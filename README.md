@@ -82,6 +82,24 @@ git submodule update
 #compile
 scram b -j 4
 ```
+Installation MTD selection (CMSSW 10.4.0.MTD5)
+============
+```
+cmsrel CMSSW_10_4_0_mtd5
+cd CMSSW_10_4_0_mtd5/src/
+cmsenv
+git cms-init
+git cms-merge-topic dseith:mtd_selection
+git clone https://github.com/dseith/DeepNTuples
+cd DeepNTuples
+git checkout mtd_selection
+# Add JetToolBox
+git submodule init
+git submodule update
+cd $CMSSW_BASE/src
+scram b -j 4
+```
+
 
 
 

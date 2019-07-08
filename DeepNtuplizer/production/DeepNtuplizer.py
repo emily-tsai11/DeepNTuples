@@ -130,6 +130,8 @@ if options.phase2 :
 else:
     jet_collection = 'slimmedJets'
 
+pvSource = "offlineSlimmedPrimaryVertices4D" 
+
 updateJetCollection(
         process,
         labelName = "DeepFlavour",
@@ -137,7 +139,7 @@ updateJetCollection(
         jetSource = cms.InputTag(jet_collection),  # 'ak4Jets'
         jetCorrections = jetCorrectionsAK4,
         pfCandidates = cms.InputTag('packedPFCandidates'),
-        pvSource = cms.InputTag("offlineSlimmedPrimaryVertices"),
+        pvSource = cms.InputTag(pvSource),
         svSource = cms.InputTag('slimmedSecondaryVertices'),
         muSource = cms.InputTag('slimmedMuons'),
         elSource = cms.InputTag('slimmedElectrons'),
@@ -200,13 +202,13 @@ process.genJetSequence = cms.Sequence(process.packedGenParticlesForJetsNoNu*proc
 # Very Loose IVF SV collection
 from PhysicsTools.PatAlgos.tools.helpers import loadWithPrefix
 loadWithPrefix(process, 'RecoVertex.AdaptiveVertexFinder.inclusiveVertexing_cff', "looseIVF")
-process.looseIVFinclusiveCandidateVertexFinder.primaryVertices = cms.InputTag("offlineSlimmedPrimaryVertices")
+process.looseIVFinclusiveCandidateVertexFinder.primaryVertices = cms.InputTag(pvSource)
 process.looseIVFinclusiveCandidateVertexFinder.tracks = cms.InputTag("packedPFCandidates")
 process.looseIVFinclusiveCandidateVertexFinder.vertexMinDLen2DSig = cms.double(0.)
 process.looseIVFinclusiveCandidateVertexFinder.vertexMinDLenSig = cms.double(0.)
 process.looseIVFinclusiveCandidateVertexFinder.fitterSigmacut = 20
 
-process.looseIVFcandidateVertexArbitrator.primaryVertices = cms.InputTag("offlineSlimmedPrimaryVertices")
+process.looseIVFcandidateVertexArbitrator.primaryVertices = cms.InputTag(pvSource)
 process.looseIVFcandidateVertexArbitrator.tracks = cms.InputTag("packedPFCandidates")
 process.looseIVFcandidateVertexArbitrator.secondaryVertices = cms.InputTag("looseIVFcandidateVertexMerger")
 process.looseIVFcandidateVertexArbitrator.fitterSigmacut = 20

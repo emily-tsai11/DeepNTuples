@@ -14,6 +14,7 @@
 #include <vector>
 #include <algorithm>
 #include "DataFormats/Math/interface/deltaR.h"
+#include <TF1.h>
 
 using namespace std;
 
@@ -35,6 +36,7 @@ void ntuple_JetInfo::initBranches(TTree* tree){
     //more general event info, here applied per jet
     addBranch(tree,"npv"    ,&npv_    ,"npv/f"    );
     addBranch(tree,"npv_0_z"    ,&npv_0_z_    ,"npv_0_z/f"    );
+    addBranch(tree, "PUrho", &PU_rho_, "PU_rho/f");
     addBranch(tree,"rho", &rho_, "rho/f");
     addBranch(tree,"ntrueInt",&ntrueInt_,"ntrueInt/f");
     addBranch(tree,"event_no"    ,&event_no_    ,"event_no/i"    );
@@ -279,6 +281,18 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
     npv_ = vertices()->size();
     
     npv_0_z_ = vertices()->at(0).z();
+
+     float nPU = 200;
+     float cons = 0.09319;
+     float mean = -0.0045;
+     float sig  = 4.28;
+     float numPU = nPU; 
+
+     TF1 fungaus("fungaus","gaus",-25.,25.);
+     fungaus.SetParameters(cons,mean,sig);
+
+     float PUrho = fungaus.Integral(npv_0_z_-0.05,npv_0_z_+0.05);
+     PU_rho_ = PUrho * numPU;
 
     for (auto const& v : *pupInfo()) {
         int bx = v.getBunchCrossing();

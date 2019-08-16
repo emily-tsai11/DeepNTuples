@@ -170,6 +170,7 @@ public:
 
     // global variables
     float npv_;
+    float npv_0_z_;
     float ntrueInt_;
     float rho_;
     unsigned int event_no_;

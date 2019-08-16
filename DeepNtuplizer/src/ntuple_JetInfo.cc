@@ -34,6 +34,7 @@ void ntuple_JetInfo::initBranches(TTree* tree){
 
     //more general event info, here applied per jet
     addBranch(tree,"npv"    ,&npv_    ,"npv/f"    );
+    addBranch(tree,"npv_0_z"    ,&npv_0_z_    ,"npv_0_z/f"    );
     addBranch(tree,"rho", &rho_, "rho/f");
     addBranch(tree,"ntrueInt",&ntrueInt_,"ntrueInt/f");
     addBranch(tree,"event_no"    ,&event_no_    ,"event_no/i"    );
@@ -276,6 +277,8 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
     }
 
     npv_ = vertices()->size();
+    
+    npv_0_z_ = vertices()->at(0).z();
 
     for (auto const& v : *pupInfo()) {
         int bx = v.getBunchCrossing();

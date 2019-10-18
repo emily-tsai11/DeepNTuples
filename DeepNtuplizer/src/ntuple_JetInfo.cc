@@ -16,6 +16,24 @@
 #include "DataFormats/Math/interface/deltaR.h"
 #include <TF1.h>
 
+#include <memory>
+
+// // user include files
+// #include "FWCore/Framework/interface/Frameworkfwd.h"
+// #include "FWCore/Framework/interface/EDAnalyzer.h"
+// 
+// #include "FWCore/Framework/interface/Event.h"
+// #include "FWCore/Framework/interface/MakerMacros.h"
+// 
+// #include "FWCore/ParameterSet/interface/ParameterSet.h"
+// 
+// #include "FWCore/ServiceRegistry/interface/Service.h"
+// #include "CommonTools/UtilAlgos/interface/TFileService.h"
+// 
+// #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
+// #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+
+
 using namespace std;
 
 void ntuple_JetInfo::getInput(const edm::ParameterSet& iConfig){
@@ -154,6 +172,9 @@ void ntuple_JetInfo::readEvent(const edm::Event& iEvent){
     iEvent.getByToken(muonsToken_, muonsHandle);
     iEvent.getByToken(electronsToken_, electronsHandle);
 
+    iEvent.getByToken(puInfoToken_, PUInfo);
+
+
     event_no_=iEvent.id().event();
 
     //presumably this whole part can be removed!
@@ -275,24 +296,45 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
 
     //branch fills
     for(auto& entry : discriminators_) {
-        entry.second = catchInfs(jet.bDiscriminator(entry.first),-0.1);
+	    entry.second = catchInfs(jet.bDiscriminator(entry.first),-0.1);
     }
 
     npv_ = vertices()->size();
-    
+
     npv_0_z_ = vertices()->at(0).z();
 
-     float nPU = 200;
-     float cons = 0.09319;
-     float mean = -0.0045;
-     float sig  = 4.28;
-     float numPU = nPU; 
+    float PUrho = 0;
+    std::vector<PileupSummaryInfo>::const_iterator ipu;
+    for (ipu = PUInfo->begin(); ipu != PUInfo->end(); ++ipu) {
+	    if ( ipu->getBunchCrossing() != 0 ) continue; // storing detailed PU info only for BX=0
 
-     TF1 fungaus("fungaus","gaus",-25.,25.);
-     fungaus.SetParameters(cons,mean,sig);
+	    for (unsigned int i=0; i<ipu->getPU_zpositions().size(); ++i) {
+		    auto PU_z = (ipu->getPU_zpositions())[i];
+		//	std::cout << i << " " << PU_z << std::endl;
+		    if ( std::abs(PU_z - npv_0_z_) < 1) PUrho++;
+	    }
 
-     float PUrho = fungaus.Integral(npv_0_z_-0.05,npv_0_z_+0.05);
-     PU_rho_ = PUrho * numPU;
+    }	
+	PUrho /= 20.;
+
+	 // std::cout << "====================" << std::endl; 
+	 // std::cout << "PUrho: " << PUrho << std::endl;
+	 // std::cout << "====================" << std::endl; 
+
+	PU_rho_ = PUrho;
+
+
+     // float nPU = 200;
+     // float cons = 0.09319;
+     // float mean = -0.0045;
+     // float sig  = 4.28;
+     // float numPU = nPU; 
+
+     // TF1 fungaus("fungaus","gaus",-25.,25.);
+     // fungaus.SetParameters(cons,mean,sig);
+
+     // float PUrho = fungaus.Integral(npv_0_z_-0.05,npv_0_z_+0.05);
+     // PU_rho_ = PUrho * numPU;
 
     for (auto const& v : *pupInfo()) {
         int bx = v.getBunchCrossing();

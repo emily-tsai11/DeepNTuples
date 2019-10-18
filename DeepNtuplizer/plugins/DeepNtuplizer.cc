@@ -177,6 +177,10 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
             consumes<pat::ElectronCollection>(
                     iConfig.getParameter<edm::InputTag>("electrons")));
 
+    jetinfo->setPUInfoToken(
+        consumes<std::vector<PileupSummaryInfo>>(
+                    edm::InputTag("slimmedAddPileupInfo")));
+
     addModule(jetinfo, "jetinfo");
 
     ntuple_pfCands * pfcands = new ntuple_pfCands();

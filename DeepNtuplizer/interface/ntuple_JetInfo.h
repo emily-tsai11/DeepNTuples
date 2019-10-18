@@ -62,6 +62,10 @@ public:
         genParticlesToken_ = genParticlesToken;
     }
 
+    void setPUInfoToken(edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puInfoToken) {
+        puInfoToken_ = puInfoToken;
+    }
+
     void setMuonsToken(edm::EDGetTokenT<pat::MuonCollection> muonsToken) {
         muonsToken_ = muonsToken;
     }
@@ -100,6 +104,7 @@ public:
     edm::EDGetTokenT<edm::Association<reco::GenJetCollection> > genJetMatchWithNuToken_;
 
     edm::EDGetTokenT<reco::GenParticleCollection> genParticlesToken_;
+  edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puInfoToken_;
 
     edm::EDGetTokenT<pat::MuonCollection> muonsToken_;       
     edm::EDGetTokenT<pat::ElectronCollection> electronsToken_;
@@ -108,6 +113,7 @@ public:
     edm::Handle<edm::Association<reco::GenJetCollection> > genJetMatchWithNu;
 
     edm::Handle<reco::GenParticleCollection> genParticlesHandle;
+    edm::Handle<std::vector <PileupSummaryInfo> > PUInfo;
 
     edm::Handle<pat::MuonCollection> muonsHandle;
     edm::Handle<pat::ElectronCollection> electronsHandle;

@@ -59,6 +59,7 @@
 #endif
 
 struct MagneticField;
+const reco::TrackBaseRef toTrackRef(const reco::PFCandidate * pfcand);
 
 
 class DeepNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
@@ -90,6 +91,9 @@ private:
 
     edm::Service<TFileService> fs;
     TTree *tree_;
+
+    float event_time_=0;
+    float jet_time_ = 0;
 
     size_t njetstotal_;
     size_t njetswithgenjet_;
@@ -205,6 +209,8 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
     for(auto& m: modules_)
         m->getInput(iConfig);
 
+    std::cout << "HI" << std::endl;
+    std::cout << "HO" << std::endl;
 }
 
 
@@ -258,6 +264,51 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     edm::View<pat::Jet>::const_iterator jetIter;
     // loop over the jets
     //for (edm::View<pat::Jet>::const_iterator jetIter = jets->begin(); jetIter != jets->end(); ++jetIter) {
+
+    float event_time = 0;
+    float event_timeWeight = 0;
+    float event_timeNtk = 0;
+        float jet_vertex_time = 0;
+    float jet_vertex_timeWeight = 0;
+    float jet_vertex_timeNtk = 0;
+
+
+
+    for(size_t j=0;j<indices.size();j++){
+        njetstotal_++;
+        size_t jetidx=indices.at(j);
+        jetIter = jets->begin()+jetidx;
+        const pat::Jet& jet = *jetIter;
+
+        for (unsigned int i = 0; i <  jet.numberOfDaughters(); i++){
+            const pat::PackedCandidate* PackedCandidate = dynamic_cast<const pat::PackedCandidate*>(jet.daughter(i));
+            if(PackedCandidate){
+                if(PackedCandidate->charge()!=0){
+                    auto track = PackedCandidate->bestTrack();
+                    if(track){
+                        auto track_time = track->t0();
+                        auto track_timeError = track->covt0t0();
+                        auto track_pt = track->pt();
+                        auto time_weight = track_pt * track_pt;
+                        if(track_timeError > 0. && abs(track_time) < 1){
+                            event_timeNtk += 1;
+                            event_timeWeight += time_weight;
+                            event_time += track_time * time_weight;
+                        }
+    
+                    }
+                }
+            }
+        }
+    }
+
+    if(event_timeNtk >0)
+        event_time /= event_timeWeight; 
+
+
+    event_time_ = event_time;
+    std::cout << "event_time: " << event_time << std::endl;
+
     for(size_t j=0;j<indices.size();j++){
         njetstotal_++;
         size_t jetidx=indices.at(j);
@@ -268,16 +319,66 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             njetswithgenjet_++;
 
         bool writejet=true;
-				size_t idx = 0;
+        size_t idx = 0;
         for(auto& m:modules_){
-					//std::cout << module_names_[idx] << std::endl;
+            //std::cout << module_names_[idx] << std::endl;
             if(! m->fillBranches(jet, jetidx, jets.product())){
                 writejet=false;
                 if(applySelection_) break;
             }
-						idx++;
+            idx++;
         }
-				//std::cout << "Jet done" << std::endl;
+
+        float jet_time = 0;
+        float jet_timeWeight = 0;
+        float jet_timeNtk = 0;
+
+        for (unsigned int i = 0; i <  jet.numberOfDaughters(); i++){
+            const pat::PackedCandidate* PackedCandidate = dynamic_cast<const pat::PackedCandidate*>(jet.daughter(i));
+            if(PackedCandidate){
+                if(PackedCandidate->charge()!=0){
+                    auto track = PackedCandidate->bestTrack();
+                    if(track){
+                        auto track_time = track->t0();
+                        auto track_timeError = track->covt0t0();
+                        auto track_pt = track->pt();
+                        auto time_weight = track_pt * track_pt;
+
+                        if(track_timeError > 0. && abs(track_time) < 1){
+                            jet_timeNtk += 1;
+                            jet_timeWeight += time_weight;
+                            jet_time += track_time * time_weight;
+                        }
+                        const reco::PFCandidate *pfcand = dynamic_cast<const reco::PFCandidate*>(jet.daughter(i));
+
+                        auto svTagInfo = jet.tagInfoSecondaryVertex("pfInclusiveSecondaryVertexFinder");
+
+                        bool isv = false;
+                        size_t nSV = svTagInfo->nVertices();
+                        const reco::TrackBaseRef trackref = toTrackRef(pfcand);
+                        typedef reco::Vertex::trackRef_iterator IT;
+                        const reco::TrackBaseRef trackBaseRef(trackref);
+                        for(size_t iv=0; iv<nSV; ++iv){
+                             const reco::Vertex &vtx = svTagInfo->secondaryVertex(iv);
+                             for(IT it=vtx.tracks_begin(); it!=vtx.tracks_end(); ++it){
+                                 const reco::TrackBaseRef & baseRef = *it;
+                                 if(baseRef==trackBaseRef){
+                                     isv = true;
+                                 }
+                             }
+                        }
+                        if(isv){}
+                    }
+                }
+            }
+        }
+        if(jet_timeNtk >0)
+            jet_time /= jet_timeWeight; 
+
+
+        jet_time_ = jet_time;
+
+        //std::cout << "Jet done" << std::endl;
         if( (writejet&&applySelection_) || !applySelection_ ){
             tree_->Fill();
             njetsselected_++;
@@ -287,7 +388,7 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 
 // ------------ method called once each job just before starting event loop  ------------
-void
+    void
 DeepNtuplizer::beginJob()
 {
     if( !fs ){
@@ -295,6 +396,8 @@ DeepNtuplizer::beginJob()
                 "TFile Service is not registered in cfg file" );
     }
     tree_=(fs->make<TTree>("tree" ,"tree" ));
+    tree_->Branch("Event_time", &event_time_, "Event_time/F");
+    tree_->Branch("Jet_time", &jet_time_, "Jet_time/F");
 
     for(auto& m:modules_)
         m->initBranches(tree_);
@@ -305,7 +408,7 @@ DeepNtuplizer::beginJob()
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void
+    void
 DeepNtuplizer::endJob()
 {
 
@@ -326,6 +429,16 @@ DeepNtuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
     desc.setUnknown();
     descriptions.addDefault(desc);
 }
+
+const reco::TrackBaseRef toTrackRef(const reco::PFCandidate * pfcand){
+    if ( (std::abs(pfcand->pdgId()) == 11 || pfcand->pdgId() == 22) && pfcand->gsfTrackRef().isNonnull() && pfcand->gsfTrackRef().isAvailable() )
+      return reco::TrackBaseRef(pfcand->gsfTrackRef());
+    else if ( pfcand->trackRef().isNonnull() && pfcand->trackRef().isAvailable() )
+          return reco::TrackBaseRef(pfcand->trackRef());
+    else
+        return reco::TrackBaseRef();
+}
+
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(DeepNtuplizer);

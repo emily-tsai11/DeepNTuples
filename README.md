@@ -101,7 +101,7 @@ scram b -j 4
 ```
 
 
-Installation CMSSW 10.6.0 patch2 with new track timing variables (under development)
+Installation CMSSW 10.6.0 patch2 with new track timing variables 
 ============
 ```
 cmsrel CMSSW_10_6_0_patch2
@@ -111,7 +111,7 @@ git cms-init
 git cms-merge-topic dseith:daniel_new_timing_variables
 git clone https://github.com/dseith/DeepNTuples
 cd DeepNTuples
-git checkout devel
+git checkout timing_variables
 # Add JetToolBox
 git submodule init
 git submodule update

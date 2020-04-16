@@ -49,5 +49,6 @@ def submit(ds):
 if __name__ == '__main__':
     import sys
     ds = sys.argv[1]
+    ds = ds.rstrip()
     submit(ds)
 

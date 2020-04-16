@@ -233,7 +233,7 @@ if ( int(releases[0]) > 8 ) or ( (int(releases[0])==8) and (int(releases[1]) >= 
    process.deepntuplizer.tagInfoName = cms.string('pfDeepCSV')
 
 if options.phase2 :
-    process.deepntuplizer.jetAbsEtaMax = cms.double(3.0)
+    process.deepntuplizer.jetAbsEtaMax = cms.double(4.5)
 
 process.deepntuplizer.gluonReduction  = cms.double(options.gluonReduction)
 

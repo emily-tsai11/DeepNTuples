@@ -88,6 +88,9 @@ private:
     unsigned ntrack_time_ = 0;
 
     const  reco::Vertex  *pv;
+   float jet_vertex_time_   = 0;
+ float vertex_time_[25] = {-1};
+
 //$$
 
     size_t njetstotal_;
@@ -204,8 +207,6 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
     for(auto& m: modules_)
         m->getInput(iConfig);
 
-//$$    std::cout << "HI" << std::endl;
-//$$    std::cout << "HO" << std::endl;
 }
 
 
@@ -223,6 +224,10 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 
     //global info
+
+    int   vertex_timeNtk[1000];
+    float vertex_time[1000];
+    float vertex_timeWeight[1000];
 
     edm::Handle<reco::VertexCollection> vertices;
     iEvent.getByToken(vtxToken_, vertices);
@@ -324,6 +329,21 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       float jet_timeWeight = 0;
       float jet_timeNtk    = 0;
 
+      float jet_vertex_time	  = 0;
+      float jet_vertex_timeWeight = 0;
+      float jet_vertex_timeNtk    = 0;
+      for (int isv = 0; isv < 100; isv++) {
+        vertex_time[isv]       = 0;
+        vertex_timeWeight[isv] = 0;
+        vertex_timeNtk[isv]    = 0;
+      }
+
+      int  nSV = -2;
+      const reco::CandSecondaryVertexTagInfo *candSVTagInfo = jet.tagInfoCandSecondaryVertex("pfInclusiveSecondaryVertexFinder");
+      if ( candSVTagInfo != nullptr ) nSV = candSVTagInfo->nVertices();
+      if ( nSV > 0 && candSVTagInfo->vertexTracks().size() == 0 ) nSV = -1;
+
+
       std::vector<std::pair<float, float>> tracks_pt_time;
 
       for (unsigned int i = 0; i <  jet.numberOfDaughters(); i++){
@@ -345,9 +365,51 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         if ( track_timeError > 0. && abs(track_time) < 1 && event_timeNtk > 0 )
              track_time = track_time - event_time;
 	else track_time = -1.; 
-
         tracks_pt_time.push_back(std::make_pair(track_pt, track_time));
+
+
+  	bool SVtrack = false;
+	int iSV = -1;
+	if ( nSV > 0  && track_timeError > 0. && abs(track_time) < 1 ) {
+	  for (unsigned int isv=0; isv<candSVTagInfo->nVertices(); ++isv) {
+	    for (unsigned int it=0; it<candSVTagInfo->nVertexTracks(isv); ++it) {
+	    if ( candSVTagInfo->vertexTracks(isv)[it]->charge() != track->charge() ) continue;
+	      float dpt  = TMath::Abs(candSVTagInfo->vertexTracks(isv)[it]->pt()  / track->pt() - 1.);
+              float deta = TMath::Abs(candSVTagInfo->vertexTracks(isv)[it]->eta() - track->eta());
+              float dphi = TMath::Abs(candSVTagInfo->vertexTracks(isv)[it]->phi() - track->phi());
+	      if (dphi > 3.141593 ) dphi -= 2.*3.141593;
+	      if (dpt < 0.01 && deta < 0.01 && dphi < 0.01) {
+	        SVtrack = true;
+		iSV = isv;
+// 		nsvtracks_matched++;
+	      }
+	    }
+	  }
+	}
+	if ( SVtrack ) {
+          jet_vertex_timeNtk     += 1;
+          jet_vertex_timeWeight  += time_weight;
+          jet_vertex_time        += track_time * time_weight;
+          vertex_timeNtk[iSV]    += 1;
+          vertex_timeWeight[iSV] += time_weight;
+          vertex_time[iSV]       += track_time * time_weight;
+	}
+
       }
+
+
+     if ( jet_vertex_timeNtk > 0 && event_timeNtk > 0 )
+           jet_vertex_time = jet_vertex_time / jet_vertex_timeWeight - event_time;
+      else jet_vertex_time = -1; 
+
+      if ( nSV > 0 ) {
+        for (unsigned int isv=0; isv<candSVTagInfo->nVertices(); ++isv) {
+          if ( vertex_timeNtk[isv] > 0 && event_timeNtk > 0 )
+               vertex_time[isv] = vertex_time[isv] / vertex_timeWeight[isv] - event_time;
+          else vertex_time[isv] = -1; 
+	}
+      }
+
 
       if ( jet_timeNtk > 0 && event_timeNtk > 0 )
            jet_time = jet_time / jet_timeWeight - event_time;
@@ -355,28 +417,37 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 //$$
 
       jet_time_ = jet_time;
-      std::sort(tracks_pt_time.begin(), tracks_pt_time.end()); 
+      jet_vertex_time_ = jet_vertex_time;
 
-      for(unsigned itr=0; itr<25; ++itr){
-          //store the 25 tracks with the largest pt
-          if(itr>=tracks_pt_time.size())
-              track_time_[itr]=-1;
-          else{
-             // std::cout << " " << tracks_pt_time.size() << " " << itr << " " ;
-              unsigned index = tracks_pt_time.size()-itr;
-//std::cout << index  << " " ;
-                float time = tracks_pt_time[index].second;
-                if(std::abs(time) > 1) //sometimes time is smt like 10e25 which is unphysical should always be between -1 and 1
-                  track_time_[itr] = -1;
-                else
-                  track_time_[itr] = time;
-// std::cout << track_time_[itr] << std::endl;
-          }
+      for(unsigned isv=0; isv<25; ++isv){
+          vertex_time_[isv] = vertex_time[isv];
       }
 
-    ntrack_time_ = tracks_pt_time.size();
 
-      //std::cout << "Jet done" << std::endl;
+
+      // std::sort(tracks_pt_time.begin(), tracks_pt_time.end()); 
+
+      for(unsigned itr=0; itr<25; ++itr){
+        if(itr<tracks_pt_time.size())
+            track_time_[itr] = tracks_pt_time[itr].second;
+        else
+            track_time_[itr] = -1;
+      }
+      //     //store the 25 tracks with the largest pt
+      //     if(itr>=tracks_pt_time.size())
+      //         track_time_[itr]=-1;
+      //     else{
+      //         unsigned index = tracks_pt_time.size()-itr-1;
+      //           float time = tracks_pt_time[index].second;
+      //           if(std::abs(time) > 1) //sometimes time is smt like 10e25 which is unphysical should always be between -1 and 1
+      //             track_time_[itr] = -1;
+      //           else
+      //             track_time_[itr] = time;
+      //     }
+      // }
+
+      ntrack_time_ = tracks_pt_time.size();
+
       if( (writejet&&applySelection_) || !applySelection_ ){
           tree_->Fill();
           njetsselected_++;
@@ -401,6 +472,9 @@ DeepNtuplizer::beginJob()
     tree_->Branch("Jet_time", &jet_time_, "Jet_time/F");
     tree_->Branch("nTrack_time", &ntrack_time_, "nTrack_time/i");
     tree_->Branch("Track_time", &track_time_, "Track_time[25]/F");
+    tree_->Branch("Jet_vertex_time", &jet_vertex_time_, "Jet_vertex_time/F");
+    tree_->Branch("vertex_time", &vertex_time_, "vertex_time[25]/F");
+
 
     for(auto& m:modules_)
         m->initBranches(tree_);

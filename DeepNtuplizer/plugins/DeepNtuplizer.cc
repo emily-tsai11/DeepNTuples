@@ -425,7 +425,7 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 
 
-      // std::sort(tracks_pt_time.begin(), tracks_pt_time.end()); 
+      std::sort(tracks_pt_time.begin(), tracks_pt_time.end()); 
 
       for(unsigned itr=0; itr<25; ++itr){
           //store the 25 tracks with the largest pt

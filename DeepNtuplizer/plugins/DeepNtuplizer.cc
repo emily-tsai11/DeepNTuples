@@ -428,23 +428,18 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       // std::sort(tracks_pt_time.begin(), tracks_pt_time.end()); 
 
       for(unsigned itr=0; itr<25; ++itr){
-        if(itr<tracks_pt_time.size())
-            track_time_[itr] = tracks_pt_time[itr].second;
-        else
-            track_time_[itr] = -1;
+          //store the 25 tracks with the largest pt
+          if(itr>=tracks_pt_time.size())
+              track_time_[itr]=-1;
+          else{
+              unsigned index = tracks_pt_time.size()-itr-1;
+                float time = tracks_pt_time[index].second;
+                if(std::abs(time) > 1) //sometimes time is smt like 10e25 which is unphysical should always be between -1 and 1
+                  track_time_[itr] = -1;
+                else
+                  track_time_[itr] = time;
+          }
       }
-      //     //store the 25 tracks with the largest pt
-      //     if(itr>=tracks_pt_time.size())
-      //         track_time_[itr]=-1;
-      //     else{
-      //         unsigned index = tracks_pt_time.size()-itr-1;
-      //           float time = tracks_pt_time[index].second;
-      //           if(std::abs(time) > 1) //sometimes time is smt like 10e25 which is unphysical should always be between -1 and 1
-      //             track_time_[itr] = -1;
-      //           else
-      //             track_time_[itr] = time;
-      //     }
-      // }
 
       ntrack_time_ = tracks_pt_time.size();
 

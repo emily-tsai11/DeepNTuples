@@ -199,7 +199,9 @@ void ntuple_pfCands::initBranches(TTree* tree){
     addBranch(tree,"Cpfcan_dlambdadz",&Cpfcan_dlambdadz_,"Cpfcan_dlambdadz_[n_Cpfcand_]/f");
      */
 
-
+//$$
+    addBranch(tree,"Cpfcan_time", &Cpfcan_time_,"Cpfcan_time_[n_Cpfcand_]/f");
+//$$
 
     addBranch(tree,"Cpfcan_BtagPf_trackMomentum",&Cpfcan_BtagPf_trackMomentum_,"Cpfcan_BtagPf_trackMomentum_[n_Cpfcand_]/f");
     addBranch(tree,"Cpfcan_BtagPf_trackEta",&Cpfcan_BtagPf_trackEta_,"Cpfcan_BtagPf_trackEta_[n_Cpfcand_]/f");
@@ -268,7 +270,8 @@ void ntuple_pfCands::readEvent(const edm::Event& iEvent){
 
 //use either of these functions
 
-bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll){
+//$$ bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll){
+bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll, float EventTime){
     float etasign = 1.;
     if (jet.eta()<0) etasign =-1.;
     math::XYZVector jetDir = jet.momentum().Unit();
@@ -301,6 +304,13 @@ bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
     }
 		std::sort(sortedcharged.begin(),sortedcharged.end(),sorting::sortingClass<size_t>::compareByABCInv);
     n_Cpfcand_ = std::min(sortedcharged.size(),max_pfcand_);
+
+//$$
+//   std::cout << " Ntuple jet pt eta phi " << jet.pt() << " " << jet.eta() << " " << jet.phi() 
+//             << " ntrks " << n_Cpfcand_ << " EventTime " << EventTime << std::endl;
+
+    float track_time = -1;
+//$$
 
     std::sort(sortedneutrals.begin(),sortedneutrals.end(),sorting::sortingClass<size_t>::compareByABCInv);
     std::vector<size_t> sortedchargedindices,sortedneutralsindices;
@@ -396,6 +406,23 @@ bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
             Cpfcan_BtagPf_trackDecayLen_[fillntupleentry]   =0;
             Cpfcan_BtagPf_trackJetDistVal_[fillntupleentry] =catchInfsAndBound(trackinfo.getTrackJetDistVal(),0,-20,1 );
             Cpfcan_BtagPf_trackJetDistSig_[fillntupleentry] =catchInfsAndBound(trackinfo.getTrackJetDistSig(),0,-1,1e5 );
+
+//$$
+	    track_time = -1.;
+            auto track = PackedCandidate_->bestTrack();
+            if ( track && EventTime > -1 ) {
+              if ( track->covt0t0() > 0. && abs(track->t0()) < 1 ) {
+	        track_time = track->t0() - EventTime;
+	        track_time = TMath::Abs(track_time);
+	      }
+	    }
+            Cpfcan_time_[fillntupleentry] = track_time;
+
+//   std::cout << " Ntuple Cpfcan " << fillntupleentry << " pt " << PackedCandidate_->pt()
+//             << " IPsig " << trackinfo.getTrackSip2dSig()   
+//             << " time " << track_time 
+// 	       << std::endl;     
+//$$
 
             // TO DO: we can do better than that by including reco::muon informations
             Cpfcan_isMu_[fillntupleentry] = 0;

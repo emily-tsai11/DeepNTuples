@@ -53,7 +53,9 @@ void ntuple_SV::initBranches(TTree* tree){
     addBranch(tree,(prefix_+"sv_d3dsig").c_str()      ,&sv_d3dsig_      ,(prefix_+"sv_d3dsig_["+prefix_+"sv_num_]/f").c_str()      );
     addBranch(tree,(prefix_+"sv_costhetasvpv").c_str(),&sv_costhetasvpv_,(prefix_+"sv_costhetasvpv_["+prefix_+"sv_num_]/f").c_str());
     addBranch(tree,(prefix_+"sv_enratio").c_str()     ,&sv_enratio_     ,(prefix_+"sv_enratio_["+prefix_+"sv_num_]/f").c_str());
-
+//$$
+    addBranch(tree,(prefix_+"sv_time").c_str()        ,&sv_time_        ,(prefix_+"sv_time_["+prefix_+"sv_num_]/f").c_str());
+//$$
 
 }
 
@@ -76,7 +78,8 @@ bool ntuple_SV::compareDxyDxyErr(const reco::VertexCompositePtrCandidate &sva,co
     return bsig<asig;
 }
 
-bool ntuple_SV::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll){
+//$$ bool ntuple_SV::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll){
+bool ntuple_SV::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll, float EventTime){
 
 
     const float jet_uncorr_e=jet.correctedJet("Uncorrected").energy();
@@ -103,6 +106,16 @@ bool ntuple_SV::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  
           jet_radius = dR;
       }
     }
+
+//$$
+    int  nSV = -2;
+    const reco::CandSecondaryVertexTagInfo *candSVTagInfo = jet.tagInfoCandSecondaryVertex("pfInclusiveSecondaryVertexFinder");
+    if ( candSVTagInfo != nullptr ) nSV = candSVTagInfo->nVertices();
+    if ( nSV > 0 && candSVTagInfo->vertexTracks().size() == 0 ) nSV = -1;
+
+//   std::cout << " NTuple jet   pt eta phi " 
+// 	 << jet.pt() << " " << jet.eta() << " " << jet.phi() << "   nSV " << nSV << std::endl;
+//$$
 
     for (const reco::VertexCompositePtrCandidate &sv : cpvtx) {
 
@@ -131,7 +144,62 @@ bool ntuple_SV::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  
 
             sv_enratio_[sv_num_]=sv.energy()/jet_uncorr_e;
 
+//$$
+// get the vertex time, matching VertexCompositePtrCandidate and tagInfoCandSecondaryVertex ...
+            float vertex_time       = 0;
+            float vertex_timeWeight = 0;
+            float vertex_timeNtk    = 0;
+    
+            if ( nSV > 0 && sv.pt() > 0. ) {
+	      for (unsigned int isv=0; isv<candSVTagInfo->nVertices(); ++isv) {
+	        float dSVpt  = TMath::Abs(candSVTagInfo->secondaryVertex(isv).pt() / sv.pt() - 1.);
+                float dSVeta = TMath::Abs(candSVTagInfo->secondaryVertex(isv).eta() - sv.eta());
+                float dSVphi = TMath::Abs(candSVTagInfo->secondaryVertex(isv).phi() - sv.phi());
+	        if (dSVphi > 3.141593 ) dSVphi -= 2.*3.141593;
+	      if (!(dSVpt < 0.01 && dSVeta < 0.01 && dSVphi < 0.01)) continue;
+//   std::cout << "  => matched sv " << sv_num_ << " to " << isv << std::endl;
 
+	        for (unsigned int it=0; it<candSVTagInfo->nVertexTracks(isv); ++it) {
+
+                  for (unsigned int i = 0; i <  jet.numberOfDaughters(); i++) {
+                    const pat::PackedCandidate* PackedCandidate = dynamic_cast<const pat::PackedCandidate*>(jet.daughter(i));
+                  if ( !PackedCandidate ) continue;
+                  if ( PackedCandidate->charge() == 0 ) continue;
+                    auto track = PackedCandidate->bestTrack();
+                  if ( !track ) continue;
+	          if ( candSVTagInfo->vertexTracks(isv)[it]->charge() != track->charge() ) continue;
+                    float track_time      = track->t0();
+                    float track_timeError = track->covt0t0();
+                    float track_pt    = track->pt();
+                    float time_weight = track_pt * track_pt;
+		  if (!( track_timeError > 0. && abs(track_time) < 1 )) continue;
+
+	            float dpt  = TMath::Abs(candSVTagInfo->vertexTracks(isv)[it]->pt()  / track->pt() - 1.);
+                    float deta = TMath::Abs(candSVTagInfo->vertexTracks(isv)[it]->eta() - track->eta());
+                    float dphi = TMath::Abs(candSVTagInfo->vertexTracks(isv)[it]->phi() - track->phi());
+	            if (dphi > 3.141593 ) dphi -= 2.*3.141593;
+	            if (dpt < 0.01 && deta < 0.01 && dphi < 0.01) {
+                      vertex_timeNtk    += 1;
+                      vertex_timeWeight += time_weight;
+                      vertex_time       += track_time * time_weight;
+//   std::cout << "  => matched track " << it << " to " << i << " time " << track_time << std::endl;
+	            }
+		  } // end loop on all tracks in jet
+		} // end loop on tracks from SV in jet
+	      } // end loop on SVs in jet
+              if ( vertex_timeNtk > 0 && EventTime > -1 ) {
+                vertex_time = vertex_time / vertex_timeWeight - EventTime;
+		vertex_time = TMath::Abs(vertex_time);
+	      }
+              else vertex_time = -1; 
+	    }
+	    else vertex_time = -1.;
+
+//   std::cout << " NTuple sv " << sv_num_ << " pt eta phi " << sv.pt() << " " << sv.eta() << " " << sv.phi() 
+//             << " time " << vertex_time << std::endl;
+
+            sv_time_[sv_num_] = vertex_time;
+//$$
 
             sv_num_++;
         }

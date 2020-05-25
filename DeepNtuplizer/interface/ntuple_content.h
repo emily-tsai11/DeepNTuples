@@ -38,7 +38,8 @@ public:
     virtual void readSetup(const edm::EventSetup& iSetup){}
     //use either of these functions
 
-    virtual bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0)=0;
+//$$    virtual bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0)=0;
+    virtual bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0, float EventTime = -1)=0;
 
     void setPrimaryVertices(const reco::VertexCollection* v){
         vertices_=v;
@@ -66,6 +67,7 @@ public:
     }
 
     static bool useoffsets;
+
 
 protected:
     const reco::VertexCollection * vertices()const;

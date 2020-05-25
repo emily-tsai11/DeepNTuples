@@ -129,7 +129,8 @@ void ntuple_DeepVertex::readSetup(const edm::EventSetup& iSetup){
 
 
 
-bool ntuple_DeepVertex::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll){
+//$$ bool ntuple_DeepVertex::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll){
+bool ntuple_DeepVertex::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll, float EventTime){
 
     // pv info
     const reco::Vertex &pv = vertices()->at(0);

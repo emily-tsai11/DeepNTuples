@@ -30,7 +30,8 @@ public:
 
     //use either of these functions
 
-    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0);
+//$$    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0);
+    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0, float EventTime = -1);
 
     void setAxis2Token(edm::EDGetTokenT<edm::ValueMap<float> > axis2Token) {
         axis2Token_ = axis2Token;
@@ -80,6 +81,7 @@ public:
     void setIsHerwig(const bool use){
         isherwig_=use;
     }
+
 
     //private:
 

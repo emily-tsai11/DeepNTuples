@@ -25,12 +25,14 @@ public:
 
     //use either of these functions
 
-    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0);
+//$$    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0);
+    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0, float EventTime = -1);
 
 
     void setCandidatesToken(const edm::EDGetTokenT<edm::View<pat::PackedCandidate> > & t){
         CandidateToken=t;
      }
+
 
 private:
 

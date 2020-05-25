@@ -24,10 +24,11 @@ public:
     void readEvent(const edm::Event& iEvent);
     void readSetup(const edm::EventSetup& iSetup);
 
-
     //use either of these functions
 
-    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0);
+//$$    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0);
+    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0, float EventTime = -1);
+
 
 private:
 
@@ -78,7 +79,9 @@ private:
     float  Cpfcan_dphidxy_[max_pfcand_];
     float  Cpfcan_dlambdadz_[max_pfcand_];
 
-
+//$$
+    float  Cpfcan_time_[max_pfcand_];
+//$$
 
     float Cpfcan_BtagPf_trackMomentum_[max_pfcand_];
     float Cpfcan_BtagPf_trackEta_[max_pfcand_];

@@ -121,7 +121,8 @@ void ntuple_FatJetInfo::initBranches(TTree* tree) {
 	addBranch(tree, "fj_sdn2",           &fj_sdn2_            );
 }
 
-bool ntuple_FatJetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, const edm::View<pat::Jet>* coll) {
+//$$ bool ntuple_FatJetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, const edm::View<pat::Jet>* coll) {
+bool ntuple_FatJetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, const edm::View<pat::Jet> * coll, float EventTime) {
 	
     
 /*     if(!jet.hasTagInfo(tagInfoName_)) {

@@ -1,5 +1,4 @@
-from CRABClient.UserUtilities import config
-from CRABClient import getUsername
+from CRABClient.UserUtilities import config, getUsername
 from WMCore.Configuration import Configuration
 from CRABAPI.RawCommand import crabCommand
 config = Configuration()
@@ -52,4 +51,3 @@ if __name__ == '__main__':
     ds = sys.argv[1]
     ds = ds.rstrip()
     submit(ds)
-

@@ -1,4 +1,5 @@
-from CRABClient.UserUtilities import config, getUsernameFromSiteDB
+from CRABClient.UserUtilities import config
+from CRABClient import getUsername
 from WMCore.Configuration import Configuration
 from CRABAPI.RawCommand import crabCommand
 config = Configuration()
@@ -34,7 +35,7 @@ def submit(ds):
     config.Data.inputDBS = 'global'
     config.Data.splitting = 'FileBased'
     config.Data.unitsPerJob = 1
-    config.Data.outLFNDirBase = '/store/user/%s/' % (getUsernameFromSiteDB())
+    config.Data.outLFNDirBase = '/store/user/%s/' % (getUsername())
     config.Data.publication = False
     config.Data.outputDatasetTag = 'DeepNtuples'
 

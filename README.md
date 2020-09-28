@@ -101,7 +101,7 @@ scram b -j 4
 ```
 
 
-Installation CMSSW 10.6.0 patch2 with new track timing variables, use this setip for PV3D+timing
+Installation CMSSW 10.6.0 patch2 with new track timing variables, PV3D+timing
 ============
 ```
 cmsrel CMSSW_10_6_0_patch2
@@ -119,7 +119,7 @@ cd $CMSSW_BASE/src
 scram b -j 4
 ```
 
-Installation CMSSW 11.1.2 patch3 with new track timing variables, use this setup for PV4D
+Installation CMSSW 11.1.2 patch3 with new track timing variables, PV4D
 ============
 ```
 cmsrel CMSSW_11_1_2_patch3

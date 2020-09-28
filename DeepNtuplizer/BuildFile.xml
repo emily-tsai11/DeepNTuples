@@ -5,6 +5,7 @@
 <use name="TrackingTools/IPTools"/>
 <use name="DeepNTuples/JetAnalysis"/>
 <use name="RecoBTag/DeepFlavour"/>
+<use name="SimTracker/Records"/>
 
 <use   name="root"/>
 <use   name="rootrflx"/>

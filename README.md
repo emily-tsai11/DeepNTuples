@@ -101,7 +101,7 @@ scram b -j 4
 ```
 
 
-Installation CMSSW 10.6.0 patch2 with new track timing variables 
+Installation CMSSW 10.6.0 patch2 with new track timing variables, use this setip for PV3D+timing
 ============
 ```
 cmsrel CMSSW_10_6_0_patch2
@@ -119,7 +119,23 @@ cd $CMSSW_BASE/src
 scram b -j 4
 ```
 
-
+Installation CMSSW 11.1.2 patch3 with new track timing variables, use this setup for PV4D
+============
+```
+cmsrel CMSSW_11_1_2_patch3
+cd CMSSW_11_1_2_patch3/src/
+cmsenv
+git cms-init
+git cms-merge-topic mneukum:11_1_2_patch3_deepntuplizer
+git clone https://github.com/mneukum/DeepNTuples
+cd DeepNTuples
+git checkout timing_variables
+# Add JetToolBox
+git submodule init
+git submodule update
+cd $CMSSW_BASE/src
+scram b -j 4
+```
 
 
 Further settings

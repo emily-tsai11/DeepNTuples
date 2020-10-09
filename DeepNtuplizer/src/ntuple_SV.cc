@@ -34,27 +34,27 @@ void ntuple_SV::initBranches(TTree* tree){
     // SV candidates
     addBranch(tree,(prefix_+"n_sv").c_str()         ,&sv_num_         ,(prefix_+"sv_num_/i").c_str()     );
     addBranch(tree,(prefix_+"nsv").c_str()          ,&nsv_          ,(prefix_+"nsv_/f").c_str()         );
-    addBranch(tree,(prefix_+"sv_pt").c_str()          ,&sv_pt_          ,(prefix_+"sv_pt_["+prefix_+"sv_num_]/f").c_str()        );
-    addBranch(tree,(prefix_+"sv_eta").c_str()          ,&sv_eta_          ,(prefix_+"sv_eta_["+prefix_+"sv_num_]/f").c_str()        );
-    addBranch(tree,(prefix_+"sv_phi").c_str()          ,&sv_phi_          ,(prefix_+"sv_phi_["+prefix_+"sv_num_]/f").c_str()        );
-    addBranch(tree,(prefix_+"sv_etarel").c_str()         ,&sv_etarel_         ,(prefix_+"sv_etarel_["+prefix_+"sv_num_]/f").c_str()         );
-    addBranch(tree,(prefix_+"sv_phirel").c_str()         ,&sv_phirel_         ,(prefix_+"sv_phirel_["+prefix_+"sv_num_]/f").c_str()         );
-    addBranch(tree,(prefix_+"sv_deltaR").c_str()         ,&sv_deltaR_         ,(prefix_+"sv_deltaR_["+prefix_+"sv_num_]/f").c_str()         );
-    addBranch(tree,(prefix_+"sv_mass").c_str()        ,&sv_mass_        ,(prefix_+"sv_mass_["+prefix_+"sv_num_]/f").c_str()        );
-    addBranch(tree,(prefix_+"sv_ntracks").c_str()     ,&sv_ntracks_     ,(prefix_+"sv_ntracks_["+prefix_+"sv_num_]/f").c_str()     );
-    addBranch(tree,(prefix_+"sv_chi2").c_str()        ,&sv_chi2_        ,(prefix_+"sv_chi2_["+prefix_+"sv_num_]/f").c_str()        );
-    addBranch(tree,(prefix_+"sv_ndf").c_str()         ,&sv_ndf_         ,(prefix_+"sv_ndf_["+prefix_+"sv_num_]/f").c_str()         );
-    addBranch(tree,(prefix_+"sv_normchi2").c_str()    ,&sv_normchi2_   ,(prefix_+"sv_normchi2_["+prefix_+"sv_num_]/f").c_str()     );
-    addBranch(tree,(prefix_+"sv_dxy").c_str()         ,&sv_dxy_         ,(prefix_+"sv_dxy_["+prefix_+"sv_num_]/f").c_str()         );
-    addBranch(tree,(prefix_+"sv_dxyerr").c_str()      ,&sv_dxyerr_      ,(prefix_+"sv_dxyerr_["+prefix_+"sv_num_]/f").c_str()      );
-    addBranch(tree,(prefix_+"sv_dxysig").c_str()      ,&sv_dxysig_      ,(prefix_+"sv_dxysig_["+prefix_+"sv_num_]/f").c_str()      );
-    addBranch(tree,(prefix_+"sv_d3d").c_str()         ,&sv_d3d_         ,(prefix_+"sv_d3d_["+prefix_+"sv_num_]/f").c_str()         );
-    addBranch(tree,(prefix_+"sv_d3derr").c_str()      ,&sv_d3derr_      ,(prefix_+"sv_d3err_["+prefix_+"sv_num_]/f").c_str()       );
-    addBranch(tree,(prefix_+"sv_d3dsig").c_str()      ,&sv_d3dsig_      ,(prefix_+"sv_d3dsig_["+prefix_+"sv_num_]/f").c_str()      );
-    addBranch(tree,(prefix_+"sv_costhetasvpv").c_str(),&sv_costhetasvpv_,(prefix_+"sv_costhetasvpv_["+prefix_+"sv_num_]/f").c_str());
-    addBranch(tree,(prefix_+"sv_enratio").c_str()     ,&sv_enratio_     ,(prefix_+"sv_enratio_["+prefix_+"sv_num_]/f").c_str());
+    addBranch(tree,(prefix_+"sv_pt").c_str()          ,&sv_pt_          ,(prefix_+"sv_pt_["+prefix_+"sv_num_]/F").c_str()        );
+    addBranch(tree,(prefix_+"sv_eta").c_str()          ,&sv_eta_          ,(prefix_+"sv_eta_["+prefix_+"sv_num_]/F").c_str()        );
+    addBranch(tree,(prefix_+"sv_phi").c_str()          ,&sv_phi_          ,(prefix_+"sv_phi_["+prefix_+"sv_num_]/F").c_str()        );
+    addBranch(tree,(prefix_+"sv_etarel").c_str()         ,&sv_etarel_         ,(prefix_+"sv_etarel_["+prefix_+"sv_num_]/F").c_str()         );
+    addBranch(tree,(prefix_+"sv_phirel").c_str()         ,&sv_phirel_         ,(prefix_+"sv_phirel_["+prefix_+"sv_num_]/F").c_str()         );
+    addBranch(tree,(prefix_+"sv_deltaR").c_str()         ,&sv_deltaR_         ,(prefix_+"sv_deltaR_["+prefix_+"sv_num_]/F").c_str()         );
+    addBranch(tree,(prefix_+"sv_mass").c_str()        ,&sv_mass_        ,(prefix_+"sv_mass_["+prefix_+"sv_num_]/F").c_str()        );
+    addBranch(tree,(prefix_+"sv_ntracks").c_str()     ,&sv_ntracks_     ,(prefix_+"sv_ntracks_["+prefix_+"sv_num_]/F").c_str()     );
+    addBranch(tree,(prefix_+"sv_chi2").c_str()        ,&sv_chi2_        ,(prefix_+"sv_chi2_["+prefix_+"sv_num_]/F").c_str()        );
+    addBranch(tree,(prefix_+"sv_ndf").c_str()         ,&sv_ndf_         ,(prefix_+"sv_ndf_["+prefix_+"sv_num_]/F").c_str()         );
+    addBranch(tree,(prefix_+"sv_normchi2").c_str()    ,&sv_normchi2_   ,(prefix_+"sv_normchi2_["+prefix_+"sv_num_]/F").c_str()     );
+    addBranch(tree,(prefix_+"sv_dxy").c_str()         ,&sv_dxy_         ,(prefix_+"sv_dxy_["+prefix_+"sv_num_]/F").c_str()         );
+    addBranch(tree,(prefix_+"sv_dxyerr").c_str()      ,&sv_dxyerr_      ,(prefix_+"sv_dxyerr_["+prefix_+"sv_num_]/F").c_str()      );
+    addBranch(tree,(prefix_+"sv_dxysig").c_str()      ,&sv_dxysig_      ,(prefix_+"sv_dxysig_["+prefix_+"sv_num_]/F").c_str()      );
+    addBranch(tree,(prefix_+"sv_d3d").c_str()         ,&sv_d3d_         ,(prefix_+"sv_d3d_["+prefix_+"sv_num_]/F").c_str()         );
+    addBranch(tree,(prefix_+"sv_d3derr").c_str()      ,&sv_d3derr_      ,(prefix_+"sv_d3err_["+prefix_+"sv_num_]/F").c_str()       );
+    addBranch(tree,(prefix_+"sv_d3dsig").c_str()      ,&sv_d3dsig_      ,(prefix_+"sv_d3dsig_["+prefix_+"sv_num_]/F").c_str()      );
+    addBranch(tree,(prefix_+"sv_costhetasvpv").c_str(),&sv_costhetasvpv_,(prefix_+"sv_costhetasvpv_["+prefix_+"sv_num_]/F").c_str());
+    addBranch(tree,(prefix_+"sv_enratio").c_str()     ,&sv_enratio_     ,(prefix_+"sv_enratio_["+prefix_+"sv_num_]/F").c_str());
 //$$
-    addBranch(tree,(prefix_+"sv_time").c_str()        ,&sv_time_        ,(prefix_+"sv_time_["+prefix_+"sv_num_]/f").c_str());
+    addBranch(tree,(prefix_+"sv_time").c_str()        ,&sv_time_        ,(prefix_+"sv_time_["+prefix_+"sv_num_]/F").c_str());
 //$$
 
 }

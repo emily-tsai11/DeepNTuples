@@ -132,14 +132,14 @@ void ntuple_JetInfo::initBranches(TTree* tree){
     addBranch(tree,"muons_isTightMuon", &muons_isTightMuon_, "muons_isTightMuon_[muons_number_]/i");
     addBranch(tree,"muons_isSoftMuon", &muons_isSoftMuon_, "muons_isSoftMuon_[muons_number_]/i");
     addBranch(tree,"muons_isHighPtMuon", &muons_isHighPtMuon_, "muons_isHighPtMuon_[muons_number_]/i");
-    addBranch(tree,"muons_pt", &muons_pt_, "muons_pt_[muons_number_]/f");
-    addBranch(tree,"muons_relEta", &muons_relEta_, "muons_relEta_[muons_number_]/f");
-    addBranch(tree,"muons_relPhi", &muons_relPhi_, "muons_relPhi_[muons_number_]/f");
-    addBranch(tree,"muons_energy", &muons_energy_, "muons_energy_[muons_number_]/f");
-    addBranch(tree,"electrons_pt", &electrons_pt_, "electrons_pt_[electrons_number_]/f");
-    addBranch(tree,"electrons_relEta", &electrons_relEta_, "electrons_relEta_[electrons_number_]/f");
-    addBranch(tree,"electrons_relPhi", &electrons_relPhi_, "electrons_relPhi_[electrons_number_]/f");
-    addBranch(tree,"electrons_energy", &electrons_energy_, "electrons_energy_[electrons_number_]/f");
+    addBranch(tree,"muons_pt", &muons_pt_, "muons_pt_[muons_number_]/F");
+    addBranch(tree,"muons_relEta", &muons_relEta_, "muons_relEta_[muons_number_]/F");
+    addBranch(tree,"muons_relPhi", &muons_relPhi_, "muons_relPhi_[muons_number_]/F");
+    addBranch(tree,"muons_energy", &muons_energy_, "muons_energy_[muons_number_]/F");
+    addBranch(tree,"electrons_pt", &electrons_pt_, "electrons_pt_[electrons_number_]/F");
+    addBranch(tree,"electrons_relEta", &electrons_relEta_, "electrons_relEta_[electrons_number_]/F");
+    addBranch(tree,"electrons_relPhi", &electrons_relPhi_, "electrons_relPhi_[electrons_number_]/F");
+    addBranch(tree,"electrons_energy", &electrons_energy_, "electrons_energy_[electrons_number_]/F");
 
 
     addBranch(tree,"gen_pt_Recluster"    ,&gen_pt_Recluster_    ,"gen_pt_Recluster_/f"    );

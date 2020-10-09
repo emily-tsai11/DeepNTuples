@@ -30,37 +30,37 @@ void ntuple_bTagVars::initBranches(TTree* tree){
     addBranch(tree,"n_TagVarCSV_jetNSelectedTracks", &n_jetNSelectedTracks_, "n_jetNSelectedTracks_/i");
     addBranch(tree,"TagVarCSV_jetNSelectedTracks", &jetNSelectedTracks_, "jetNSelectedTracks_/f");
 
-    addBranch(tree,"TagVarCSVTrk_trackPtRel"      , &trackPtRel_      , "trackPtRel_[n_jetNSelectedTracks_]/f"      );
-    addBranch(tree,"TagVarCSVTrk_trackDeltaR"     , &trackDeltaR_     , "trackDeltaR_[n_jetNSelectedTracks_]/f"     );
-    addBranch(tree,"TagVarCSVTrk_trackPtRatio"    , &trackPtRatio_    , "trackPtRatio_[n_jetNSelectedTracks_]/f"    );
-    addBranch(tree,"TagVarCSVTrk_trackSip3dSig"   , &trackSip3dSig_   , "trackSip3dSig_[n_jetNSelectedTracks_]/f"   );
-    addBranch(tree,"TagVarCSVTrk_trackSip2dSig"   , &trackSip2dSig_   , "trackSip2dSig_[n_jetNSelectedTracks_]/f"   );
-    addBranch(tree,"TagVarCSVTrk_trackDecayLenVal", &trackDecayLenVal_, "trackDecayLenVal_[n_jetNSelectedTracks_]/f");
-    addBranch(tree,"TagVarCSVTrk_trackJetDistVal" , &trackJetDistVal_ , "trackJetDistVal_[n_jetNSelectedTracks_]/f" );
+    addBranch(tree,"TagVarCSVTrk_trackPtRel"      , &trackPtRel_      , "trackPtRel_[n_jetNSelectedTracks_]/F"      );
+    addBranch(tree,"TagVarCSVTrk_trackDeltaR"     , &trackDeltaR_     , "trackDeltaR_[n_jetNSelectedTracks_]/F"     );
+    addBranch(tree,"TagVarCSVTrk_trackPtRatio"    , &trackPtRatio_    , "trackPtRatio_[n_jetNSelectedTracks_]/F"    );
+    addBranch(tree,"TagVarCSVTrk_trackSip3dSig"   , &trackSip3dSig_   , "trackSip3dSig_[n_jetNSelectedTracks_]/F"   );
+    addBranch(tree,"TagVarCSVTrk_trackSip2dSig"   , &trackSip2dSig_   , "trackSip2dSig_[n_jetNSelectedTracks_]/F"   );
+    addBranch(tree,"TagVarCSVTrk_trackDecayLenVal", &trackDecayLenVal_, "trackDecayLenVal_[n_jetNSelectedTracks_]/F");
+    addBranch(tree,"TagVarCSVTrk_trackJetDistVal" , &trackJetDistVal_ , "trackJetDistVal_[n_jetNSelectedTracks_]/F" );
 
     addBranch(tree,"n_TagVarCSV_jetNTracksEtaRel", &n_jetNTracksEtaRel_, "n_jetNTracksEtaRel_/i"                );
     addBranch(tree,"TagVarCSV_jetNTracksEtaRel", &jetNTracksEtaRel_, "jetNTracksEtaRel_/f"                );
 
-    addBranch(tree,"TagVarCSV_trackEtaRel"     , &trackEtaRel_     , "trackEtaRel_[n_jetNTracksEtaRel_]/f"  );
+    addBranch(tree,"TagVarCSV_trackEtaRel"     , &trackEtaRel_     , "trackEtaRel_[n_jetNTracksEtaRel_]/F"  );
 
-    addBranch(tree,"trackPParRatio"  , &trackPParRatio_  , "trackPParRatio_[n_jetNSelectedTracks_]/f"  );
-    addBranch(tree,"trackSip2dVal"   , &trackSip2dVal_   , "trackSip2dVal_[n_jetNSelectedTracks_]/f"   );
-    addBranch(tree,"trackSip3dVal"   , &trackSip3dVal_   , "trackSip3dVal_[n_jetNSelectedTracks_]/f"   );
-    addBranch(tree,"trackMomentum"   , &trackMomentum_   , "trackMomentum_[n_jetNSelectedTracks_]/f"   );
-    addBranch(tree,"trackEta"        , &trackEta_        , "trackEta_[n_jetNSelectedTracks_]/f"        );
-    addBranch(tree,"trackPPar"       , &trackPPar_       , "trackPPar_[n_jetNSelectedTracks_]/f"       );
+    addBranch(tree,"trackPParRatio"  , &trackPParRatio_  , "trackPParRatio_[n_jetNSelectedTracks_]/F"  );
+    addBranch(tree,"trackSip2dVal"   , &trackSip2dVal_   , "trackSip2dVal_[n_jetNSelectedTracks_]/F"   );
+    addBranch(tree,"trackSip3dVal"   , &trackSip3dVal_   , "trackSip3dVal_[n_jetNSelectedTracks_]/F"   );
+    addBranch(tree,"trackMomentum"   , &trackMomentum_   , "trackMomentum_[n_jetNSelectedTracks_]/F"   );
+    addBranch(tree,"trackEta"        , &trackEta_        , "trackEta_[n_jetNSelectedTracks_]/F"        );
+    addBranch(tree,"trackPPar"       , &trackPPar_       , "trackPPar_[n_jetNSelectedTracks_]/F"       );
     //SV info
     addBranch(tree,"n_StoredVertices"    , &n_StoredVertices_    , "n_StoredVertices_/i"  );
     addBranch(tree,"NStoredVertices"    , &NStoredVertices_    , "NStoredVertices_/f"  );
 
-    addBranch(tree,"TagVarCSV_vertexMass"         , &vertexMass_         , "vertexMass_[n_StoredVertices_]/f"         );
-    addBranch(tree,"TagVarCSV_vertexNTracks"      , &vertexNTracks_      , "vertexNTracks_[n_StoredVertices_]/f"      );
-    addBranch(tree,"TagVarCSV_vertexEnergyRatio"  , &vertexEnergyRatio_  , "vertexEnergyRatio_[n_StoredVertices_]/f"  );
-    addBranch(tree,"TagVarCSV_vertexJetDeltaR"    , &vertexJetDeltaR_    , "vertexJetDeltaR_[n_StoredVertices_]/f"    );
-    addBranch(tree,"TagVarCSV_flightDistance2dVal", &flightDistance2dVal_, "flightDistance2dVal_[n_StoredVertices_]/f");
-    addBranch(tree,"TagVarCSV_flightDistance2dSig", &flightDistance2dSig_, "flightDistance2dSig_[n_StoredVertices_]/f");
-    addBranch(tree,"TagVarCSV_flightDistance3dVal", &flightDistance3dVal_, "flightDistance3dVal_[n_StoredVertices_]/f");
-    addBranch(tree,"TagVarCSV_flightDistance3dSig", &flightDistance3dSig_, "flightDistance3dSig_[n_StoredVertices_]/f");
+    addBranch(tree,"TagVarCSV_vertexMass"         , &vertexMass_         , "vertexMass_[n_StoredVertices_]/F"         );
+    addBranch(tree,"TagVarCSV_vertexNTracks"      , &vertexNTracks_      , "vertexNTracks_[n_StoredVertices_]/F"      );
+    addBranch(tree,"TagVarCSV_vertexEnergyRatio"  , &vertexEnergyRatio_  , "vertexEnergyRatio_[n_StoredVertices_]/F"  );
+    addBranch(tree,"TagVarCSV_vertexJetDeltaR"    , &vertexJetDeltaR_    , "vertexJetDeltaR_[n_StoredVertices_]/F"    );
+    addBranch(tree,"TagVarCSV_flightDistance2dVal", &flightDistance2dVal_, "flightDistance2dVal_[n_StoredVertices_]/F");
+    addBranch(tree,"TagVarCSV_flightDistance2dSig", &flightDistance2dSig_, "flightDistance2dSig_[n_StoredVertices_]/F");
+    addBranch(tree,"TagVarCSV_flightDistance3dVal", &flightDistance3dVal_, "flightDistance3dVal_[n_StoredVertices_]/F");
+    addBranch(tree,"TagVarCSV_flightDistance3dSig", &flightDistance3dSig_, "flightDistance3dSig_[n_StoredVertices_]/F");
 }
 
 //use either of these functions

@@ -85,6 +85,8 @@ private:
 
     const reco::Vertex  *pv;
     float jet_vertex_time_   = 0;
+
+    bool PV4D = true; // if event time is taken from PV4D
 //$$
 
     size_t njetstotal_;
@@ -224,6 +226,13 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     if (vertices->empty()) return; // skip the event if no PV found
 //$$
     pv = &(*vertices->begin());
+// all these are equivalent:
+//     float PVtime      = vertices->at(0).t();
+//     float PVtimeError = vertices->at(0).tError();
+//     float PVtime      = (*vertices)[0].t();
+//     float PVtimeError = (*vertices)[0].tError();
+    float PVtime      = (pv)[0].t();
+    float PVtimeError = (pv)[0].tError();
 //$$
 
     edm::Handle<std::vector<reco::VertexCompositePtrCandidate> > secvertices;
@@ -247,12 +256,6 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         m->readEvent(iEvent);
     }
 
-//    reco::VertexCompositePtrCandidateCollection cpvtx = *(secvertices.product());
-//    for (const reco::VertexCompositePtrCandidate &sv : cpvtx) {
-//      cout << "SV_PT: " << sv.pt() << endl;
-//    }
-
-
     std::vector<size_t> indices(jets->size());
     for(size_t i=0;i<jets->size();i++)
         indices.at(i)=i;
@@ -269,6 +272,7 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     float event_timeWeight = 0;
     float event_timeNtk    = 0;
 
+  if ( !PV4D ) { 
     for (size_t j=0; j<indices.size(); j++) {
       size_t jetidx=indices.at(j);
       jetIter = jets->begin()+jetidx;
@@ -295,11 +299,25 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
     if ( event_timeNtk > 0 ) event_time /= event_timeWeight;
     else                     event_time = -1;
+  }
 
-//     std::cout << std::endl;
-//     std::cout << " event PVz time " << (*vertices)[0].z() << " " << event_time << std::endl;
+  else {
+    if ( PVtimeError > 0. ) {
+      event_timeNtk = 1;
+      event_time = PVtime;
+    }
+    else {
+      event_timeNtk = 0;
+      event_time = -1;
+    }
+  }
+
+//   std::cout << std::endl;
+//   std::cout << " in DeepNtuplizer " << std::endl;
+//   std::cout << " event PVz time " << (*vertices)[0].z() << " " << event_time << std::endl;
 
     event_time_ = event_time;
+//$$
 
     int njet = 0;
     for (size_t j=0; j<indices.size(); j++) {
@@ -398,6 +416,11 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
           tree_->Fill();
           njetsselected_++;
       }
+
+//   std::cout << "    jet pt eta "  << jet.pt() << " " << jet.eta()
+// 	    << " Time evt jet jvx " << event_time << " " << jet_time << " " << jet_vertex_time 
+// 	    << " nSV " << nSV 
+// 	    << std::endl;
 
       njet++;
     } // end of looping over the jets

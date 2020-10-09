@@ -130,7 +130,8 @@ if options.phase2 :
 else:
     jet_collection = 'slimmedJets'
 
-pvSource = "offlineSlimmedPrimaryVertices" 
+#$$ pvSource = "offlineSlimmedPrimaryVertices" 
+pvSource = 'offlineSlimmedPrimaryVertices4D'  # with .t() and .tError()
 
 updateJetCollection(
         process,

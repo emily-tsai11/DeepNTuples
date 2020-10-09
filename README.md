@@ -119,6 +119,25 @@ cd $CMSSW_BASE/src
 scram b -j 4
 ```
 
+Installation CMSSW 11.1.2 patch3 with new track timing variables, PV3D+timing
+============
+```
+cmsrel CMSSW_11_1_2_patch3
+cd CMSSW_11_1_2_patch3/src/
+cmsenv
+git cms-init
+# PV3D fixes ported to CMSSW_11_1_2_patch3, pv4d not yet implemented
+git cms-merge-topic mneukum:c85512659e829ae4df982e6e3415f5bc3e0da684	
+git clone https://github.com/mneukum/DeepNTuples
+cd DeepNTuples
+git checkout d55237e099a1bc111243181ca933c54d5849d89c
+# Add JetToolBox
+git submodule init
+git submodule update
+cd $CMSSW_BASE/src
+scram b -j 4
+```
+
 Installation CMSSW 11.1.2 patch3 with new track timing variables, PV4D
 ============
 ```
@@ -126,6 +145,7 @@ cmsrel CMSSW_11_1_2_patch3
 cd CMSSW_11_1_2_patch3/src/
 cmsenv
 git cms-init
+# PV3D fixes ported and switched to PV4D
 git cms-merge-topic mneukum:11_1_2_patch3_deepntuplizer
 git clone https://github.com/mneukum/DeepNTuples
 cd DeepNTuples
@@ -136,6 +156,7 @@ git submodule update
 cd $CMSSW_BASE/src
 scram b -j 4
 ```
+
 
 
 Further settings

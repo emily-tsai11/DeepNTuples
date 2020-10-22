@@ -151,9 +151,9 @@ void ntuple_pfCands::getInput(const edm::ParameterSet& iConfig){
 
 void ntuple_pfCands::initBranches(TTree* tree){
 
-    addBranch(tree,"n_Cpfcand", &n_Cpfcand_,"n_Cpfcand_/i");
+    addBranch(tree,"n_Cpfcand", &n_Cpfcand_,"n_Cpfcand_/I");
 
-    addBranch(tree,"nCpfcand", &nCpfcand_,"nCpfcand_/f");
+    addBranch(tree,"nCpfcand", &nCpfcand_,"nCpfcand_/F");
 
     addBranch(tree,"Cpfcan_pt", &Cpfcan_pt_,"Cpfcan_pt_[n_Cpfcand_]/F");
     addBranch(tree,"Cpfcan_eta", &Cpfcan_eta_,"Cpfcan_eta_[n_Cpfcand_]/F");
@@ -233,11 +233,11 @@ void ntuple_pfCands::initBranches(TTree* tree){
     addBranch(tree,"Cpfcan_quality",&Cpfcan_quality_,"Cpfcan_quality_[n_Cpfcand_]/F");
 
     // did not give integers !!
-    //  addBranch(tree,"Cpfcan_charge",&Cpfcan_charge_,"Cpfcan_charge_[n_Cpfcand_]/i");
+    //  addBranch(tree,"Cpfcan_charge",&Cpfcan_charge_,"Cpfcan_charge_[n_Cpfcand_]/I");
 
     //Neutral Pf candidates
-    addBranch(tree,"n_Npfcand", &n_Npfcand_,"n_Npfcand_/i");
-    addBranch(tree,"nNpfcand", &nNpfcand_,"nNpfcand/f");
+    addBranch(tree,"n_Npfcand", &n_Npfcand_,"n_Npfcand_/I");
+    addBranch(tree,"nNpfcand", &nNpfcand_,"nNpfcand/F");
 
     addBranch(tree,"Npfcan_pt", &Npfcan_pt_,"Npfcan_pt_[n_Npfcand_]/F");
     addBranch(tree,"Npfcan_eta", &Npfcan_eta_,"Npfcan_eta_[n_Npfcand_]/F");

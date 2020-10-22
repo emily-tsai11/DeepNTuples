@@ -26,6 +26,7 @@ def submit(ds):
     config.JobType.psetName = 'DeepNtuplizer.py'
     config.JobType.inputFiles = ['QGL_cmssw8020_v2.db']
     config.JobType.maxMemoryMB = 2500
+    config.JobType.pyCfgParams = ['phase2=True']
 
     config.section_("Data")
     # config.Data.inputDataset = '/QCD_Pt-15To7000_TuneCP5_Flat_14TeV-pythia8/PhaseIIMTDTDRAutumn18MiniAOD-PU200_103X_upgrade2023_realistic_v2-v1/MINIAODSIM'
@@ -33,7 +34,7 @@ def submit(ds):
     config.Data.inputDataset = ds
     config.Data.inputDBS = 'global'
     config.Data.splitting = 'FileBased'
-    config.Data.unitsPerJob = 1
+    config.Data.unitsPerJob = 50
     config.Data.outLFNDirBase = '/store/user/%s/' % (getUsername())
     config.Data.publication = False
     config.Data.outputDatasetTag = 'DeepNtuples'

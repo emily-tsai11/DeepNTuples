@@ -29,8 +29,8 @@ void ntuple_DeepVertex::getInput(const edm::ParameterSet& iConfig){
 
 void ntuple_DeepVertex::initBranches(TTree* tree){
     
-    addBranch(tree,"n_seeds",&n_seeds, "n_seeds/i");
-    addBranch(tree,"nSeeds",&nSeeds, "nSeeds/f");
+    addBranch(tree,"n_seeds",&n_seeds, "n_seeds/I");
+    addBranch(tree,"nSeeds",&nSeeds, "nSeeds/F");
 
     addBranch(tree,"seed_pt",&seed_pt, "seed_pt[n_seeds]/F");
     addBranch(tree,"seed_eta",&seed_eta, "seed_eta[n_seeds]/F");
@@ -55,15 +55,15 @@ void ntuple_DeepVertex::initBranches(TTree* tree){
     addBranch(tree,"seed_jetAxisDistance",&seed_jetAxisDistance, "seed_jetAxisDistance[n_seeds]/F");
     addBranch(tree,"seed_jetAxisDlength",&seed_jetAxisDlength, "seed_jetAxisDlength[n_seeds]/F");
     
-    addBranch(tree,"seed_n_NearTracks",&seed_n_NearTracks, "seed_n_NearTracks[n_seeds]/i");
+    addBranch(tree,"seed_n_NearTracks",&seed_n_NearTracks, "seed_n_NearTracks[n_seeds]/I");
     addBranch(tree,"seed_nNearTracks",&seed_nNearTracks, "seed_nNearTracks[n_seeds]/F");
     
     
     
     // near Tracks
     
-    addBranch(tree,"n_NearTracksTotal",&n_NearTracksTotal, "n_NearTracksTotal/i");
-    addBranch(tree,"nNearTracksTotal",&nNearTracksTotal, "nNearTracksTotal/f");
+    addBranch(tree,"n_NearTracksTotal",&n_NearTracksTotal, "n_NearTracksTotal/I");
+    addBranch(tree,"nNearTracksTotal",&nNearTracksTotal, "nNearTracksTotal/F");
     
     addBranch(tree,"nearTracks_pt", &nearTracks_pt, "nearTracks_pt[n_NearTracksTotal]/F");
     addBranch(tree,"nearTracks_eta", &nearTracks_eta, "nearTracks_eta[n_NearTracksTotal]/F");

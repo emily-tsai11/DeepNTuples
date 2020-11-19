@@ -131,6 +131,8 @@ git cms-merge-topic mneukum:c85512659e829ae4df982e6e3415f5bc3e0da684
 git clone https://github.com/mneukum/DeepNTuples
 cd DeepNTuples
 git checkout d55237e099a1bc111243181ca933c54d5849d89c
+# another root fix...
+git cherry-pick 4ddac50c5effdcb0f788aa02b0b98aa18ea635ce --strategy-option theirs
 # Add JetToolBox
 git submodule init
 git submodule update

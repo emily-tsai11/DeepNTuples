@@ -15,7 +15,7 @@ git checkout timing_variables_pv3d
 # Add JetToolBox
 git submodule init
 git submodule update
-# copy files eplicitly. Read additional_files/info for more information
+# copy files explicitly. Read additional_files/info for more information
 git cms-addpkg DataFormats/BTauReco
 . additional_files/copy_files.sh
 cd $CMSSW_BASE/src

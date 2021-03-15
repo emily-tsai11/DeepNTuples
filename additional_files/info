@@ -9,7 +9,7 @@ Ugly workaround: add files to DNT repo and copy them to $CMSSW_BASE/src/<path th
 
 Files:
 
-TaggingVariables.cc
+TaggingVariable.cc
 -> DataFormats/BTauReco/src
-TaggingVariables.h
+TaggingVariable.h
 -> DataFormats/BTauReco/interface

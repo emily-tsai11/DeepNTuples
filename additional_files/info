@@ -1,0 +1,15 @@
+additional files to copy.
+
+`git cms-merge-topic` adds all packages that include changed files and thus a lot of packages when changing the files added here.
+
+Technically, should be added to CMSSW repo (11_1_2_patch3_dnt_pv3d branch in my repo) but it takes so long that it isn't acceptable.
+
+Ugly workaround: add files to DNT repo and copy them to $CMSSW_BASE/src/<path that is mentioned>. Needs to be checked explicitly when upgrading CMSSW release.
+
+
+Files:
+
+TaggingVariables.cc
+-> DataFormats/BTauReco/src
+TaggingVariables.h
+-> DataFormats/BTauReco/interface

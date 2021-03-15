@@ -14,7 +14,7 @@ git cms-init
 git cms-merge-topic mneukum:11_1_2_patch3_dnt_pv4d
 git clone https://github.com/mneukum/DeepNTuples
 cd DeepNTuples
-git checkout timing_variables
+git checkout timing_variables_pv4d
 # Add JetToolBox
 git submodule init
 git submodule update

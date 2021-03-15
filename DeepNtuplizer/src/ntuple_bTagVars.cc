@@ -26,6 +26,12 @@ void ntuple_bTagVars::initBranches(TTree* tree){
     addBranch(tree,"TagVarCSV_trackSip2dSigAboveCharm", &trackSip2dSigAboveCharm_, "trackSip2dSigAboveCharm_/F");
     addBranch(tree,"TagVarCSV_trackSip3dValAboveCharm", &trackSip3dValAboveCharm_, "trackSip3dValAboveCharm_/F");
     addBranch(tree,"TagVarCSV_trackSip3dSigAboveCharm", &trackSip3dSigAboveCharm_, "trackSip3dSigAboveCharm_/F");
+//$$
+    //time info
+//     addBranch(tree,"Event_time"      , &event_time_      , "Event_time/F");
+    addBranch(tree,"Jet_time"        , &jet_time_        , "Jet_time/F");
+    addBranch(tree,"Jet_vertex_time" , &jet_vertex_time_ , "Jet_vertex_time/F");
+//$$
     //track info
     addBranch(tree,"n_TagVarCSV_jetNSelectedTracks", &n_jetNSelectedTracks_, "n_jetNSelectedTracks_/I");
     addBranch(tree,"TagVarCSV_jetNSelectedTracks", &jetNSelectedTracks_, "jetNSelectedTracks_/F");
@@ -40,7 +46,6 @@ void ntuple_bTagVars::initBranches(TTree* tree){
 
     addBranch(tree,"n_TagVarCSV_jetNTracksEtaRel", &n_jetNTracksEtaRel_, "n_jetNTracksEtaRel_/I"                );
     addBranch(tree,"TagVarCSV_jetNTracksEtaRel", &jetNTracksEtaRel_, "jetNTracksEtaRel_/F"                );
-
     addBranch(tree,"TagVarCSV_trackEtaRel"     , &trackEtaRel_     , "trackEtaRel_[n_jetNTracksEtaRel_]/F"  );
 
     addBranch(tree,"trackPParRatio"  , &trackPParRatio_  , "trackPParRatio_[n_jetNSelectedTracks_]/F"  );
@@ -91,6 +96,15 @@ bool ntuple_bTagVars::fillBranches(const pat::Jet & jet, const size_t& jetidx, c
     trackSip3dValAboveCharm_    = vars.get(reco::btau::trackSip3dValAboveCharm, -999);
     trackSip3dSigAboveCharm_    = vars.get(reco::btau::trackSip3dSigAboveCharm, -999);
     jetNTracks_ = vars.get(reco::btau::jetNTracks, -1);
+//$$
+//     event_time_       = vars.get(reco::btau::eventTime, -1);
+    jet_time_         = vars.get(reco::btau::jetTime, -1);
+    jet_vertex_time_  = vars.get(reco::btau::jetVertexTime, -1);
+
+//   std::cout << "  in bTagVars  Jet pt eta " << jet.correctedJet("Uncorrected").pt() << " " << jet.eta()
+// 	    << "  Time jet jvx " << jet_time_ << " " << jet_vertex_time_ 
+// 	    << std::endl;
+//$$
     n_jetNTracksEtaRel_ = vars.get(reco::btau::jetNTracksEtaRel, -1);
     jetNTracksEtaRel_=n_jetNTracksEtaRel_;
 

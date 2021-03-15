@@ -234,6 +234,9 @@ if ( int(releases[0]) > 8 ) or ( (int(releases[0])==8) and (int(releases[1]) >= 
 
 if options.phase2 :
     process.deepntuplizer.jetAbsEtaMax = cms.double(4.5)
+#$$
+    process.deepntuplizer.jetPtMin = cms.double(0.0)
+#$$
 
 process.deepntuplizer.gluonReduction  = cms.double(options.gluonReduction)
 

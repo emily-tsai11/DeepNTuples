@@ -55,13 +55,19 @@ private:
     float trackSip3dValAboveCharm_; // track 3D signed impact parameter of first track lifting mass above charm
     float trackSip3dSigAboveCharm_; // track 3D signed impact parameter significance of first track lifting mass above charm
     float vertexCategory_;          // category of secondary vertex (Reco, Pseudo, No)
+
+//$$
+    //time info
+//     float event_time_;              // event time
+    float jet_time_;                // jet time wrt event time
+    float jet_vertex_time_;         // jet time wrt event time, for those tracks within a SV
+//$$
+
     //track info
     int   n_jetNTracksEtaRel_;        // tracks associated to jet for which trackEtaRel is calculated
     int   n_jetNSelectedTracks_;
-
     float jetNTracksEtaRel_;
     float jetNSelectedTracks_;
-
 
     static constexpr size_t max_jetNSelectedTracks_=100;
 

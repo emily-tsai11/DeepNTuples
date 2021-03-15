@@ -1,144 +1,7 @@
 # DeepNTuples
 NTuple framework for DeepFlavour
 
-Installation (CMSSW 8_0_25)
-============
-
-```
-cmsrel CMSSW_8_0_25
-cd CMSSW_8_0_25/src/
-cmsenv
-git cms-init
-git clone https://github.com/CMSDeepFlavour/DeepNTuples
-# Add JetToolBox
-cd DeepNTuples
-git submodule init
-git submodule update
-
-# Add DeepFlavour -- To be updated once the 80X PR is done
-cd -
-git cms-merge-topic -u mverzett:DeepFlavour-from-CMSSW_8_0_21
-mkdir RecoBTag/DeepFlavour/data/
-cd RecoBTag/DeepFlavour/data/
-wget http://home.fnal.gov/~verzetti//DeepFlavour/training/DeepFlavourNoSL.json
-cd -
-#compile
-scram b -j 4
-```
-Installation (CMSSW 8_1_X)
-============
-
-```
-cmsrel CMSSW_8_1_0
-cd CMSSW_8_1_0/src/
-cmsenv
-git cms-init
-# Add DeepFlavour -- To be updated once the 80X PR is done
-git cms-merge-topic -u cms-btv-pog:DeepFlavour-from-CMSSW_8_1_0
-git clone https://github.com/CMSDeepFlavour/DeepNTuples
-# Add JetToolBox
-cd DeepNTuples
-git submodule init
-git submodule update
-
-#compile
-scram b -j 4
-```
-
-Installation (CMSSW 8_4_X and 9_0_X)
-============
-
-```
-cmsrel CMSSW_8_4_0
-cd CMSSW_8_4_0/src/
-cmsenv
-git cms-init
-git clone https://github.com/CMSDeepFlavour/DeepNTuples
-# Add JetToolBox
-cd DeepNTuples
-git submodule init
-git submodule update
-
-#DeepCSV is already in the release, but with different names, which will become the defaults in the close future
-sed -i 's|deepFlavourJetTags|pfDeepCSVJetTags|g' DeepNtuplizer/production/DeepNtuplizer.py
-#compile
-scram b -j 4
-```
-
-Installation (CMSSW 9_1_X and newer)
-============
-
-```
-cmsrel CMSSW_10_0_1
-cd CMSSW_10_0_1/src/
-cmsenv
-git cms-init
-git clone https://github.com/CMSDeepFlavour/DeepNTuples
-cd DeepNTuples
-git checkout 94X
-# Add JetToolBox
-git submodule init
-git submodule update
-#compile
-scram b -j 4
-```
-Installation MTD selection (CMSSW 10.4.0.MTD5)
-============
-```
-cmsrel CMSSW_10_4_0_mtd5
-cd CMSSW_10_4_0_mtd5/src/
-cmsenv
-git cms-init
-git cms-merge-topic dseith:mtd_selection
-git clone https://github.com/dseith/DeepNTuples
-cd DeepNTuples
-git checkout mtd_selection
-# Add JetToolBox
-git submodule init
-git submodule update
-cd $CMSSW_BASE/src
-scram b -j 4
-```
-
-
-Installation CMSSW 10.6.0 patch2 with new track timing variables, PV3D+timing
-============
-```
-cmsrel CMSSW_10_6_0_patch2
-cd CMSSW_10_6_0_patch2/src/
-cmsenv
-git cms-init
-git cms-merge-topic dseith:daniel_new_timing_variables
-git clone https://github.com/dseith/DeepNTuples
-cd DeepNTuples
-git checkout timing_variables
-# Add JetToolBox
-git submodule init
-git submodule update
-cd $CMSSW_BASE/src
-scram b -j 4
-```
-
-Installation CMSSW 11.1.2 patch3 with new track timing variables, PV3D+timing
-============
-```
-cmsrel CMSSW_11_1_2_patch3
-cd CMSSW_11_1_2_patch3/src/
-cmsenv
-git cms-init
-# PV3D fixes ported to CMSSW_11_1_2_patch3, pv4d not yet implemented
-git cms-merge-topic mneukum:c85512659e829ae4df982e6e3415f5bc3e0da684	
-git clone https://github.com/mneukum/DeepNTuples
-cd DeepNTuples
-git checkout d55237e099a1bc111243181ca933c54d5849d89c
-# another root fix...
-git cherry-pick 4ddac50c5effdcb0f788aa02b0b98aa18ea635ce --strategy-option theirs
-# Add JetToolBox
-git submodule init
-git submodule update
-cd $CMSSW_BASE/src
-scram b -j 4
-```
+Branch for ongoing development using PV4D. Branch "timing_variables" for "merging" of pv3d and pv4d and older instructions.
 
 Installation CMSSW 11.1.2 patch3 with new track timing variables, PV4D
 ============
@@ -148,7 +11,7 @@ cd CMSSW_11_1_2_patch3/src/
 cmsenv
 git cms-init
 # PV3D fixes ported and switched to PV4D
-git cms-merge-topic mneukum:11_1_2_patch3_deepntuplizer
+git cms-merge-topic mneukum:11_1_2_patch3_dnt_pv4d
 git clone https://github.com/mneukum/DeepNTuples
 cd DeepNTuples
 git checkout timing_variables

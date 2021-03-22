@@ -18,8 +18,10 @@ git submodule update
 # copy files explicitly. Read additional_files/info for more information
 git cms-addpkg DataFormats/BTauReco
 . additional_files/copy_files.sh
+# The following line is necessary for a consistent setup, since TaggingVariables.h/cc require recompilation, esp. for track related variables! Fetch a coffee while compiling
+git cms-checkdeps -a
 cd $CMSSW_BASE/src
-scram b -j 4
+scram b -j 10
 ```
 
 

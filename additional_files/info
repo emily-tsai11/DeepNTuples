@@ -6,6 +6,8 @@ Technically, should be added to CMSSW repo (11_1_2_patch3_dnt_pv3d branch in my 
 
 Ugly workaround: add files to DNT repo and copy them to $CMSSW_BASE/src/<path that is mentioned>. Needs to be checked explicitly when upgrading CMSSW release.
 
+CAUTION: when not running `git cms-checkdeps`, the build will not be consistent and some variables are wrong! Check /afs/cern.ch/user/m/mneukum/public/phase2_btagging/feb2021/not_consistent_plots/*.pdf for comparison plots of all input variables
+
 
 Files:
 

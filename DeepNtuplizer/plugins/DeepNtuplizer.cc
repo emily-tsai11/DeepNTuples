@@ -74,6 +74,8 @@ private:
     edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puToken_;
     edm::EDGetTokenT<double> rhoToken_;
 
+    edm::EDGetTokenT<float>  genT0Token_;
+
     std::string t_qgtagger;
 
     edm::Service<TFileService> fs;
@@ -106,6 +108,7 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
                                     jetToken_(consumes<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jets"))),
                                     puToken_(consumes<std::vector<PileupSummaryInfo >>(iConfig.getParameter<edm::InputTag>("pupInfo"))),
                                     rhoToken_(consumes<double>(iConfig.getParameter<edm::InputTag>("rhoInfo"))),
+                                    genT0Token_(consumes<float>(iConfig.getParameter<edm::InputTag>("genT0Tag"))),
                                     t_qgtagger(iConfig.getParameter<std::string>("qgtagger"))
 {
     /*
@@ -263,41 +266,46 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 //$$
     float event_time       = 0;
-    float event_timeWeight = 0;
-    float event_timeNtk    = 0;
+//     float event_timeWeight = 0;
+//     float event_timeNtk    = 0;
+// 
+//     for (size_t j=0; j<indices.size(); j++) {
+//       size_t jetidx=indices.at(j);
+//       jetIter = jets->begin()+jetidx;
+//       const pat::Jet& jet = *jetIter;
+//       for (unsigned int i = 0; i <  jet.numberOfDaughters(); i++) {
+//         const pat::PackedCandidate* PackedCandidate = dynamic_cast<const pat::PackedCandidate*>(jet.daughter(i));
+//       if ( !PackedCandidate ) continue;
+//       if ( PackedCandidate->charge() == 0 ) continue;
+//      	auto track = PackedCandidate->bestTrack();
+//       if ( !track ) continue;
+//         float track_dxy = track->dxy(pv->position());
+//         float track_dz  = track->dz(pv->position());
+//         float track_time    = track->t0();
+//         float track_timeError = track->covt0t0();
+//         float track_pt    = track->pt();
+//         float time_weight = track_pt * track_pt;
+//         if ( track_timeError > 0. && abs(track_time) < 1 
+// 	     && abs(track_dxy) < 0.05 && abs(track_dz) < 0.10 ) {
+//           event_timeNtk    += 1;
+//           event_timeWeight += time_weight;
+//           event_time	   += track_time * time_weight;
+//     
+// //   std::cout << "    Jet  pt " << jet.pt
+// //             << "   Track pt dxy dz time " << track_pt
+// //             << " " << track_dxy << " " << track_dz << " " << track_time
+// // 	    << std::endl;
+// 
+//         }
+//       }
+//     }
+//     if ( event_timeNtk > 0 ) event_time /= event_timeWeight;
+//     else                     event_time = -1;
 
-    for (size_t j=0; j<indices.size(); j++) {
-      size_t jetidx=indices.at(j);
-      jetIter = jets->begin()+jetidx;
-      const pat::Jet& jet = *jetIter;
-      for (unsigned int i = 0; i <  jet.numberOfDaughters(); i++) {
-        const pat::PackedCandidate* PackedCandidate = dynamic_cast<const pat::PackedCandidate*>(jet.daughter(i));
-      if ( !PackedCandidate ) continue;
-      if ( PackedCandidate->charge() == 0 ) continue;
-     	auto track = PackedCandidate->bestTrack();
-      if ( !track ) continue;
-        float track_dxy = track->dxy(pv->position());
-        float track_dz  = track->dz(pv->position());
-        float track_time    = track->t0();
-        float track_timeError = track->covt0t0();
-        float track_pt    = track->pt();
-        float time_weight = track_pt * track_pt;
-        if ( track_timeError > 0. && abs(track_time) < 1 
-	     && abs(track_dxy) < 0.05 && abs(track_dz) < 0.10 ) {
-          event_timeNtk    += 1;
-          event_timeWeight += time_weight;
-          event_time	   += track_time * time_weight;
-    
-//   std::cout << "    Jet  pt " << jet.pt
-//             << "   Track pt dxy dz time " << track_pt
-//             << " " << track_dxy << " " << track_dz << " " << track_time
-// 	    << std::endl;
-
-        }
-      }
-    }
-    if ( event_timeNtk > 0 ) event_time /= event_timeWeight;
-    else                     event_time = -1;
+// Event time from generated t0:
+    edm::Handle<float> genT0Handle;
+    iEvent.getByToken(genT0Token_, genT0Handle);
+    event_time = *genT0Handle.product();
 
 //     std::cout << std::endl;
 //     std::cout << " in DeepNtuplizer: Event time " << event_time << std::endl;

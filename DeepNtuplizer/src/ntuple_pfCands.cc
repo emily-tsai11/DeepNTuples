@@ -190,8 +190,6 @@ void ntuple_pfCands::initBranches(TTree* tree){
     addBranch(tree,"Cpfcan_dptdpt",&Cpfcan_dptdpt_,"Cpfcan_dptdpt_[n_Cpfcand_]/F");
     addBranch(tree,"Cpfcan_detadeta",&Cpfcan_detadeta_,"Cpfcan_detadeta_[n_Cpfcand_]/F");
     addBranch(tree,"Cpfcan_dphidphi",&Cpfcan_dphidphi_,"Cpfcan_dphidphi_[n_Cpfcand_]/F");
-
-
     addBranch(tree,"Cpfcan_dxydxy",&Cpfcan_dxydxy_,"Cpfcan_dxydxy_[n_Cpfcand_]/F");
     addBranch(tree,"Cpfcan_dzdz",&Cpfcan_dzdz_,"Cpfcan_dzdz_[n_Cpfcand_]/F");
     addBranch(tree,"Cpfcan_dxydz",&Cpfcan_dxydz_,"Cpfcan_dxydz_[n_Cpfcand_]/F");
@@ -377,11 +375,9 @@ bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
             /*
             reco::Track::CovarianceMatrix myCov = PseudoTrack.covariance ();
             //https://github.com/cms-sw/cmssw/blob/CMSSW_9_0_X/DataFormats/PatCandidates/interface/PackedCandidate.h#L394
-
             Cpfcan_dptdpt_[fillntupleentry] =    catchInfsAndBound(myCov[0][0],0,-1,1);
             Cpfcan_detadeta_[fillntupleentry]=   catchInfsAndBound(myCov[1][1],0,-1,0.01);
             Cpfcan_dphidphi_[fillntupleentry]=   catchInfsAndBound(myCov[2][2],0,-1,0.1);
-
             Cpfcan_dxydxy_[fillntupleentry] =    catchInfsAndBound(myCov[3][3],7.,-1,7); //zero if pvAssociationQuality ==7 ?
             Cpfcan_dzdz_[fillntupleentry] =      catchInfsAndBound(myCov[4][4],6.5,-1,6.5); //zero if pvAssociationQuality ==7 ?
             Cpfcan_dxydz_[fillntupleentry] =     catchInfsAndBound(myCov[3][4],6.,-6,6); //zero if pvAssociationQuality ==7 ?
@@ -410,7 +406,7 @@ bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
 //$$
 	    track_time = -1.;
             auto track = PackedCandidate_->bestTrack();
-            if ( track && EventTime > -1 ) {
+            if ( track && EventTime != -1 ) {
               if ( track->covt0t0() > 0. && abs(track->t0()) < 1 ) {
 	        track_time = track->t0() - EventTime;
 	        track_time = TMath::Abs(track_time);

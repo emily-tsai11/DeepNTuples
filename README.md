@@ -24,6 +24,36 @@ cd $CMSSW_BASE/src
 scram b -j 10
 ```
 
+Installation CMSSW 11.3.0 pre3, PV3D+timing, for RelVal
+============
+```
+cmsrel CMSSW_11_3_0_pre3
+cd CMSSW_11_3_0_pre3/src/
+cmsenv
+git cms-init
+git cms-merge-topic mneukum:CMSSW_11_3_0_pre3_dnt_pv3d
+git clone https://github.com/mneukum/DeepNTuples
+cd DeepNTuples
+git checkout timing_variables_pv3d
+# Add JetToolBox
+git submodule init
+git submodule update
+# copy files explicitly. Read additional_files/info for more information
+git cms-addpkg DataFormats/BTauReco
+. additional_files/copy_files.sh
+# The following line is necessary for a consistent setup, since TaggingVariables.h/cc require recompilation, esp. for track related variables! Fetch a coffee while compiling
+git cms-checkdeps -a
+cd $CMSSW_BASE/src
+scram b -j 10
+```
+
+Caveats
+============
+
+- Compilation of a lot of CMSSW modules is necessary, because of changed TaggingVariable.h/cc for time related variables.
+- In 11_3_0_pre3: differences in muon_isHighPt and muon_energy. These variables are not used in the training.
+- For TagVarCSV_vertexCategory==1: set TagVarCSV_flightDistance* to 0. Script will be uploaded soon and should be included in DeepNTuplizer code later. This is an old bug to recover the same values as in BTagAnalyzer (only few jets).
+
 
 Further settings
 ============

@@ -54,6 +54,25 @@ Caveats
 - In 11_3_0_pre3: differences in muon_isHighPt and muon_energy. These variables are not used in the training.
 - For TagVarCSV_vertexCategory==1: set TagVarCSV_flightDistance* to 0. Script will be uploaded soon and should be included in DeepNTuplizer code later. This is an old bug to recover the same values as in BTagAnalyzer (only few jets).
 
+Vertex Category 1 Fix (temporary)
+============
+```
+cd additional_files/vc1Fix
+git clone https://github.com/pybind/pybind11.git
+cmsenv # just in case
+g++ -O3 -Wall -shared -fPIC $(python3 -m pybind11 --includes) -I $PWD/pybind11/include/pybind11 `root-config --cflags --libs --glibs` btv_vc1Fix.cc -o btv_vc1Fix$(python3-config --extension-suffix)
+export PYTHONPATH=$PWD:$PYTHONPATH
+```
+
+Now you need access to the directory where the output ntuples are stored. Then run:
+
+```
+cp fix_vc1.py <directory with ntuples>
+cd <directory with ntuples>
+mkdir vertexCategory1Fix
+python3 fix_vc1.py
+```
+
 
 Further settings
 ============

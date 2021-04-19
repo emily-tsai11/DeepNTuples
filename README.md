@@ -53,8 +53,6 @@ Caveats
 - Compilation of a lot of CMSSW modules, because of changed TaggingVariable.h/cc for time related variables.
 - In 11_3_0_pre3: differences in muon_isHighPt and muon_energy. These variables are not used in the training.
 - (old bug) For TagVarCSV_vertexCategory==1: set TagVarCSV_flightDistance* to 0. Scripts below. Will be included in DNT code directly.
-- jet_eta > 4: n_tracks=0
-- jet_corr_pt uses inconsistent jet correction. jet_pt is uncorrected and is used in the training.
 
 Vertex Category 1 Fix (temporary)
 ============

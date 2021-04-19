@@ -50,9 +50,11 @@ scram b -j 10
 Caveats
 ============
 
-- Compilation of a lot of CMSSW modules is necessary, because of changed TaggingVariable.h/cc for time related variables.
+- Compilation of a lot of CMSSW modules, because of changed TaggingVariable.h/cc for time related variables.
 - In 11_3_0_pre3: differences in muon_isHighPt and muon_energy. These variables are not used in the training.
-- For TagVarCSV_vertexCategory==1: set TagVarCSV_flightDistance* to 0. Script will be uploaded soon and should be included in DeepNTuplizer code later. This is an old bug to recover the same values as in BTagAnalyzer (only few jets).
+- (old bug) For TagVarCSV_vertexCategory==1: set TagVarCSV_flightDistance* to 0. Scripts below. Will be included in DNT code directly.
+- jet_eta > 4: n_tracks=0
+- jet_corr_pt uses inconsistent jet correction. jet_pt is uncorrected and is used in the training.
 
 Vertex Category 1 Fix (temporary)
 ============

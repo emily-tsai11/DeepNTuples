@@ -73,6 +73,7 @@ mkdir vertexCategory1Fix
 python3 fix_vc1.py
 ```
 
+The ntuples in ./vertexCategory1Fix can then be used for the training. This affects only a small fraction of jets.
 
 Further settings
 ============

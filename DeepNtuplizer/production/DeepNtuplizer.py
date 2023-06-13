@@ -1,4 +1,3 @@
-
 import FWCore.ParameterSet.Config as cms
 
 import FWCore.ParameterSet.VarParsing as VarParsing
@@ -100,29 +99,30 @@ if (int(releases[0])>8) or ( (int(releases[0])==8) and (int(releases[1]) >= 4) )
  bTagDiscriminators = [
      'softPFMuonBJetTags',
      'softPFElectronBJetTags',
-         'pfJetBProbabilityBJetTags',
-         'pfJetProbabilityBJetTags',
+     'pfJetBProbabilityBJetTags',
+     'pfJetProbabilityBJetTags',
      'pfCombinedInclusiveSecondaryVertexV2BJetTags',
-         'pfDeepCSVJetTags:probudsg', #to be fixed with new names
-         'pfDeepCSVJetTags:probb',
-         'pfDeepCSVJetTags:probc',
-         'pfDeepCSVJetTags:probbb',
+     'pfDeepCSVJetTags:probudsg', #to be fixed with new names
+     'pfDeepCSVJetTags:probb',
+     'pfDeepCSVJetTags:probc',
+     'pfDeepCSVJetTags:probbb',
  ]
 else :
   bTagDiscriminators = [
      'softPFMuonBJetTags',
      'softPFElectronBJetTags',
-         'pfJetBProbabilityBJetTags',
-         'pfJetProbabilityBJetTags',
+     'pfJetBProbabilityBJetTags',
+     'pfJetProbabilityBJetTags',
      'pfCombinedInclusiveSecondaryVertexV2BJetTags',
-         'deepFlavourJetTags:probudsg', #to be fixed with new names
-         'deepFlavourJetTags:probb',
-         'deepFlavourJetTags:probc',
-         'deepFlavourJetTags:probbb',
-         'deepFlavourJetTags:probcc',
+     'deepFlavourJetTags:probudsg', #to be fixed with new names
+     'deepFlavourJetTags:probb',
+     'deepFlavourJetTags:probc',
+     'deepFlavourJetTags:probbb',
+     'deepFlavourJetTags:probcc',
  ]
 
 jetCorrectionsAK4 = ('AK4PFchs', ['L1FastJet', 'L2Relative', 'L3Absolute'], 'None')
+#jetCorrectionsAK4 = ('AK4Puppi', ['L1FastJet', 'L2Relative', 'L3Absolute'], 'None')
 
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
 if options.phase2 :
@@ -248,11 +248,12 @@ process.ProfilerService = cms.Service (
        paths = cms.untracked.vstring('p') 
 )
 
+
 #Trick to make it work in 9_1_X
 process.tsk = cms.Task()
-for mod in process.producers_().itervalues():
+for mod in process.producers_().values():
     process.tsk.add(mod)
-for mod in process.filters_().itervalues():
+for mod in process.filters_().values():
     process.tsk.add(mod)
 
 process.p = cms.Path(
@@ -260,3 +261,4 @@ process.p = cms.Path(
 	process.deepntuplizer,
 	process.tsk
 	)
+open('DeepNtupleFileDump.py','w').write(process.dumpPython())

@@ -10,7 +10,11 @@
 
 #include "ntuple_content.h"
 #include "trackVars2.h"
+#include "MagneticField/Engine/interface/MagneticField.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
+#include "TrackingTools/Records/interface/TransientTrackRecord.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
+#include "FWCore/Utilities/interface/ESGetToken.h"
 
 class ntuple_DeepVertex: public ntuple_content{
 public:
@@ -33,6 +37,9 @@ public:
         CandidateToken=t;
      }
 
+	void setTrackBuilderToken(const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord>& track_builder_token) {
+		track_builder_token_ = track_builder_token;
+    }
 
 private:
 
@@ -128,15 +135,13 @@ private:
     
     // builder    
     edm::ESHandle<TransientTrackBuilder> builder;
-    
+	edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> track_builder_token_;    
+
     // temporary containers
     trackVars2 myTrack;
     std::vector<trackVars2> nearTracks; 
     std::multimap<double,std::pair<const reco::TransientTrack*,const std::vector<trackVars2> > > SortedSeedsMap;
 
-
 };
-
-
-
-#endif /* DEEPNTUPLES_DEEPNTUPLIZER_INTERFACE_NTUPLE_DEEPVERTEX_H_ */
+#endif 
+/* DEEPNTUPLES_DEEPNTUPLIZER_INTERFACE_NTUPLE_DEEPVERTEX_H_ */

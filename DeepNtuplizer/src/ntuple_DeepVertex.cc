@@ -10,22 +10,23 @@
 
 #include "DataFormats/GeometrySurface/interface/Line.h"
 
+#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 #include "TrackingTools/IPTools/interface/IPTools.h"
 #include "TrackingTools/PatternTools/interface/TwoTrackMinimumDistance.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
+
+#include "FWCore/Utilities/interface/ESGetToken.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 
 
+ntuple_DeepVertex::ntuple_DeepVertex(double jetR):ntuple_content(jetR){}
 
-
-
-ntuple_DeepVertex::ntuple_DeepVertex(double jetR):ntuple_content(jetR){
-}
 ntuple_DeepVertex::~ntuple_DeepVertex(){}
 
 
 void ntuple_DeepVertex::getInput(const edm::ParameterSet& iConfig){
-
-}
+}	
 
 void ntuple_DeepVertex::initBranches(TTree* tree){
     
@@ -122,11 +123,10 @@ void ntuple_DeepVertex::readEvent(const edm::Event& iEvent){
 
 void ntuple_DeepVertex::readSetup(const edm::EventSetup& iSetup){
 
-    iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
+//	iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
+	builder = iSetup.getHandle(track_builder_token_);
 
 }
-
-
 
 
 //$$ bool ntuple_DeepVertex::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll){
@@ -142,7 +142,7 @@ bool ntuple_DeepVertex::fillBranches(const pat::Jet & jet, const size_t& jetidx,
     
     
    for(size_t k = 0; k<tracks->size(); ++k) {
-        if((*tracks)[k].bestTrack() != 0 &&  (*tracks)[k].pt()>0.5 && std::fabs(pvp.z()-builder->build(tracks->ptrAt(k)).track().vz())<0.5) {
+        if((*tracks)[k].bestTrack() != 0 &&  (*tracks)[k].pt()>0.5 && std::fabs(pvp.z()- builder->build(tracks->ptrAt(k)).track().vz())<0.5) {
             selectedTracks.push_back(builder->build(tracks->ptrAt(k)));
             masses.push_back(tracks->ptrAt(k)->mass());
         }

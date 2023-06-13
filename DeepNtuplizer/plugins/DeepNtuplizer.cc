@@ -130,8 +130,13 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
     applySelection_=iConfig.getParameter<bool>("applySelection");
 
     ntuple_SV* svmodule=new ntuple_SV("", jetR);
-    addModule(svmodule, "SVNtuple");
+    svmodule->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
+	addModule(svmodule, "SVNtuple");
 
+	ntuple_DeepVertex* dvmodule = new ntuple_DeepVertex(jetR);
+	dvmodule->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
+	addModule(dvmodule, "DVNtuple");
+ 
     //Loose IVF vertices
     //ntuple_SV* svmodule_LooseIVF=new ntuple_SV("LooseIVF_", jetR);
     //svmodule_LooseIVF->setSVToken(
@@ -181,6 +186,7 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
 
     ntuple_pfCands * pfcands = new ntuple_pfCands();
     pfcands->setJetRadius(jetR);
+	pfcands->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
 
     addModule(pfcands, "pfcands");
 

@@ -17,6 +17,141 @@
 #include "TrackingTools/IPTools/interface/IPTools.h"
 #include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
 
+#include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+
+#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
+#include "TrackingTools/IPTools/interface/IPTools.h"
+#include "TrackingTools/Records/interface/TransientTrackRecord.h"
+#include "RecoVertex/VertexTools/interface/VertexDistance3D.h"
+#include "TVector3.h"
+
+class TrackInfoBuilder{
+public:
+  TrackInfoBuilder(edm::ESHandle<TransientTrackBuilder> & build):
+    builder(build),
+    trackMomentum_(0),
+    trackEta_(0),
+    trackEtaRel_(0),
+    trackPtRel_(0),
+    trackPPar_(0),
+    trackDeltaR_(0),
+    trackPtRatio_(0),
+    trackPParRatio_(0),
+    trackSip2dVal_(0),
+    trackSip2dSig_(0),
+    trackSip3dVal_(0),
+    trackSip3dSig_(0),
+
+    trackJetDecayLen_(0),
+    trackJetDistVal_(0),
+    trackJetDistSig_(0),
+    ttrack_(0)
+  {
+
+  }
+
+  void buildTrackInfo(const pat::PackedCandidate* PackedCandidate_ ,const math::XYZVector&  jetDir, GlobalVector refjetdirection, const reco::Vertex & pv){
+    TVector3 jetDir3(jetDir.x(),jetDir.y(),jetDir.z());
+    if(!PackedCandidate_->hasTrackDetails()) {
+      TVector3 trackMom3(
+			 PackedCandidate_->momentum().x(),
+			 PackedCandidate_->momentum().y(),
+			 PackedCandidate_->momentum().z()
+			 );
+      trackMomentum_=PackedCandidate_->p();
+      trackEta_= PackedCandidate_->eta();
+      trackEtaRel_=reco::btau::etaRel(jetDir, PackedCandidate_->momentum());
+      trackPtRel_=trackMom3.Perp(jetDir3);
+      trackPPar_=jetDir.Dot(PackedCandidate_->momentum());
+      trackDeltaR_=reco::deltaR(PackedCandidate_->momentum(), jetDir);
+      trackPtRatio_=trackMom3.Perp(jetDir3) / PackedCandidate_->p();
+      trackPParRatio_=jetDir.Dot(PackedCandidate_->momentum()) / PackedCandidate_->p();
+      trackSip2dVal_=0.;
+      trackSip2dSig_=0.;
+      trackSip3dVal_=0.;
+      trackSip3dSig_=0.;
+      trackJetDecayLen_=0.;
+      trackJetDistVal_=0.;
+      trackJetDistSig_=0.;
+      return;
+    }
+
+    const reco::Track & PseudoTrack =  PackedCandidate_->pseudoTrack();
+
+    reco::TransientTrack transientTrack;
+    transientTrack=builder->build(PseudoTrack);
+    Measurement1D meas_ip2d=IPTools::signedTransverseImpactParameter(transientTrack, refjetdirection, pv).second;
+    Measurement1D meas_ip3d=IPTools::signedImpactParameter3D(transientTrack, refjetdirection, pv).second;
+    Measurement1D jetdist=IPTools::jetTrackDistance(transientTrack, refjetdirection, pv).second;
+    Measurement1D decayl = IPTools::signedDecayLength3D(transientTrack, refjetdirection, pv).second;
+    math::XYZVector trackMom = PseudoTrack.momentum();
+    double trackMag = std::sqrt(trackMom.Mag2());
+    TVector3 trackMom3(trackMom.x(),trackMom.y(),trackMom.z());
+
+    trackMomentum_=std::sqrt(trackMom.Mag2());
+    trackEta_= trackMom.Eta();
+    trackEtaRel_=reco::btau::etaRel(jetDir, trackMom);
+    trackPtRel_=trackMom3.Perp(jetDir3);
+    trackPPar_=jetDir.Dot(trackMom);
+    trackDeltaR_=reco::deltaR(trackMom, jetDir);
+    trackPtRatio_=trackMom3.Perp(jetDir3) / trackMag;
+    trackPParRatio_=jetDir.Dot(trackMom) / trackMag;
+
+    trackSip2dVal_=(meas_ip2d.value());
+    trackSip2dSig_=(meas_ip2d.significance());
+    trackSip3dVal_=(meas_ip3d.value());
+    trackSip3dSig_=meas_ip3d.significance();
+
+    trackJetDecayLen_= decayl.value();
+    trackJetDistVal_= jetdist.value();
+    trackJetDistSig_= jetdist.significance();
+
+    ttrack_ = transientTrack;
+
+  }
+
+  const float& getTrackDeltaR() const {return trackDeltaR_;}
+  const float& getTrackEta() const {return trackEta_;}
+  const float& getTrackEtaRel() const {return trackEtaRel_;}
+  const float& getTrackJetDecayLen() const {return trackJetDecayLen_;}
+  const float& getTrackJetDistSig() const {return trackJetDistSig_;}
+  const float& getTrackJetDistVal() const {return trackJetDistVal_;}
+  const float& getTrackMomentum() const {return trackMomentum_;}
+  const float& getTrackPPar() const {return trackPPar_;}
+  const float& getTrackPParRatio() const {return trackPParRatio_;}
+  const float& getTrackPtRatio() const {return trackPtRatio_;}
+  const float& getTrackPtRel() const {return trackPtRel_;}
+  const float& getTrackSip2dSig() const {return trackSip2dSig_;}
+  const float& getTrackSip2dVal() const {return trackSip2dVal_;}
+  const float& getTrackSip3dSig() const {return trackSip3dSig_;}
+  const float& getTrackSip3dVal() const {return trackSip3dVal_;}
+  const reco::TransientTrack getTTrack() const {return ttrack_;}
+
+private:
+
+  edm::ESHandle<TransientTrackBuilder>& builder;
+  edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> track_builder_token_;
+    
+  float trackMomentum_;
+  float trackEta_;
+  float trackEtaRel_;
+  float trackPtRel_;
+  float trackPPar_;
+  float trackDeltaR_;
+  float trackPtRatio_;
+  float trackPParRatio_;
+  float trackSip2dVal_;
+  float trackSip2dSig_;
+  float trackSip3dVal_;
+  float trackSip3dSig_;
+
+  float trackJetDecayLen_;
+  float trackJetDistVal_;
+  float trackJetDistSig_;
+  reco::TransientTrack ttrack_;
+
+};
+
 
 const reco::Vertex * ntuple_SV::spvp_;
 
@@ -37,6 +172,7 @@ void ntuple_SV::initBranches(TTree* tree){
     addBranch(tree,(prefix_+"sv_pt").c_str()          ,&sv_pt_          ,(prefix_+"sv_pt_["+prefix_+"sv_num_]/F").c_str()        );
     addBranch(tree,(prefix_+"sv_eta").c_str()          ,&sv_eta_          ,(prefix_+"sv_eta_["+prefix_+"sv_num_]/F").c_str()        );
     addBranch(tree,(prefix_+"sv_phi").c_str()          ,&sv_phi_          ,(prefix_+"sv_phi_["+prefix_+"sv_num_]/F").c_str()        );
+    addBranch(tree,(prefix_+"sv_e").c_str()          ,&sv_e_          ,(prefix_+"sv_e_["+prefix_+"sv_num_]/F").c_str()        );
     addBranch(tree,(prefix_+"sv_etarel").c_str()         ,&sv_etarel_         ,(prefix_+"sv_etarel_["+prefix_+"sv_num_]/F").c_str()         );
     addBranch(tree,(prefix_+"sv_phirel").c_str()         ,&sv_phirel_         ,(prefix_+"sv_phirel_["+prefix_+"sv_num_]/F").c_str()         );
     addBranch(tree,(prefix_+"sv_deltaR").c_str()         ,&sv_deltaR_         ,(prefix_+"sv_deltaR_["+prefix_+"sv_num_]/F").c_str()         );
@@ -53,12 +189,28 @@ void ntuple_SV::initBranches(TTree* tree){
     addBranch(tree,(prefix_+"sv_d3dsig").c_str()      ,&sv_d3dsig_      ,(prefix_+"sv_d3dsig_["+prefix_+"sv_num_]/F").c_str()      );
     addBranch(tree,(prefix_+"sv_costhetasvpv").c_str(),&sv_costhetasvpv_,(prefix_+"sv_costhetasvpv_["+prefix_+"sv_num_]/F").c_str());
     addBranch(tree,(prefix_+"sv_enratio").c_str()     ,&sv_enratio_     ,(prefix_+"sv_enratio_["+prefix_+"sv_num_]/F").c_str());
+
+    addBranch(tree,(prefix_+"sv_hcal_frac").c_str()     ,&sv_hcal_frac_     ,(prefix_+"sv_hcal_frac_["+prefix_+"sv_num_]/F").c_str());
+    addBranch(tree,(prefix_+"sv_calo_frac").c_str()     ,&sv_calo_frac_     ,(prefix_+"sv_calo_frac_["+prefix_+"sv_num_]/F").c_str());
+
+    addBranch(tree,(prefix_+"sv_dz").c_str()     ,&sv_dz_     ,(prefix_+"sv_dz_["+prefix_+"sv_num_]/F").c_str());
+    addBranch(tree,(prefix_+"sv_pfd2dval").c_str()     ,&sv_pfd2dval_     ,(prefix_+"sv_pfd2dval_["+prefix_+"sv_num_]/F").c_str());
+    addBranch(tree,(prefix_+"sv_pfd2dsig").c_str()     ,&sv_pfd2dsig_     ,(prefix_+"sv_pfd2dsig_["+prefix_+"sv_num_]/F").c_str());
+    addBranch(tree,(prefix_+"sv_pfd3dval").c_str()     ,&sv_pfd3dval_     ,(prefix_+"sv_pfd3dval_["+prefix_+"sv_num_]/F").c_str());
+    addBranch(tree,(prefix_+"sv_pfd3dsig").c_str()     ,&sv_pfd3dsig_     ,(prefix_+"sv_pfd3dsig_["+prefix_+"sv_num_]/F").c_str());
+    addBranch(tree,(prefix_+"sv_puppiw").c_str()     ,&sv_puppiw_     ,(prefix_+"sv_puppiw_["+prefix_+"sv_num_]/F").c_str());
+    addBranch(tree,(prefix_+"sv_charge_sum").c_str()     ,&sv_charge_sum_     ,(prefix_+"sv_charge_sum_["+prefix_+"sv_num_]/F").c_str());
+
 //$$
     addBranch(tree,(prefix_+"sv_time").c_str()        ,&sv_time_        ,(prefix_+"sv_time_["+prefix_+"sv_num_]/F").c_str());
 //$$
 
 }
 
+void ntuple_SV::readSetup(const edm::EventSetup& iSetup){
+
+  builder = iSetup.getHandle(track_builder_token_);
+}
 
 void ntuple_SV::readEvent(const edm::Event& iEvent){
 
@@ -86,12 +238,18 @@ bool ntuple_SV::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  
 
     const reco::Vertex & pv =    vertices()->at(0);
 
+    math::XYZVector jetDir = jet.momentum().Unit();
+    GlobalVector jetRefTrackDir(jet.px(),jet.py(),jet.pz());
+    
+
     sv_num_ = 0;
 
     reco::VertexCompositePtrCandidateCollection cpvtx=*secVertices();
 
     spvp_ =   & vertices()->at(0);
     std::sort(cpvtx.begin(),cpvtx.end(),ntuple_SV::compareDxyDxyErr);
+
+	TrackInfoBuilder trackinfo(builder);
 
     float etasign=1;
     etasign++; //avoid unused warning
@@ -144,54 +302,97 @@ bool ntuple_SV::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  
 
             sv_enratio_[sv_num_]=sv.energy()/jet_uncorr_e;
 
-//$$
+            sv_e_[sv_num_]=sv.energy();
+
+			float calo_frac = 0.0;
+			float hcal_frac = 0.0;
+			float puppiw = 0.0;
+			float charge = 0.0;
+			float dz = 0.0;
+
+			float pfd3dval = 0.0;
+			float pfd3dsig = 0.0;
+			float pfd2dval = 0.0;
+			float pfd2dsig = 0.0;
+			float pfcount  = 0.0;
+
+			for (unsigned idx=0; idx<sv.numberOfDaughters(); ++idx){
+				const pat::PackedCandidate* PackedCandidate_ = dynamic_cast<const pat::PackedCandidate*>(sv.daughter(idx));
+
+				calo_frac = calo_frac + PackedCandidate_->caloFraction();
+				hcal_frac = hcal_frac + PackedCandidate_->hcalFraction();
+				puppiw = puppiw + PackedCandidate_->puppiWeight();
+				charge = charge + PackedCandidate_->charge();
+				dz = dz + PackedCandidate_->dz();
+				if(PackedCandidate_->charge() != 0 and PackedCandidate_->pt() > 0.95){
+					trackinfo.buildTrackInfo(PackedCandidate_,jetDir,jetRefTrackDir,pv);
+					pfd3dval = pfd3dval + catchInfsAndBound(trackinfo.getTrackSip3dVal(), 0, -1,1e5 );
+					pfd3dsig = pfd3dsig + catchInfsAndBound(trackinfo.getTrackSip3dSig(), 0, -1,4e4 );
+					pfd2dval = pfd2dval + catchInfsAndBound(trackinfo.getTrackSip2dVal(), 0, -1,70  );
+					pfd2dsig = pfd2dsig + catchInfsAndBound(trackinfo.getTrackSip2dSig(), 0, -1,4e4 );
+					pfcount = pfcount + 1.0;
+				}
+			}
+
+			sv_calo_frac_[sv_num_]          = calo_frac / sv.numberOfDaughters();
+			sv_hcal_frac_[sv_num_]          = hcal_frac / sv.numberOfDaughters();
+			sv_puppiw_[sv_num_]             = puppiw / sv.numberOfDaughters();
+			sv_dz_[sv_num_]                 = dz / sv.numberOfDaughters();
+			sv_charge_sum_[sv_num_]         = charge;
+
+			sv_pfd3dval_[sv_num_]           = pfd3dval / pfcount;
+			sv_pfd3dsig_[sv_num_]           = pfd3dsig / pfcount;
+			sv_pfd2dval_[sv_num_]           = pfd2dval / pfcount;
+			sv_pfd2dsig_[sv_num_]           = pfd2dsig / pfcount;
+
+ //$$
 // get the vertex time, matching VertexCompositePtrCandidate and tagInfoCandSecondaryVertex ...
             float vertex_time       = 0;
             float vertex_timeWeight = 0;
             float vertex_timeNtk    = 0;
     
             if ( nSV > 0 && sv.pt() > 0. ) {
-	      for (unsigned int isv=0; isv<candSVTagInfo->nVertices(); ++isv) {
-	        float dSVpt  = TMath::Abs(candSVTagInfo->secondaryVertex(isv).pt() / sv.pt() - 1.);
+			for (unsigned int isv=0; isv<candSVTagInfo->nVertices(); ++isv) {
+				float dSVpt  = TMath::Abs(candSVTagInfo->secondaryVertex(isv).pt() / sv.pt() - 1.);
                 float dSVeta = TMath::Abs(candSVTagInfo->secondaryVertex(isv).eta() - sv.eta());
                 float dSVphi = TMath::Abs(candSVTagInfo->secondaryVertex(isv).phi() - sv.phi());
-	        if (dSVphi > 3.141593 ) dSVphi -= 2.*3.141593;
-	      if (!(dSVpt < 0.01 && dSVeta < 0.01 && dSVphi < 0.01)) continue;
+				if (dSVphi > 3.141593 ) dSVphi -= 2.*3.141593;
+				if (!(dSVpt < 0.01 && dSVeta < 0.01 && dSVphi < 0.01)) continue;
 //   std::cout << "  => matched sv " << sv_num_ << " to " << isv << std::endl;
 
-	        for (unsigned int it=0; it<candSVTagInfo->nVertexTracks(isv); ++it) {
+				for (unsigned int it=0; it<candSVTagInfo->nVertexTracks(isv); ++it) {
 
-                  for (unsigned int i = 0; i <  jet.numberOfDaughters(); i++) {
-                    const pat::PackedCandidate* PackedCandidate = dynamic_cast<const pat::PackedCandidate*>(jet.daughter(i));
-                  if ( !PackedCandidate ) continue;
-                  if ( PackedCandidate->charge() == 0 ) continue;
-                    auto track = PackedCandidate->bestTrack();
-                  if ( !track ) continue;
-	          if ( candSVTagInfo->vertexTracks(isv)[it]->charge() != track->charge() ) continue;
-                    float track_time      = track->t0();
-                    float track_timeError = track->covt0t0();
-                    float track_pt    = track->pt();
-                    float time_weight = track_pt * track_pt;
-		  if (!( track_timeError > 0. && abs(track_time) < 1 )) continue;
+					for (unsigned int i = 0; i <  jet.numberOfDaughters(); i++) {
+						const pat::PackedCandidate* PackedCandidate = dynamic_cast<const pat::PackedCandidate*>(jet.daughter(i));
+						if ( !PackedCandidate ) continue;
+						if ( PackedCandidate->charge() == 0 ) continue;
+						auto track = PackedCandidate->bestTrack();
+						if ( !track ) continue;
+						if ( candSVTagInfo->vertexTracks(isv)[it]->charge() != track->charge() ) continue;
+						float track_time      = track->t0();
+						float track_timeError = track->covt0t0();
+						float track_pt    = track->pt();
+						float time_weight = track_pt * track_pt;
+						if (!( track_timeError > 0. && abs(track_time) < 1 )) continue;
 
-	            float dpt  = TMath::Abs(candSVTagInfo->vertexTracks(isv)[it]->pt()  / track->pt() - 1.);
-                    float deta = TMath::Abs(candSVTagInfo->vertexTracks(isv)[it]->eta() - track->eta());
-                    float dphi = TMath::Abs(candSVTagInfo->vertexTracks(isv)[it]->phi() - track->phi());
-	            if (dphi > 3.141593 ) dphi -= 2.*3.141593;
-	            if (dpt < 0.01 && deta < 0.01 && dphi < 0.01) {
-                      vertex_timeNtk    += 1;
-                      vertex_timeWeight += time_weight;
-                      vertex_time       += track_time * time_weight;
-//   std::cout << "  => matched track " << it << " to " << i << " time " << track_time << std::endl;
-	            }
-		  } // end loop on all tracks in jet
-		} // end loop on tracks from SV in jet
-	      } // end loop on SVs in jet
-              if ( vertex_timeNtk > 0 && EventTime > -1 ) {
-                vertex_time = vertex_time / vertex_timeWeight - EventTime;
-		vertex_time = TMath::Abs(vertex_time);
-	      }
-              else vertex_time = -1; 
+						float dpt  = TMath::Abs(candSVTagInfo->vertexTracks(isv)[it]->pt()  / track->pt() - 1.);
+						float deta = TMath::Abs(candSVTagInfo->vertexTracks(isv)[it]->eta() - track->eta());
+						float dphi = TMath::Abs(candSVTagInfo->vertexTracks(isv)[it]->phi() - track->phi());
+						if (dphi > 3.141593 ) dphi -= 2.*3.141593;
+						if (dpt < 0.01 && deta < 0.01 && dphi < 0.01) {
+							vertex_timeNtk    += 1;
+							vertex_timeWeight += time_weight;
+							vertex_time       += track_time * time_weight;
+//   						std::cout << "  => matched track " << it << " to " << i << " time " << track_time << std::endl;
+						}
+					} // end loop on all tracks in jet
+				} // end loop on tracks from SV in jet
+			} // end loop on SVs in jet
+            if ( vertex_timeNtk > 0 && EventTime > -1 ) {
+				vertex_time = vertex_time / vertex_timeWeight - EventTime;
+				vertex_time = TMath::Abs(vertex_time);
+			}
+            else vertex_time = -1; 
 	    }
 	    else vertex_time = -1.;
 

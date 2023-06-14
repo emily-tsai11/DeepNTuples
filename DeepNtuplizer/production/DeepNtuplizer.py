@@ -81,45 +81,63 @@ process.source.skipEvents = cms.untracked.uint32(options.skipEvents)
 process.maxEvents  = cms.untracked.PSet( 
     input = cms.untracked.int32 (options.maxEvents) 
 )
+
 releases = release.split("_")
-if ( int(releases[0]) >8 ) or ( (int(releases[0])==8) and (int(releases[1]) >= 4) ):
- bTagInfos = [
-	'pfImpactParameterTagInfos',
+#if ( int(releases[0]) >8 ) or ( (int(releases[0])==8) and (int(releases[1]) >= 4) ):
+bTagInfos = ['pfImpactParameterTagInfos',
 	'pfInclusiveSecondaryVertexFinderTagInfos',
-	'pfDeepCSVTagInfos' ]
-else : 
- bTagInfos = [
-        'pfImpactParameterTagInfos',
-        'pfInclusiveSecondaryVertexFinderTagInfos',
-	'deepNNTagInfos',
- ]
+	'pfDeepCSVTagInfos',
+        'pfDeepFlavourTagInfos',
+        'pfParticleNetAK4TagInfos',]
+
+from RecoBTag.ONNXRuntime.pfParticleNetAK4_cff import _pfParticleNetAK4JetTagsAll as pfParticleNetAK4JetTagsAll
+
+#else : 
+#  bTagInfos = [
+#        'pfImpactParameterTagInfos',
+#        'pfInclusiveSecondaryVertexFinderTagInfos',
+#	'deepNNTagInfos',
+#  ]
 
 
 if (int(releases[0])>8) or ( (int(releases[0])==8) and (int(releases[1]) >= 4) ) :
- bTagDiscriminators = [
-     'softPFMuonBJetTags',
-     'softPFElectronBJetTags',
-     'pfJetBProbabilityBJetTags',
-     'pfJetProbabilityBJetTags',
-     'pfCombinedInclusiveSecondaryVertexV2BJetTags',
+#if int(release.replace("_",""))>=840 :
+  bTagDiscriminators = [
+#     'softPFMuonBJetTags',
+#     'softPFElectronBJetTags',
+#     'pfJetBProbabilityBJetTags',
+#     'pfJetProbabilityBJetTags',
+#     'pfCombinedInclusiveSecondaryVertexV2BJetTags',
      'pfDeepCSVJetTags:probudsg', #to be fixed with new names
      'pfDeepCSVJetTags:probb',
      'pfDeepCSVJetTags:probc',
      'pfDeepCSVJetTags:probbb',
- ]
+     'pfDeepFlavourJetTags:probb',
+     'pfDeepFlavourJetTags:probbb',
+     'pfDeepFlavourJetTags:problepb',
+     'pfDeepFlavourJetTags:probc',
+     'pfDeepFlavourJetTags:probuds',
+     'pfDeepFlavourJetTags:probg',
+  ]
+
 else :
   bTagDiscriminators = [
-     'softPFMuonBJetTags',
-     'softPFElectronBJetTags',
-     'pfJetBProbabilityBJetTags',
-     'pfJetProbabilityBJetTags',
-     'pfCombinedInclusiveSecondaryVertexV2BJetTags',
-     'deepFlavourJetTags:probudsg', #to be fixed with new names
-     'deepFlavourJetTags:probb',
-     'deepFlavourJetTags:probc',
-     'deepFlavourJetTags:probbb',
-     'deepFlavourJetTags:probcc',
- ]
+#     'softPFMuonBJetTags',
+#     'softPFElectronBJetTags',
+#     'pfJetBProbabilityBJetTags',
+#     'pfJetProbabilityBJetTags',
+#     'pfCombinedInclusiveSecondaryVertexV2BJetTags',
+     'pfDeepCSVJetTags:probudsg', #to be fixed with new names
+     'pfDeepCSVJetTags:probb',
+     'pfDeepCSVJetTags:probc',
+     'pfDeepCSVJetTags:probbb',
+#     'pfDeepCSVJetTags:probcc',
+     'pfDeepFlavourJetTags:probudsg', #to be fixed with new names
+     'pfDeepFlavourJetTags:probb',
+     'pfDeepFlavourJetTags:probc',
+     'pfDeepFlavourJetTags:probbb',
+     'pfDeepFlavourJetTags:probcc',
+  ]
 
 jetCorrectionsAK4 = ('AK4PFchs', ['L1FastJet', 'L2Relative', 'L3Absolute'], 'None')
 #jetCorrectionsAK4 = ('AK4Puppi', ['L1FastJet', 'L2Relative', 'L3Absolute'], 'None')
@@ -230,6 +248,7 @@ process.deepntuplizer.LooseSVs = cms.InputTag("looseIVFinclusiveCandidateSeconda
 process.deepntuplizer.applySelection = cms.bool(options.selectJets)
 
 if ( int(releases[0]) > 8 ) or ( (int(releases[0])==8) and (int(releases[1]) >= 4) ):
+#if int(release.replace("_",""))>=840 :
    process.deepntuplizer.tagInfoName = cms.string('pfDeepCSV')
 
 if options.phase2 :

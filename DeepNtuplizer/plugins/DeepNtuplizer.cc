@@ -72,8 +72,8 @@ private:
     edm::EDGetTokenT<reco::VertexCompositePtrCandidateCollection> svToken_;
     edm::EDGetTokenT<edm::View<pat::Jet> >      jetToken_;
     edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puToken_;
+	edm::EDGetTokenT<edm::View<reco::BaseTagInfo> > pixHitsToken_;
     edm::EDGetTokenT<double> rhoToken_;
-
     edm::EDGetTokenT<float>  genT0Token_;
 
     std::string t_qgtagger;
@@ -91,7 +91,7 @@ private:
     size_t njetsselected_;
 
 	ntuple_content * addModule(ntuple_content *m, std::string name = ""){
-        modules_.push_back(m);
+    modules_.push_back(m);
 	module_names_.push_back(name);
         return m;
     }
@@ -103,13 +103,13 @@ private:
 
 DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
                             vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
-                            svToken_(consumes<reco::VertexCompositePtrCandidateCollection>(
-                                    iConfig.getParameter<edm::InputTag>("secVertices"))),
-                                    jetToken_(consumes<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jets"))),
-                                    puToken_(consumes<std::vector<PileupSummaryInfo >>(iConfig.getParameter<edm::InputTag>("pupInfo"))),
-                                    rhoToken_(consumes<double>(iConfig.getParameter<edm::InputTag>("rhoInfo"))),
-                                    genT0Token_(consumes<float>(iConfig.getParameter<edm::InputTag>("genT0Tag"))),
-                                    t_qgtagger(iConfig.getParameter<std::string>("qgtagger"))
+                            svToken_(consumes<reco::VertexCompositePtrCandidateCollection>(iConfig.getParameter<edm::InputTag>("secVertices"))),
+							jetToken_(consumes<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jets"))),
+                            puToken_(consumes<std::vector<PileupSummaryInfo >>(iConfig.getParameter<edm::InputTag>("pupInfo"))),
+							pixHitsToken_(consumes< edm::View<reco::BaseTagInfo> > (iConfig.getParameter<edm::InputTag>("pixelhit"))),
+                            rhoToken_(consumes<double>(iConfig.getParameter<edm::InputTag>("rhoInfo"))),
+                            genT0Token_(consumes<float>(iConfig.getParameter<edm::InputTag>("genT0Tag"))),
+                            t_qgtagger(iConfig.getParameter<std::string>("qgtagger"))
 {
     /*
      *  Initialise the modules here
@@ -133,9 +133,9 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
     svmodule->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
 	addModule(svmodule, "SVNtuple");
 
-	ntuple_DeepVertex* dvmodule = new ntuple_DeepVertex(jetR);
-	dvmodule->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
-	addModule(dvmodule, "DVNtuple");
+//	ntuple_DeepVertex* dvmodule = new ntuple_DeepVertex(jetR);
+//	dvmodule->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
+//	addModule(dvmodule, "DVNtuple");
  
     //Loose IVF vertices
     //ntuple_SV* svmodule_LooseIVF=new ntuple_SV("LooseIVF_", jetR);
@@ -190,6 +190,8 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
 
     addModule(pfcands, "pfcands");
 
+//	std::cout<<"PFcands Check"<<std::endl;
+
     addModule(new ntuple_bTagVars(), "bTagVars");
 
     if(runFatJets_){
@@ -243,6 +245,9 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     edm::Handle<edm::View<pat::Jet> > jets;
     iEvent.getByToken(jetToken_, jets);
+
+	edm::Handle< edm::View<reco::BaseTagInfo> > pixHits;
+	iEvent.getByToken(pixHitsToken_, pixHits);
 
     for(auto& m:modules_){
         m->setPrimaryVertices(vertices.product());

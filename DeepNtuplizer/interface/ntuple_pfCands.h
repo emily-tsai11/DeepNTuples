@@ -51,6 +51,7 @@ private:
     float  Cpfcan_eta_[max_pfcand_];
     float  Cpfcan_phi_[max_pfcand_];
     float  Cpfcan_ptrel_[max_pfcand_];
+    float  Cpfcan_e_[max_pfcand_];
     float  Cpfcan_erel_[max_pfcand_];
     float  Cpfcan_phirel_[max_pfcand_];
     float  Cpfcan_etarel_[max_pfcand_];
@@ -206,6 +207,7 @@ private:
     float  Npfcan_eta_[max_pfcand_];
     float  Npfcan_phi_[max_pfcand_];
     float  Npfcan_ptrel_[max_pfcand_];
+    float  Npfcan_e_[max_pfcand_];
     float  Npfcan_erel_[max_pfcand_];
     float  Npfcan_puppiw_[max_pfcand_];
     float  Npfcan_phirel_[max_pfcand_];

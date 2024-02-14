@@ -35,9 +35,9 @@ def submit(ds):
     config.Data.inputDBS = 'global'
     config.Data.splitting = 'FileBased'
     config.Data.unitsPerJob = 50
-    config.Data.outLFNDirBase = '/store/user/%s/' % (getUsername())
+    config.Data.outLFNDirBase = '/store/user/%s/DeepNtuples_july23' % (getUsername())
     config.Data.publication = False
-    config.Data.outputDatasetTag = 'DeepNtuples'
+    config.Data.outputDatasetTag = 'DeepNtuples_july23'
 
     config.section_("Site")
     config.Site.storageSite = 'T1_DE_KIT_Disk'

@@ -25,9 +25,9 @@
 #include "RecoVertex/VertexTools/interface/VertexDistance3D.h"
 #include "TVector3.h"
 
-class TrackInfoBuilder{
+class SVTrackInfoBuilder{
 public:
-  TrackInfoBuilder(edm::ESHandle<TransientTrackBuilder> & build):
+  SVTrackInfoBuilder(edm::ESHandle<TransientTrackBuilder> & build):
     builder(build),
     trackMomentum_(0),
     trackEta_(0),
@@ -249,7 +249,7 @@ bool ntuple_SV::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  
     spvp_ =   & vertices()->at(0);
     std::sort(cpvtx.begin(),cpvtx.end(),ntuple_SV::compareDxyDxyErr);
 
-	TrackInfoBuilder trackinfo(builder);
+	SVTrackInfoBuilder trackinfo(builder);
 
     float etasign=1;
     etasign++; //avoid unused warning

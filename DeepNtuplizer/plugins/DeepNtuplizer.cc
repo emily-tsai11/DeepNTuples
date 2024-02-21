@@ -67,7 +67,7 @@ class DeepNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
 
         Measurement1D vertexDxy(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv) const;
         Measurement1D vertexD3d(const reco::VertexCompositePtrCandidate& sv, const reco::Vertex& pv) const;
-        float vertexDdotP(const reco::VertexCompositePtrCandidate &sv, const reco::Vertex& pv) const;
+        float vertexDdotP(const reco::VertexCompositePtrCandidate& sv, const reco::Vertex& pv) const;
 
         // Member data
         edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
@@ -102,7 +102,7 @@ class DeepNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
 };
 
 
-DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
+DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
     vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
     svToken_(consumes<reco::VertexCompositePtrCandidateCollection>(iConfig.getParameter<edm::InputTag>("secVertices"))),
     jetToken_(consumes<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jets"))),
@@ -129,6 +129,7 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
 
     ntuple_SV* svmodule = new ntuple_SV("", jetR);
     svmodule->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
+    // svmodule->setGenParticlesToken(consumes<edm::Association<std::vector<pat::PackedGenParticle>>>(iConfig.getParameter<edm::InputTag>("packedGen")));
     addModule(svmodule, "SVNtuple");
 
     // ntuple_DeepVertex* dvmodule = new ntuple_DeepVertex(jetR);
@@ -185,7 +186,7 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
     }
 
     // Initialize modules and parse input parameters (if any)
-    for(auto& m: modules_)
+    for(auto& m : modules_)
         m->getInput(iConfig);
 }
 
@@ -193,7 +194,7 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
 DeepNtuplizer::~DeepNtuplizer() {
 
     return;
-    for(auto& m:modules_)
+    for(auto& m : modules_)
         delete m;
 }
 
@@ -222,7 +223,7 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     edm::Handle< edm::View<reco::BaseTagInfo>> pixHits;
     iEvent.getByToken(pixHitsToken_, pixHits);
 
-    for(auto& m:modules_) {
+    for(auto& m : modules_) {
         m->setPrimaryVertices(vertices.product());
         m->setSecVertices(secvertices.product());
         m->setPuInfo(pupInfo.product());
@@ -241,7 +242,7 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         indices.at(i) = i;
 
     if(applySelection_)
-        std::random_shuffle(indices.begin(),indices.end());
+        std::random_shuffle(indices.begin(), indices.end());
  
     edm::View<pat::Jet>::const_iterator jetIter;
     // Loop over the jets
@@ -303,7 +304,7 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
         bool writejet = true;
         size_t idx = 0;
-        for (auto& m:modules_) {
+        for (auto& m : modules_) {
             // std::cout << module_names_[idx] << std::endl;
             // if(!m->fillBranches(jet, jetidx, jets.product())) {
             if(!m->fillBranches(jet, jetidx, jets.product(), event_time)) {
@@ -331,7 +332,7 @@ void DeepNtuplizer::beginJob() {
     tree_ = (fs->make<TTree>("tree", "tree"));
     tree_->Branch("Event_time", &event_time_, "Event_time/F");
 
-    for(auto& m:modules_)
+    for(auto& m : modules_)
         m->initBranches(tree_);
 
     njetstotal_ = 0;

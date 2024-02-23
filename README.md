@@ -1,7 +1,7 @@
 # DeepNTuples
 NTuple framework for DeepFlavour
 
-Installation CMSSW 14.1.0 with timing variables, PV3D+timing
+Installation CMSSW 14.1.0 pre0 with timing variables, PV3D+timing
 ============
 ```
 cmsrel CMSSW_14_1_0_pre0
@@ -22,6 +22,11 @@ scram b -j
 Or, for debugging, compile with
 ```
 scram b -j USER_CXXFLAGS="-g"
+```
+Subsequent setup:
+```
+cd CMSSW_14_1_0_pre0/src/
+cmsenv
 ```
 
 Installation CMSSW 12.5.5 with timing variables, PV3D+timing

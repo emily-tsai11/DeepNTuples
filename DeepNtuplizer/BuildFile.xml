@@ -2,15 +2,14 @@
 <use name="FWCore/PluginManager"/>
 <use name="FWCore/ParameterSet"/>
 <use name="DataFormats/PatCandidates"/>
+<use name="SimDataFormats/TrackingAnalysis"/>
 <use name="TrackingTools/IPTools"/>
 <use name="DeepNTuples/JetAnalysis"/>
 <use name="TrackingTools/Records"/>
-
-<use   name="root"/>
-<use   name="rootrflx"/>
+<use name="root"/>
+<use name="rootrflx"/>
+<use name="hepmc"/>
 
 <export>
   <lib   name="1"/>
 </export>
-
-

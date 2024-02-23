@@ -31,7 +31,7 @@ class SVTrackInfoBuilder {
     public:
 
         SVTrackInfoBuilder(edm::ESHandle<TransientTrackBuilder>& build) :
-            builder(build),
+            builder_(build),
             trackMomentum_(0),
             trackEta_(0),
             trackEtaRel_(0),
@@ -79,7 +79,7 @@ class SVTrackInfoBuilder {
             const reco::Track& PseudoTrack = PackedCandidate_->pseudoTrack();
 
             reco::TransientTrack transientTrack;
-            transientTrack = builder->build(PseudoTrack);
+            transientTrack = builder_->build(PseudoTrack);
             Measurement1D meas_ip2d = IPTools::signedTransverseImpactParameter(transientTrack, refjetdirection, pv).second;
             Measurement1D meas_ip3d = IPTools::signedImpactParameter3D(transientTrack, refjetdirection, pv).second;
             Measurement1D jetdist = IPTools::jetTrackDistance(transientTrack, refjetdirection, pv).second;
@@ -97,9 +97,9 @@ class SVTrackInfoBuilder {
             trackPtRatio_ = trackMom3.Perp(jetDir3) / trackMag;
             trackPParRatio_ = jetDir.Dot(trackMom) / trackMag;
 
-            trackSip2dVal_ = (meas_ip2d.value());
-            trackSip2dSig_ = (meas_ip2d.significance());
-            trackSip3dVal_ = (meas_ip3d.value());
+            trackSip2dVal_ = meas_ip2d.value();
+            trackSip2dSig_ = meas_ip2d.significance();
+            trackSip3dVal_ = meas_ip3d.value();
             trackSip3dSig_ = meas_ip3d.significance();
 
             trackJetDecayLen_ = decayl.value();
@@ -128,7 +128,7 @@ class SVTrackInfoBuilder {
 
     private:
 
-        edm::ESHandle<TransientTrackBuilder>& builder;
+        edm::ESHandle<TransientTrackBuilder>& builder_;
         edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> track_builder_token_;
 
         float trackMomentum_;
@@ -155,6 +155,7 @@ const reco::Vertex* ntuple_SV::spvp_;
 
 
 ntuple_SV::ntuple_SV(std::string prefix, double jetR) : ntuple_content(jetR), sv_num_(0) {
+
     prefix_ = prefix;
 }
 
@@ -205,7 +206,7 @@ void ntuple_SV::initBranches(TTree* tree) {
 
 void ntuple_SV::readSetup(const edm::EventSetup& iSetup) {
 
-    builder = iSetup.getHandle(track_builder_token_);
+    builder_ = iSetup.getHandle(track_builder_token_);
 }
 
 
@@ -228,12 +229,13 @@ bool ntuple_SV::compareDxyDxyErr(const reco::VertexCompositePtrCandidate& sva, c
 
 
 // Use either of these functions
-// bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const edm::View<pat::Jet>* coll){
+// bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const edm::View<pat::Jet>* coll) {
 bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const edm::View<pat::Jet>* coll, float EventTime) {
 
     const float jet_uncorr_e = jet.correctedJet("Uncorrected").energy();
 
-    const reco::Vertex& pv = vertices()->at(0);
+    // Sorting described here: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideOfflinePrimaryVertexProduction
+    const reco::Vertex& pv = vertices()->at(0); // Most likely the signal vertex
 
     math::XYZVector jetDir = jet.momentum().Unit();
     GlobalVector jetRefTrackDir(jet.px(), jet.py(), jet.pz());
@@ -241,11 +243,14 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
     sv_num_ = 0;
 
     reco::VertexCompositePtrCandidateCollection cpvtx = *secVertices();
+    TrackingVertexCollection cgvtx = *genVertices();
 
     spvp_ = &vertices()->at(0);
-    std::sort(cpvtx.begin(), cpvtx.end(), ntuple_SV::compareDxyDxyErr);
 
-    SVTrackInfoBuilder trackinfo(builder);
+    std::sort(cpvtx.begin(), cpvtx.end(), ntuple_SV::compareDxyDxyErr);
+    // TODO: sort genvertices?
+
+    SVTrackInfoBuilder trackinfo(builder_);
 
     float etasign = 1;
     etasign++; // avoid unused warning
@@ -271,7 +276,7 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
     for (const reco::VertexCompositePtrCandidate& sv : cpvtx) {
         if (reco::deltaR(sv, jet) > jet_radius) continue;
 
-        if ((int) max_sv > sv_num_) {
+        if ((int) max_sv > sv_num_) { // limit number of SVs
             sv_pt_[sv_num_] = sv.pt();
             sv_eta_[sv_num_] = sv.eta();
             sv_phi_[sv_num_] = sv.phi();
@@ -283,7 +288,7 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
             sv_chi2_[sv_num_] = sv.vertexChi2();
             sv_ndf_[sv_num_] = sv.vertexNdof();
             sv_normchi2_[sv_num_] = catchInfsAndBound(sv_chi2_[sv_num_] / sv_ndf_[sv_num_], 1000, -1000, 1000);
-            sv_dxy_[sv_num_] = vertexDxy(sv,pv).value();
+            sv_dxy_[sv_num_] = vertexDxy(sv, pv).value();
             sv_dxyerr_[sv_num_] = catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0);
             sv_dxysig_[sv_num_] = catchInfsAndBound(sv_dxy_[sv_num_] / vertexDxy(sv, pv).error(), 0, -1, 800);
             sv_d3d_[sv_num_] = vertexD3d(sv, pv).value();
@@ -313,7 +318,7 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
                 puppiw = puppiw + PackedCandidate_->puppiWeight();
                 charge = charge + PackedCandidate_->charge();
                 dz = dz + PackedCandidate_->dz();
-                if (PackedCandidate_->charge() != 0 and PackedCandidate_->pt() > 0.95) {
+                if (PackedCandidate_->charge() != 0 and PackedCandidate_->pt() > 0.95) { // TODO: understand these "track" cuts
                     trackinfo.buildTrackInfo(PackedCandidate_, jetDir, jetRefTrackDir, pv);
                     pfd3dval = pfd3dval + catchInfsAndBound(trackinfo.getTrackSip3dVal(), 0, -1, 1e5);
                     pfd3dsig = pfd3dsig + catchInfsAndBound(trackinfo.getTrackSip3dSig(), 0, -1, 4e4);
@@ -388,9 +393,25 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
 
             sv_time_[sv_num_] = vertex_time;
 
+            // Match reconstructed vertices to generator vertices
+            for (TrackingVertexCollection::const_iterator gv = cgvtx.begin(); gv != cgvtx.end(); ++gv) {
+                // std::cout << "Daughters of this vertex: " << std::endl;
+                for (unsigned idx = 0; idx < sv.numberOfDaughters(); ++idx) {
+                    const pat::PackedCandidate* PackedCandidate_ = dynamic_cast<const pat::PackedCandidate*>(sv.daughter(idx));
+                    if (PackedCandidate_->charge() != 0 and PackedCandidate_->pt() > 0.95) { // TODO: understand these "track" cuts
+                        trackinfo.buildTrackInfo(PackedCandidate_, jetDir, jetRefTrackDir, pv);
+                        // TODO
+                    }
+                } // end of looping over reconstructed tracks
+                for (TrackingParticleRefVector::iterator tp = gv->daughterTracks_begin(); tp != gv->daughterTracks_end(); ++tp) {
+                    // std::cout << (*tp)->pdgId() << ", ";
+                } // end of looping over generator tracks
+                // std::cout << std::endl;
+            } // end of looping over generator vertices
+
             sv_num_++;
-        }
-    } // end of looping over the secondary vertices
+        } // end if max_sv > sv_num_
+    } // end of looping over the reconstructed secondary vertices
     nsv_ = sv_num_;
 
     return true;

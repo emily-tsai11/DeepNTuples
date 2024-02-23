@@ -21,7 +21,7 @@ options = VarParsing.VarParsing()
 options.register('inputScript', '', VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.string, "input script")
 options.register('inputFiles', '', VarParsing.VarParsing.multiplicity.list, VarParsing.VarParsing.varType.string, "input files (default is the tt RelVal)")
 options.register('outputFile', 'output', VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.string, "output file (w/o .root)")
-options.register('maxEvents', -1, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "maximum events")
+options.register('maxEvents', 10, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "maximum events")
 options.register('skipEvents', 0, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "skip N events")
 options.register('job', 0, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "job number")
 options.register('nJobs', 1, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "total jobs")
@@ -43,8 +43,6 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_mc', '')
 # process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
-
-process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(-1))
 
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = options.reportEvery
@@ -235,12 +233,12 @@ if options.phase2:
 process.deepntuplizer.gluonReduction = cms.double(options.gluonReduction)
 
 # 1631
-process.ProfilerService = cms.Service(
-    "ProfilerService",
-    firstEvent=cms.untracked.int32(1631),
-    lastEvent=cms.untracked.int32(1641),
-    paths=cms.untracked.vstring('p')
-)
+# process.ProfilerService = cms.Service(
+#     "ProfilerService",
+#     firstEvent=cms.untracked.int32(1631),
+#     lastEvent=cms.untracked.int32(1641),
+#     paths=cms.untracked.vstring('p')
+# )
 
 # Trick to make it work in 9_1_X
 process.tsk = cms.Task()

@@ -14,7 +14,6 @@
 #include "FWCore/Utilities/interface/ESGetToken.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
-#include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 
 
 class ntuple_SV : public ntuple_content {
@@ -36,9 +35,6 @@ class ntuple_SV : public ntuple_content {
         void setTrackBuilderToken(const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord>& track_builder_token) {
             track_builder_token_ = track_builder_token;
         }
-        // void setGenParticlesToken(const edm::Association<std::vector<pat::PackedGenParticle>> gen_particles_token) {
-        //     gen_particles_token_ = gen_particles_token;
-        // }
 
     private:
 
@@ -47,9 +43,8 @@ class ntuple_SV : public ntuple_content {
         float nsv_;
         std::string prefix_;
 
-        edm::ESHandle<TransientTrackBuilder> builder;
+        edm::ESHandle<TransientTrackBuilder> builder_;
         edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> track_builder_token_;
-        // edm::Association<std::vector<pat::PackedGenParticle>> gen_particles_token_;
 
         static constexpr size_t max_sv = 10;
 
@@ -93,7 +88,7 @@ class ntuple_SV : public ntuple_content {
         static Measurement1D vertexDxy(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv);
         static Measurement1D vertexD3d(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv);
         static float vertexDdotP(const reco::VertexCompositePtrCandidate& sv, const reco::Vertex& pv);
-        TODO: put matching functions here?
+        // TODO: put matching functions here?
 };
 
 

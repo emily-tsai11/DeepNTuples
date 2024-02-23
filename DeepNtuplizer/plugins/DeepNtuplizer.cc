@@ -17,6 +17,7 @@
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
+#include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
 
 #include "TrackingTools/IPTools/interface/IPTools.h"
 #if defined( __GXX_EXPERIMENTAL_CXX0X__)
@@ -72,6 +73,7 @@ class DeepNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
         // Member data
         edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
         edm::EDGetTokenT<reco::VertexCompositePtrCandidateCollection> svToken_;
+        edm::EDGetTokenT<TrackingVertexCollection> gvToken_;
         edm::EDGetTokenT<edm::View<pat::Jet>> jetToken_;
         edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puToken_;
         edm::EDGetTokenT<edm::View<reco::BaseTagInfo>> pixHitsToken_;
@@ -95,6 +97,7 @@ class DeepNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
             module_names_.push_back(name);
             return m;
         }
+
         std::vector<ntuple_content*> modules_;
         std::vector<std::string> module_names_;
 
@@ -105,6 +108,7 @@ class DeepNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
 DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
     vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
     svToken_(consumes<reco::VertexCompositePtrCandidateCollection>(iConfig.getParameter<edm::InputTag>("secVertices"))),
+    gvToken_(consumes<TrackingVertexCollection>(iConfig.getParameter<edm::InputTag>("genVertices"))),
     jetToken_(consumes<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jets"))),
     puToken_(consumes<std::vector<PileupSummaryInfo >>(iConfig.getParameter<edm::InputTag>("pupInfo"))),
     pixHitsToken_(consumes< edm::View<reco::BaseTagInfo> > (iConfig.getParameter<edm::InputTag>("pixelhit"))),
@@ -129,7 +133,6 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
 
     ntuple_SV* svmodule = new ntuple_SV("", jetR);
     svmodule->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
-    // svmodule->setGenParticlesToken(consumes<edm::Association<std::vector<pat::PackedGenParticle>>>(iConfig.getParameter<edm::InputTag>("packedGen")));
     addModule(svmodule, "SVNtuple");
 
     // ntuple_DeepVertex* dvmodule = new ntuple_DeepVertex(jetR);
@@ -211,6 +214,9 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     edm::Handle<std::vector<reco::VertexCompositePtrCandidate>> secvertices;
     iEvent.getByToken(svToken_, secvertices);
 
+    edm::Handle<TrackingVertexCollection> genvertices;
+    iEvent.getByToken(gvToken_, genvertices);
+
     edm::Handle<std::vector<PileupSummaryInfo>> pupInfo;
     iEvent.getByToken(puToken_, pupInfo);
 
@@ -226,6 +232,7 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     for(auto& m : modules_) {
         m->setPrimaryVertices(vertices.product());
         m->setSecVertices(secvertices.product());
+        m->setGenVertices(genvertices.product());
         m->setPuInfo(pupInfo.product());
         m->setRhoInfo(rhoInfo.product());
         m->readSetup(iSetup);

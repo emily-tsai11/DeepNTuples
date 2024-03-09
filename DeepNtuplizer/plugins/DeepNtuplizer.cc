@@ -133,6 +133,13 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
 
     ntuple_SV* svmodule = new ntuple_SV("", jetR);
     svmodule->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
+
+    svmodule->setPFCandToken(consumes<pat::PackedCandidateCollection>(edm::InputTag("packedPFCandidates")));
+    svmodule->setLostTracksToken(consumes<pat::PackedCandidateCollection>(edm::InputTag("lostTracks")));
+
+    svmodule->setPFMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("packedPFCandidateToGenAssociation")));
+    svmodule->setLTMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("lostTracksToGenAssociation")));
+
     addModule(svmodule, "SVNtuple");
 
     // ntuple_DeepVertex* dvmodule = new ntuple_DeepVertex(jetR);
@@ -226,7 +233,7 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     edm::Handle<edm::View<pat::Jet>> jets;
     iEvent.getByToken(jetToken_, jets);
 
-    edm::Handle< edm::View<reco::BaseTagInfo>> pixHits;
+    edm::Handle<edm::View<reco::BaseTagInfo>> pixHits;
     iEvent.getByToken(pixHitsToken_, pixHits);
 
     for(auto& m : modules_) {

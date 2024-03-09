@@ -36,6 +36,22 @@ class ntuple_SV : public ntuple_content {
             track_builder_token_ = track_builder_token;
         }
 
+        void setPFCandToken(const edm::EDGetTokenT<pat::PackedCandidateCollection>& pf_cand_token) {
+            pf_cand_token_ = pf_cand_token;
+        }
+
+        void setLostTracksToken(const edm::EDGetTokenT<pat::PackedCandidateCollection>& lost_tracks_token) {
+            lost_tracks_token_ = lost_tracks_token;
+        }
+
+        void setPFMCMatchToken(const edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>>& pf_mcmatch_token) {
+            pf_mcmatch_token_ = pf_mcmatch_token;
+        }
+
+        void setLTMCMatchToken(const edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>>& lt_mcmatch_token) {
+            lt_mcmatch_token_ = lt_mcmatch_token;
+        }
+
     private:
 
         // SV candidates
@@ -44,7 +60,16 @@ class ntuple_SV : public ntuple_content {
         std::string prefix_;
 
         edm::ESHandle<TransientTrackBuilder> builder_;
+        edm::Handle<pat::PackedCandidateCollection> pf_cand_;
+        edm::Handle<pat::PackedCandidateCollection> lost_tracks_;
+        edm::Handle<edm::Association<reco::GenParticleCollection>> pf_mcmatch_;
+        edm::Handle<edm::Association<reco::GenParticleCollection>> lt_mcmatch_;
+
         edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> track_builder_token_;
+        edm::EDGetTokenT<pat::PackedCandidateCollection> pf_cand_token_;
+        edm::EDGetTokenT<pat::PackedCandidateCollection> lost_tracks_token_;
+        edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>> pf_mcmatch_token_;
+        edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>> lt_mcmatch_token_;
 
         static constexpr size_t max_sv = 10;
 
@@ -83,12 +108,14 @@ class ntuple_SV : public ntuple_content {
 
         static const reco::Vertex* spvp_;
 
-        // Helper functions:
+        // Helper functions
         static bool compareDxyDxyErr(const reco::VertexCompositePtrCandidate& sva, const reco::VertexCompositePtrCandidate& svb);
         static Measurement1D vertexDxy(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv);
         static Measurement1D vertexD3d(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv);
         static float vertexDdotP(const reco::VertexCompositePtrCandidate& sv, const reco::Vertex& pv);
-        // TODO: put matching functions here?
+        static bool compareVtxEta(TrackingVertex& gva, TrackingVertex& gvb);
+        int findPFCandIdx(const pat::PackedCandidate& trk, const pat::PackedCandidateCollection& pcands);
+        int findLostTrackIdx(const pat::PackedCandidate& trk, const pat::PackedCandidateCollection& lts);
 };
 
 

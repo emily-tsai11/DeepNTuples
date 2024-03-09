@@ -210,21 +210,12 @@ void ntuple_SV::readSetup(const edm::EventSetup& iSetup) {
 }
 
 
-void ntuple_SV::readEvent(const edm::Event& iEvent) {}
+void ntuple_SV::readEvent(const edm::Event& iEvent) {
 
-
-bool ntuple_SV::compareDxyDxyErr(const reco::VertexCompositePtrCandidate& sva, const reco::VertexCompositePtrCandidate& svb) {
-
-    reco::Vertex pv = *spvp_;
-    float adxy = ntuple_SV::vertexDxy(sva, pv).value();
-    float bdxy = ntuple_SV::vertexDxy(svb, pv).value();
-    float aerr = ntuple_SV::vertexDxy(sva, pv).error();
-    float berr = ntuple_SV::vertexDxy(svb, pv).error();
-
-    float asig = ntuple_SV::catchInfs(adxy / aerr, 0.0);
-    float bsig = ntuple_SV::catchInfs(bdxy / berr, 0.0);
-
-    return bsig < asig;
+    iEvent.getByToken(pf_cand_token_, pf_cand_);
+    iEvent.getByToken(lost_tracks_token_, lost_tracks_);
+    iEvent.getByToken(pf_mcmatch_token_, pf_mcmatch_);
+    iEvent.getByToken(lt_mcmatch_token_, lt_mcmatch_);
 }
 
 
@@ -243,14 +234,16 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
     sv_num_ = 0;
 
     reco::VertexCompositePtrCandidateCollection cpvtx = *secVertices();
-    TrackingVertexCollection cgvtx = *genVertices();
 
     spvp_ = &vertices()->at(0);
 
-    std::sort(cpvtx.begin(), cpvtx.end(), ntuple_SV::compareDxyDxyErr);
-    // TODO: sort genvertices?
-
     SVTrackInfoBuilder trackinfo(builder_);
+
+    const pat::PackedCandidateCollection& pfCands(*(pf_cand_.product()));
+    const pat::PackedCandidateCollection& lostTracks(*(lost_tracks_.product()));
+
+    const edm::Association<reco::GenParticleCollection>& PFCandMCTruth(*(pf_mcmatch_.product()));
+    const edm::Association<reco::GenParticleCollection>& LostTrackMCTruth(*(lt_mcmatch_.product()));
 
     float etasign = 1;
     etasign++; // avoid unused warning
@@ -313,6 +306,34 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
             for (unsigned idx = 0; idx < sv.numberOfDaughters(); ++idx) {
                 const pat::PackedCandidate* PackedCandidate_ = dynamic_cast<const pat::PackedCandidate*>(sv.daughter(idx));
 
+                int pfCandMatchIdx = findPFCandIdx(*PackedCandidate_, pfCands);
+                int ltMatchIdx = findLostTrackIdx(*PackedCandidate_, lostTracks);
+                if (pfCandMatchIdx >= 0) {
+                    pat::PackedCandidateRef tempTrkRef = pat::PackedCandidateRef(pf_cand_, (unsigned int) pfCandMatchIdx);
+                    reco::GenParticleRef trkTruthRef = PFCandMCTruth[tempTrkRef];
+                    if (trkTruthRef.isNonnull()) {
+                        // std::cout << "matched pf candidate" << std::endl;
+                        // std::cout << "pt: " << tempTrkRef->pt() << ", " << trkTruthRef->pt() << std::endl;
+                    }
+                    else {
+                        // std::cout << "no matched pf candidates found" << std::endl;
+                    }
+                }
+                else if (ltMatchIdx >= 0) {
+                    pat::PackedCandidateRef tempTrkRef = pat::PackedCandidateRef(lost_tracks_, (unsigned int) ltMatchIdx);
+                    reco::GenParticleRef trkTruthRef = LostTrackMCTruth[tempTrkRef];
+                    if (trkTruthRef.isNonnull()) {
+                        std::cout << "matched lost track" << std::endl;
+                        std::cout << "pt: " << tempTrkRef->pt() << ", " << trkTruthRef->pt() << std::endl;
+                    }
+                    else {
+                        // std::cout << "no matched lost tracks found" << std::endl;
+                    }
+                }
+                else {
+                    // std::cout << "no matched pf candidates or lost tracks found" << std::endl;
+                }
+
                 calo_frac = calo_frac + PackedCandidate_->caloFraction();
                 hcal_frac = hcal_frac + PackedCandidate_->hcalFraction();
                 puppiw = puppiw + PackedCandidate_->puppiWeight();
@@ -341,6 +362,7 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
 
             // Get the vertex time
             // Matching VertexCompositePtrCandidate (reconstructed) and tagInfoCandSecondaryVertex (information used to compute b (&c?) tag discriminator)...
+            // Maybe a trick to get the SVTagInfo features for each reconstructed vertex, as we loop over the latter and not all features are calculated -- by matching in eta, phi, you can get the same vertex and combine information from different collections
             float vertex_time = 0;
             float vertex_timeWeight = 0;
             float vertex_timeNtk = 0;
@@ -384,7 +406,7 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
                 if (vertex_timeNtk > 0 && EventTime > -1) {
                     vertex_time = vertex_time / vertex_timeWeight - EventTime;
                     vertex_time = TMath::Abs(vertex_time);
-                }
+                } // time of flight?
                 else vertex_time = -1; 
             }
             else vertex_time = -1.0;
@@ -392,22 +414,6 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
             // std::cout << " NTuple sv " << sv_num_ << " pt eta phi " << sv.pt() << " " << sv.eta() << " " << sv.phi() << " time " << vertex_time << std::endl;
 
             sv_time_[sv_num_] = vertex_time;
-
-            // Match reconstructed vertices to generator vertices
-            for (TrackingVertexCollection::const_iterator gv = cgvtx.begin(); gv != cgvtx.end(); ++gv) {
-                // std::cout << "Daughters of this vertex: " << std::endl;
-                for (unsigned idx = 0; idx < sv.numberOfDaughters(); ++idx) {
-                    const pat::PackedCandidate* PackedCandidate_ = dynamic_cast<const pat::PackedCandidate*>(sv.daughter(idx));
-                    if (PackedCandidate_->charge() != 0 and PackedCandidate_->pt() > 0.95) { // TODO: understand these "track" cuts
-                        trackinfo.buildTrackInfo(PackedCandidate_, jetDir, jetRefTrackDir, pv);
-                        // TODO
-                    }
-                } // end of looping over reconstructed tracks
-                for (TrackingParticleRefVector::iterator tp = gv->daughterTracks_begin(); tp != gv->daughterTracks_end(); ++tp) {
-                    // std::cout << (*tp)->pdgId() << ", ";
-                } // end of looping over generator tracks
-                // std::cout << std::endl;
-            } // end of looping over generator vertices
 
             sv_num_++;
         } // end if max_sv > sv_num_
@@ -418,7 +424,22 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
 }
 
 
-// Helpers seldomly touched
+// Helpers functions
+
+
+bool ntuple_SV::compareDxyDxyErr(const reco::VertexCompositePtrCandidate& sva, const reco::VertexCompositePtrCandidate& svb) {
+
+    reco::Vertex pv = *spvp_;
+    float adxy = ntuple_SV::vertexDxy(sva, pv).value();
+    float bdxy = ntuple_SV::vertexDxy(svb, pv).value();
+    float aerr = ntuple_SV::vertexDxy(sva, pv).error();
+    float berr = ntuple_SV::vertexDxy(svb, pv).error();
+
+    float asig = ntuple_SV::catchInfs(adxy / aerr, 0.0);
+    float bsig = ntuple_SV::catchInfs(bdxy / berr, 0.0);
+
+    return bsig < asig;
+}
 
 
 Measurement1D ntuple_SV::vertexDxy(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv) {
@@ -446,4 +467,46 @@ float ntuple_SV::vertexDdotP(const reco::VertexCompositePtrCandidate& sv, const 
     reco::Candidate::Vector p = sv.momentum();
     reco::Candidate::Vector d(sv.vx() - pv.x(), sv.vy() - pv.y(), sv.vz() - pv.z());
     return p.Unit().Dot(d.Unit());
+}
+
+
+bool ntuple_SV::compareVtxEta(TrackingVertex& gva, TrackingVertex& gvb) {
+
+    return gva.position().Eta() > gvb.position().Eta();
+}
+
+
+int ntuple_SV::findPFCandIdx(const pat::PackedCandidate& trk, const pat::PackedCandidateCollection& pcands) {
+
+    int nmatches = 0;
+    int matchIdx = 0;
+    for (unsigned int trkIdx = 0; trkIdx < pcands.size(); trkIdx++) {
+        if (&trk == &pcands.at(trkIdx)) {
+            matchIdx = trkIdx;
+            nmatches += 1;
+        }
+    }
+    if (nmatches != 1) {
+        // std::cout << "ntuple_SV.cc: 0 or more than one PF Candidate match found! Returning -1." << std::endl;
+        return -1;
+    }
+    return matchIdx;
+}
+
+
+int ntuple_SV::findLostTrackIdx(const pat::PackedCandidate& trk, const pat::PackedCandidateCollection& lts) {
+
+    int nmatches = 0;
+    int matchIdx = 0;
+    for (unsigned int trkIdx = 0; trkIdx < lts.size(); trkIdx++) {
+        if (&trk == &lts.at(trkIdx)) {
+            matchIdx = trkIdx;
+            nmatches += 1;
+        }
+    }
+    if (nmatches != 1) {
+        // std::cout << "ntuple_SV.cc: 0 or more than one Lost Track match found! Returning -1." << std::endl;
+        return -1;
+    }
+    return matchIdx;
 }

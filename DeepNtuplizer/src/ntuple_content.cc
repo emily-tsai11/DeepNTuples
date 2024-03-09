@@ -26,14 +26,14 @@ const reco::VertexCollection* ntuple_content::vertices() const {
 const std::vector<reco::VertexCompositePtrCandidate>* ntuple_content::secVertices() const {
 
     if (secvertices_) return secvertices_;
-    throw std::runtime_error("ntuple_content: secvertices_ not assigned");
+    throw std::runtime_error("ntuple_content: secvertices not assigned");
 }
 
 
 const TrackingVertexCollection* ntuple_content::genVertices() const {
 
     if (genvertices_) return genvertices_;
-    throw std::runtime_error("ntuple_content: genvertices_ not assigned");
+    throw std::runtime_error("ntuple_content: genvertices not assigned");
 }
 
 

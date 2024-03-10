@@ -236,6 +236,7 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
     reco::VertexCompositePtrCandidateCollection cpvtx = *secVertices();
 
     spvp_ = &vertices()->at(0);
+    std::sort(cpvtx.begin(), cpvtx.end(), ntuple_SV::compareDxyDxyErr);
 
     SVTrackInfoBuilder trackinfo(builder_);
 
@@ -308,12 +309,15 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
 
                 int pfCandMatchIdx = findPFCandIdx(*PackedCandidate_, pfCands);
                 int ltMatchIdx = findLostTrackIdx(*PackedCandidate_, lostTracks);
+                float pfCandMatchCount = 0.0;
+                float lostTrackMatchCount = 0.0;
                 if (pfCandMatchIdx >= 0) {
                     pat::PackedCandidateRef tempTrkRef = pat::PackedCandidateRef(pf_cand_, (unsigned int) pfCandMatchIdx);
                     reco::GenParticleRef trkTruthRef = PFCandMCTruth[tempTrkRef];
                     if (trkTruthRef.isNonnull()) {
                         // std::cout << "matched pf candidate" << std::endl;
                         // std::cout << "pt: " << tempTrkRef->pt() << ", " << trkTruthRef->pt() << std::endl;
+                        pfCandMatchCount++;
                     }
                     else {
                         // std::cout << "no matched pf candidates found" << std::endl;
@@ -325,6 +329,7 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
                     if (trkTruthRef.isNonnull()) {
                         std::cout << "matched lost track" << std::endl;
                         std::cout << "pt: " << tempTrkRef->pt() << ", " << trkTruthRef->pt() << std::endl;
+                        lostTrackMatchCount++;
                     }
                     else {
                         // std::cout << "no matched lost tracks found" << std::endl;
@@ -427,21 +432,6 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
 // Helpers functions
 
 
-bool ntuple_SV::compareDxyDxyErr(const reco::VertexCompositePtrCandidate& sva, const reco::VertexCompositePtrCandidate& svb) {
-
-    reco::Vertex pv = *spvp_;
-    float adxy = ntuple_SV::vertexDxy(sva, pv).value();
-    float bdxy = ntuple_SV::vertexDxy(svb, pv).value();
-    float aerr = ntuple_SV::vertexDxy(sva, pv).error();
-    float berr = ntuple_SV::vertexDxy(svb, pv).error();
-
-    float asig = ntuple_SV::catchInfs(adxy / aerr, 0.0);
-    float bsig = ntuple_SV::catchInfs(bdxy / berr, 0.0);
-
-    return bsig < asig;
-}
-
-
 Measurement1D ntuple_SV::vertexDxy(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv) {
 
     VertexDistanceXY dist;
@@ -462,17 +452,26 @@ Measurement1D ntuple_SV::vertexD3d(const reco::VertexCompositePtrCandidate& svca
 }
 
 
+bool ntuple_SV::compareDxyDxyErr(const reco::VertexCompositePtrCandidate& sva, const reco::VertexCompositePtrCandidate& svb) {
+
+    reco::Vertex pv = *spvp_;
+    float adxy = ntuple_SV::vertexDxy(sva, pv).value();
+    float bdxy = ntuple_SV::vertexDxy(svb, pv).value();
+    float aerr = ntuple_SV::vertexDxy(sva, pv).error();
+    float berr = ntuple_SV::vertexDxy(svb, pv).error();
+
+    float asig = ntuple_SV::catchInfs(adxy / aerr, 0.0);
+    float bsig = ntuple_SV::catchInfs(bdxy / berr, 0.0);
+
+    return bsig < asig;
+}
+
+
 float ntuple_SV::vertexDdotP(const reco::VertexCompositePtrCandidate& sv, const reco::Vertex& pv) {
 
     reco::Candidate::Vector p = sv.momentum();
     reco::Candidate::Vector d(sv.vx() - pv.x(), sv.vy() - pv.y(), sv.vz() - pv.z());
     return p.Unit().Dot(d.Unit());
-}
-
-
-bool ntuple_SV::compareVtxEta(TrackingVertex& gva, TrackingVertex& gvb) {
-
-    return gva.position().Eta() > gvb.position().Eta();
 }
 
 

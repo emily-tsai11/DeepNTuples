@@ -82,8 +82,10 @@ class ntuple_SV : public ntuple_content {
         float sv_deltaR_[max_sv];
         float sv_mass_[max_sv];
         // float sv_phirel_[max_sv];
-        // float sv_etarel_[max_sv];
+        // float sv_etarel_[max_sv];e
         float sv_ntracks_[max_sv];
+        float sv_nMatchPFCand[max_sv];
+        float sv_nMatchLostTrk[max_sv];
         float sv_chi2_[max_sv];
         float sv_ndf_[max_sv];
         float sv_normchi2_[max_sv];
@@ -109,11 +111,10 @@ class ntuple_SV : public ntuple_content {
         static const reco::Vertex* spvp_;
 
         // Helper functions
-        static bool compareDxyDxyErr(const reco::VertexCompositePtrCandidate& sva, const reco::VertexCompositePtrCandidate& svb);
         static Measurement1D vertexDxy(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv);
         static Measurement1D vertexD3d(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv);
         static float vertexDdotP(const reco::VertexCompositePtrCandidate& sv, const reco::Vertex& pv);
-        static bool compareVtxEta(TrackingVertex& gva, TrackingVertex& gvb);
+        static bool compareDxyDxyErr(const reco::VertexCompositePtrCandidate& sva, const reco::VertexCompositePtrCandidate& svb);
         int findPFCandIdx(const pat::PackedCandidate& trk, const pat::PackedCandidateCollection& pcands);
         int findLostTrackIdx(const pat::PackedCandidate& trk, const pat::PackedCandidateCollection& lts);
 };

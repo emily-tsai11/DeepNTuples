@@ -122,7 +122,7 @@ template <class T>
 void ntuple_content::addBranch(TTree* t, const char* name, T* address, const char* leaflist) {
 
     if (read_) {
-        t->SetBranchAddress(name,address);
+        t->SetBranchAddress(name, address);
     }
     else {
         if (leaflist)

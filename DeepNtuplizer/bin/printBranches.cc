@@ -1,13 +1,13 @@
-//getListOfBranches
-
 #include "../interface/ntuple_JetInfo.h"
 #include "../interface/ntuple_SV.h"
 #include "../interface/ntuple_bTagVars.h"
 #include "../interface/ntuple_pfCands.h"
 #include "../interface/ntuple_FatJetInfo.h"
 #include "../interface/ntuple_DeepVertex.h"
-#include "TFile.h"
+
 #include <vector>
+
+#include "TFile.h"
 #include "TH1F.h"
 #include "TPad.h"
 #include "TCanvas.h"
@@ -23,8 +23,8 @@ int main(int argc, char *argv[]) {
     branchinfos.push_back(new ntuple_SV());
     branchinfos.push_back(new ntuple_bTagVars());
     branchinfos.push_back(new ntuple_pfCands());
-  //  branchinfos.push_back(new ntuple_FatJetInfo());
-  //  branchinfos.push_back(new ntuple_DeepVertex());
+    // branchinfos.push_back(new ntuple_FatJetInfo());
+    // branchinfos.push_back(new ntuple_DeepVertex());
 
     if (argc < 3)
         return -1;
@@ -45,28 +45,24 @@ int main(int argc, char *argv[]) {
         allbranches.insert(allbranches.end(), tb.begin(), tb.end());
     }
 
-
-
     for (const auto& b : allbranches) {
-        std::vector<TH1F *> hists;
+        std::vector<TH1F*> hists;
 
-        TFile * outtfile= new TFile(outdir + "/" + b + ".root","RECREATE");
+        TFile * outtfile = new TFile(outdir + "/" + b + ".root", "RECREATE");
 
         TCanvas cv;
+
         t->SetLineColor(kBlack);
         t->Draw(b + ">>" + b + "ALL", "", "normalized");
         hists.push_back((TH1F*) gROOT->FindObject(b + "ALL"));
 
-
         t->SetLineColor(kRed);
-        t->Draw(b + ">>" + b + "B", "isB+isBB+isGBB+isLeptonicB+isLeptonicB_C",
-                "same,normalized");
+        t->Draw(b + ">>" + b + "B", "isB+isBB+isGBB+isLeptonicB+isLeptonicB_C", "same,normalized");
         hists.push_back((TH1F*) gROOT->FindObject(b + "B"));
-
 
         t->SetLineColor(kGreen);
         t->Draw(b + ">>" + b + "C", "isC+isCC+isGCC", "same,normalized");
-        hists.push_back( (TH1F*) gROOT->FindObject(b + "C"));
+        hists.push_back((TH1F*) gROOT->FindObject(b + "C"));
 
         t->SetLineColor(kBlue);
         t->Draw(b + ">>" + b + "L", "isUD+isS", "same,normalized");
@@ -74,31 +70,30 @@ int main(int argc, char *argv[]) {
 
         t->SetLineColor(kMagenta);
         t->Draw(b + ">>" + b + "G", "isG", "same,normalized");
-        hists.push_back( (TH1F*) gROOT->FindObject(b + "G"));
+        hists.push_back((TH1F*) gROOT->FindObject(b + "G"));
 
         cv.Clear();
         gStyle->SetOptStat(0);
         cv.SetLeftMargin(0.15);
         cv.SetBottomMargin(0.15);
 
-        float max=-1e10;
-        float min=1e10;
-        for(size_t i=0;i<hists.size();i++){
-            if(i==0)
+        float max = -1e10;
+        float min = 1e10;
+        for (size_t i = 0; i < hists.size(); i++) {
+            if (i == 0)
                 hists.at(i)->Draw("hist");
             else
                 hists.at(i)->Draw("hist,same");
-            float thismax=hists.at(i)->GetMaximum();
-            float thismin=hists.at(i)->GetMinimum();
-            if(thismin<min)min=thismin;
-            if(thismax>max)max=thismax;
+            float thismax = hists.at(i)->GetMaximum();
+            float thismin = hists.at(i)->GetMinimum();
+            if (thismin < min) min = thismin;
+            if (thismax > max) max = thismax;
         }
-        max*=1.2;
+        max *= 1.2;
 
-        hists.at(0)->GetYaxis()->SetRangeUser(min,max);
+        hists.at(0)->GetYaxis()->SetRangeUser(min, max);
 
-        cv.BuildLegend(0.72,0.6,0.9,0.87);
-
+        cv.BuildLegend(0.72, 0.6, 0.9, 0.87);
 
         cv.Write();
         cv.Print(outdir + "/" + b + ".pdf");
@@ -107,9 +102,7 @@ int main(int argc, char *argv[]) {
             h->Write();
 
         outtfile->Close();
-
     }
 
     return 0;
-
 }

@@ -180,6 +180,9 @@ void ntuple_SV::initBranches(TTree* tree) {
     addBranch(tree, (prefix_ + "sv_deltaR").c_str(), &sv_deltaR_, (prefix_ + "sv_deltaR_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_mass").c_str(), &sv_mass_, (prefix_ + "sv_mass_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_ntracks").c_str(), &sv_ntracks_, (prefix_ + "sv_ntracks_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "sv_nMatchPFCand").c_str(), &sv_nMatchPFCand_, (prefix_ + "sv_nMatchPFCand_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "sv_nMatchLostTrk").c_str(), &sv_nMatchLostTrk_, (prefix_ + "sv_nMatchLostTrk_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "sv_nUnmatchedTrk").c_str(), &sv_nUnmatchedTrk_, (prefix_ + "sv_nUnmatchedTrk_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_chi2").c_str(), &sv_chi2_, (prefix_ + "sv_chi2_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_ndf").c_str(), &sv_ndf_, (prefix_ + "sv_ndf_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_normchi2").c_str(), &sv_normchi2_, (prefix_ + "sv_normchi2_[" + prefix_ + "sv_num_]/F").c_str());
@@ -201,6 +204,16 @@ void ntuple_SV::initBranches(TTree* tree) {
     addBranch(tree, (prefix_ + "sv_puppiw").c_str(), &sv_puppiw_, (prefix_ + "sv_puppiw_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_charge_sum").c_str(), &sv_charge_sum_, (prefix_ + "sv_charge_sum_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_time").c_str(), &sv_time_, (prefix_ + "sv_time_[" + prefix_ + "sv_num_]/F").c_str());
+
+    addBranch(tree, (prefix_ + "svReco_pt").c_str(), &svReco_pt_);
+    addBranch(tree, (prefix_ + "svReco_eta").c_str(), &svReco_eta_);
+    addBranch(tree, (prefix_ + "svReco_phi").c_str(), &svReco_phi_);
+
+    // addBranch(tree, (prefix_ + "svReco_pt").c_str(), &svReco_pt_);
+    // addBranch(tree, (prefix_ + "svReco_eta").c_str(), &svReco_eta_);
+    // addBranch(tree, (prefix_ + "svReco_phi").c_str(), &svReco_phi_);
+
+    // add2DBranch(tree, (prefix_ + "sv_ptGenVsPtReco").c_str(), &sv_ptGenVsPtReco_, (prefix_ + "sv_ptGenVsPtReco_[" + prefix_ + "sv_num_]/F").c_str());
 }
 
 
@@ -267,10 +280,25 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
 
     // std::cout << " NTuple jet   pt eta phi " << jet.pt() << " " << jet.eta() << " " << jet.phi() << "   nSV " << nSV << std::endl;
 
+    for (unsigned int isv = 0; isv < max_sv; isv++) {
+        svReco_pt_[isv].clear();
+        svReco_eta_[isv].clear();
+        svReco_phi_[isv].clear();
+    }
+
     for (const reco::VertexCompositePtrCandidate& sv : cpvtx) {
         if (reco::deltaR(sv, jet) > jet_radius) continue;
 
         if ((int) max_sv > sv_num_) { // limit number of SVs
+            std::cout << "new vertex ---------------------------------------------------------" << std::endl;
+            svReco_pt_[sv_num_].push_back(sv.pt());
+            svReco_eta_[sv_num_].push_back(sv.eta());
+            svReco_phi_[sv_num_].push_back(sv.phi());
+
+            // svReco_pt_[sv_num_] = sv.pt();
+            // svReco_eta_[sv_num_] = sv.eta();
+            // svReco_phi_[sv_num_] = sv.phi();
+
             sv_pt_[sv_num_] = sv.pt();
             sv_eta_[sv_num_] = sv.eta();
             sv_phi_[sv_num_] = sv.phi();
@@ -304,19 +332,27 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
             float pfd2dsig = 0.0;
             float pfcount = 0.0;
 
+            float pfCandMatchCount = 0.0;
+            float lostTrackMatchCount = 0.0;
             for (unsigned idx = 0; idx < sv.numberOfDaughters(); ++idx) {
                 const pat::PackedCandidate* PackedCandidate_ = dynamic_cast<const pat::PackedCandidate*>(sv.daughter(idx));
 
                 int pfCandMatchIdx = findPFCandIdx(*PackedCandidate_, pfCands);
                 int ltMatchIdx = findLostTrackIdx(*PackedCandidate_, lostTracks);
-                float pfCandMatchCount = 0.0;
-                float lostTrackMatchCount = 0.0;
                 if (pfCandMatchIdx >= 0) {
                     pat::PackedCandidateRef tempTrkRef = pat::PackedCandidateRef(pf_cand_, (unsigned int) pfCandMatchIdx);
                     reco::GenParticleRef trkTruthRef = PFCandMCTruth[tempTrkRef];
                     if (trkTruthRef.isNonnull()) {
                         // std::cout << "matched pf candidate" << std::endl;
                         // std::cout << "pt: " << tempTrkRef->pt() << ", " << trkTruthRef->pt() << std::endl;
+                        std::cout << "number of mothers = " << trkTruthRef->numberOfMothers() << std::endl;
+                        if (trkTruthRef->numberOfMothers() == 1) {
+                            const reco::Candidate* truthMother = trkTruthRef->mother();
+                            std::cout << "mother pt = " << truthMother->pt() << std::endl;
+                        }
+                        else {
+                            std::cout << "wrong number of mothers!!" << std::endl;
+                        }
                         pfCandMatchCount++;
                     }
                     else {
@@ -353,6 +389,10 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
                     pfcount = pfcount + 1.0;
                 }
             }
+
+            sv_nMatchPFCand_[sv_num_] = pfCandMatchCount;
+            sv_nMatchLostTrk_[sv_num_] = lostTrackMatchCount;
+            sv_nUnmatchedTrk_[sv_num_] = sv.numberOfDaughters() - (pfCandMatchCount + lostTrackMatchCount);
 
             sv_calo_frac_[sv_num_] = calo_frac / sv.numberOfDaughters();
             sv_hcal_frac_[sv_num_] = hcal_frac / sv.numberOfDaughters();
@@ -426,6 +466,14 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
     nsv_ = sv_num_;
 
     return true;
+}
+
+
+bool ntuple_SV::fillBranches() {
+
+    const edm::View<pat::Jet> jetCollection = *jets();
+
+    return false;
 }
 
 

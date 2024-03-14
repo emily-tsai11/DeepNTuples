@@ -17,7 +17,7 @@
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
-#include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
+// #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
 
 #include "TrackingTools/IPTools/interface/IPTools.h"
 #if defined( __GXX_EXPERIMENTAL_CXX0X__)
@@ -49,8 +49,8 @@
 #include "TLorentzVector.h"
 
 
-struct MagneticField;
-const reco::TrackBaseRef toTrackRef(const reco::PFCandidate* pfcand);
+// struct MagneticField;
+// const reco::TrackBaseRef toTrackRef(const reco::PFCandidate* pfcand);
 
 class DeepNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
 
@@ -73,7 +73,7 @@ class DeepNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
         // Member data
         edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
         edm::EDGetTokenT<reco::VertexCompositePtrCandidateCollection> svToken_;
-        edm::EDGetTokenT<TrackingVertexCollection> gvToken_;
+        // edm::EDGetTokenT<TrackingVertexCollection> gvToken_;
         edm::EDGetTokenT<edm::View<pat::Jet>> jetToken_;
         edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puToken_;
         edm::EDGetTokenT<edm::View<reco::BaseTagInfo>> pixHitsToken_;
@@ -108,7 +108,7 @@ class DeepNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
 DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
     vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
     svToken_(consumes<reco::VertexCompositePtrCandidateCollection>(iConfig.getParameter<edm::InputTag>("secVertices"))),
-    gvToken_(consumes<TrackingVertexCollection>(iConfig.getParameter<edm::InputTag>("genVertices"))),
+    // gvToken_(consumes<TrackingVertexCollection>(iConfig.getParameter<edm::InputTag>("genVertices"))),
     jetToken_(consumes<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jets"))),
     puToken_(consumes<std::vector<PileupSummaryInfo >>(iConfig.getParameter<edm::InputTag>("pupInfo"))),
     pixHitsToken_(consumes< edm::View<reco::BaseTagInfo> > (iConfig.getParameter<edm::InputTag>("pixelhit"))),
@@ -196,7 +196,7 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
     }
 
     // Initialize modules and parse input parameters (if any)
-    for(auto& m : modules_)
+    for (auto& m : modules_)
         m->getInput(iConfig);
 }
 
@@ -204,7 +204,7 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
 DeepNtuplizer::~DeepNtuplizer() {
 
     return;
-    for(auto& m : modules_)
+    for (auto& m : modules_)
         delete m;
 }
 
@@ -221,8 +221,8 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     edm::Handle<std::vector<reco::VertexCompositePtrCandidate>> secvertices;
     iEvent.getByToken(svToken_, secvertices);
 
-    edm::Handle<TrackingVertexCollection> genvertices;
-    iEvent.getByToken(gvToken_, genvertices);
+    // edm::Handle<TrackingVertexCollection> genvertices;
+    // iEvent.getByToken(gvToken_, genvertices);
 
     edm::Handle<std::vector<PileupSummaryInfo>> pupInfo;
     iEvent.getByToken(puToken_, pupInfo);
@@ -236,10 +236,11 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     edm::Handle<edm::View<reco::BaseTagInfo>> pixHits;
     iEvent.getByToken(pixHitsToken_, pixHits);
 
-    for(auto& m : modules_) {
+    for (auto& m : modules_) {
         m->setPrimaryVertices(vertices.product());
         m->setSecVertices(secvertices.product());
-        m->setGenVertices(genvertices.product());
+        // m->setGenVertices(genvertices.product());
+        m->setJets(jets.product());
         m->setPuInfo(pupInfo.product());
         m->setRhoInfo(rhoInfo.product());
         m->readSetup(iSetup);
@@ -252,10 +253,10 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     // }
 
     std::vector<size_t> indices(jets->size());
-    for(size_t i = 0; i < jets->size(); i++)
+    for (size_t i = 0; i < jets->size(); i++)
         indices.at(i) = i;
 
-    if(applySelection_)
+    if (applySelection_)
         std::random_shuffle(indices.begin(), indices.end());
  
     edm::View<pat::Jet>::const_iterator jetIter;
@@ -320,33 +321,41 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         size_t idx = 0;
         for (auto& m : modules_) {
             // std::cout << module_names_[idx] << std::endl;
-            // if(!m->fillBranches(jet, jetidx, jets.product())) {
-            if(!m->fillBranches(jet, jetidx, jets.product(), event_time)) {
+            // if (module_names_[idx] == "SVNtuple") writejet = false;
+            // if (!m->fillBranches(jet, jetidx, jets.product())) {
+            if (!m->fillBranches(jet, jetidx, jets.product(), event_time)) {
                 writejet = false;
                 if (applySelection_) break;
             }
             idx++;
         }
 
-        if((writejet && applySelection_) || !applySelection_) {
+        if ((writejet && applySelection_) || !applySelection_) {
             tree_->Fill();
             njetsselected_++;
         }
 
         njet++;
     } // End of looping over the jets
+
+    size_t index = 0;
+    for (auto& m : modules_) {
+        if (module_names_[index] == "SVNtuple")
+            m->fillBranches();
+        index++;
+    }
 }
 
 
 // Method called once each job just before starting event loop
 void DeepNtuplizer::beginJob() {
 
-    if(!fs)
+    if (!fs)
         throw edm::Exception(edm::errors::Configuration, "TFile Service is not registered in cfg file");
+
     tree_ = (fs->make<TTree>("tree", "tree"));
     tree_->Branch("Event_time", &event_time_, "Event_time/F");
-
-    for(auto& m : modules_)
+    for (auto& m : modules_)
         m->initBranches(tree_);
 
     njetstotal_ = 0;
@@ -377,15 +386,15 @@ void DeepNtuplizer::fillDescriptions(edm::ConfigurationDescriptions& description
 
 
 // TODO: Comment
-const reco::TrackBaseRef toTrackRef(const reco::PFCandidate* pfcand) {
+// const reco::TrackBaseRef toTrackRef(const reco::PFCandidate* pfcand) {
 
-    if ((std::abs(pfcand->pdgId()) == 11 || pfcand->pdgId() == 22) && pfcand->gsfTrackRef().isNonnull() && pfcand->gsfTrackRef().isAvailable())
-        return reco::TrackBaseRef(pfcand->gsfTrackRef());
-    else if (pfcand->trackRef().isNonnull() && pfcand->trackRef().isAvailable())
-        return reco::TrackBaseRef(pfcand->trackRef());
-    else
-        return reco::TrackBaseRef();
-}
+//     if ((std::abs(pfcand->pdgId()) == 11 || pfcand->pdgId() == 22) && pfcand->gsfTrackRef().isNonnull() && pfcand->gsfTrackRef().isAvailable())
+//         return reco::TrackBaseRef(pfcand->gsfTrackRef());
+//     else if (pfcand->trackRef().isNonnull() && pfcand->trackRef().isAvailable())
+//         return reco::TrackBaseRef(pfcand->trackRef());
+//     else
+//         return reco::TrackBaseRef();
+// }
 
 
 // Define this as a plug-in

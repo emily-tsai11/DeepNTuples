@@ -32,6 +32,7 @@ public:
 
 //$$    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0);
     bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0, float EventTime = -1);
+    bool fillBranches() { return false; }
 
     void setAxis2Token(edm::EDGetTokenT<edm::ValueMap<float> > axis2Token) {
         axis2Token_ = axis2Token;

@@ -3,7 +3,7 @@ import FWCore.ParameterSet.Config as cms
 deepntuplizer = cms.EDAnalyzer("DeepNtuplizer",
     vertices             = cms.InputTag("offlineSlimmedPrimaryVertices"),
     secVertices          = cms.InputTag("slimmedSecondaryVertices"),
-    genVertices          = cms.InputTag("mix", "MergedTrackTruth"),
+    # genVertices          = cms.InputTag("mix", "MergedTrackTruth"),
     jets                 = cms.InputTag("slimmedJets"),
     pixelhit             = cms.InputTag("slimmedJets", "tagInfos", "PAT"),
     jetR                 = cms.double(0.4),

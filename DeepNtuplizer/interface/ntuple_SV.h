@@ -15,6 +15,8 @@
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 
+// #include "TROOT.h"
+// gROOT->ProcessLine("#include <vector>");
 
 class ntuple_SV : public ntuple_content {
 
@@ -31,6 +33,7 @@ class ntuple_SV : public ntuple_content {
         // Use either of these functions
         // bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0);
         bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0, float EventTime = -1);
+        bool fillBranches();
 
         void setTrackBuilderToken(const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord>& track_builder_token) {
             track_builder_token_ = track_builder_token;
@@ -84,8 +87,9 @@ class ntuple_SV : public ntuple_content {
         // float sv_phirel_[max_sv];
         // float sv_etarel_[max_sv];e
         float sv_ntracks_[max_sv];
-        float sv_nMatchPFCand[max_sv];
-        float sv_nMatchLostTrk[max_sv];
+        float sv_nMatchPFCand_[max_sv];
+        float sv_nMatchLostTrk_[max_sv];
+        float sv_nUnmatchedTrk_[max_sv];
         float sv_chi2_[max_sv];
         float sv_ndf_[max_sv];
         float sv_normchi2_[max_sv];
@@ -107,6 +111,14 @@ class ntuple_SV : public ntuple_content {
         float sv_puppiw_[max_sv];
         float sv_charge_sum_[max_sv];
         float sv_time_[max_sv];
+
+        std::vector<Float_t> svReco_pt_[max_sv];
+        std::vector<Float_t> svReco_eta_[max_sv];
+        std::vector<Float_t> svReco_phi_[max_sv];
+
+        // float svReco_pt_[max_sv];
+        // float svReco_eta_[max_sv];
+        // float svReco_phi_[max_sv];
 
         static const reco::Vertex* spvp_;
 

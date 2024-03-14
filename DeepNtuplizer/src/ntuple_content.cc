@@ -30,10 +30,16 @@ const std::vector<reco::VertexCompositePtrCandidate>* ntuple_content::secVertice
 }
 
 
-const TrackingVertexCollection* ntuple_content::genVertices() const {
+// const TrackingVertexCollection* ntuple_content::genVertices() const {
 
-    if (genvertices_) return genvertices_;
-    throw std::runtime_error("ntuple_content: genvertices not assigned");
+//     if (genvertices_) return genvertices_;
+//     throw std::runtime_error("ntuple_content: genvertices not assigned");
+// }
+
+
+const edm::View<pat::Jet>* ntuple_content::jets() const {
+
+    return jets_;
 }
 
 

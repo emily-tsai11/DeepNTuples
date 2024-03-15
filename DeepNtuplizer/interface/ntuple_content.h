@@ -44,6 +44,7 @@ class ntuple_content {
         virtual void initBranches(TTree*) = 0;
         virtual void readEvent(const edm::Event& iEvent) = 0;
         virtual void readSetup(const edm::EventSetup& iSetup) {}
+        virtual void deleteContainers() = 0;
 
         // Use either of these functions
         // virtual bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0) = 0;
@@ -110,7 +111,7 @@ class ntuple_content {
         }
 
         static inline float catchInfsAndBound(const float& in, const float& replace_value,
-            const float& lowerbound, const float& upperbound, const float offset = 0) {
+                const float& lowerbound, const float& upperbound, const float offset = 0) {
 
             float withoutinfs = catchInfs(in, replace_value);
             if (withoutinfs + offset < lowerbound) return lowerbound;

@@ -15,8 +15,6 @@
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 
-// #include "TROOT.h"
-// gROOT->ProcessLine("#include <vector>");
 
 class ntuple_SV : public ntuple_content {
 
@@ -29,6 +27,7 @@ class ntuple_SV : public ntuple_content {
         void initBranches(TTree*);
         void readEvent(const edm::Event& iEvent);
         void readSetup(const edm::EventSetup& iSetup);
+        void deleteContainers();
 
         // Use either of these functions
         // bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0);
@@ -112,13 +111,8 @@ class ntuple_SV : public ntuple_content {
         float sv_charge_sum_[max_sv];
         float sv_time_[max_sv];
 
-        std::vector<Float_t> svReco_pt_[max_sv];
-        std::vector<Float_t> svReco_eta_[max_sv];
-        std::vector<Float_t> svReco_phi_[max_sv];
-
-        // float svReco_pt_[max_sv];
-        // float svReco_eta_[max_sv];
-        // float svReco_phi_[max_sv];
+        std::vector<int>* sv_jetIdx_; // The index of the jet (that the SV at sv_matchJetIdx_[i] is matched to)
+        std::vector<int>* sv_matchJetIdx_; // The index of the SV (that is matched to the corresponding jet in sv_jetIdx_)
 
         static const reco::Vertex* spvp_;
 

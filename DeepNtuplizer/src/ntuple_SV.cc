@@ -175,14 +175,14 @@ void ntuple_SV::initBranches(TTree* tree) {
     addBranch(tree, (prefix_ + "sv_eta").c_str(), &sv_eta_, (prefix_ + "sv_eta_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_phi").c_str(), &sv_phi_, (prefix_ + "sv_phi_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_e").c_str(), &sv_e_, (prefix_ + "sv_e_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_etarel").c_str(), &sv_etarel_, (prefix_ + "sv_etarel_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_phirel").c_str(), &sv_phirel_, (prefix_ + "sv_phirel_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_deltaR").c_str(), &sv_deltaR_, (prefix_ + "sv_deltaR_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_etarel").c_str(), &sv_etarel_, (prefix_ + "sv_etarel_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_phirel").c_str(), &sv_phirel_, (prefix_ + "sv_phirel_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_deltaR").c_str(), &sv_deltaR_, (prefix_ + "sv_deltaR_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_mass").c_str(), &sv_mass_, (prefix_ + "sv_mass_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_ntracks").c_str(), &sv_ntracks_, (prefix_ + "sv_ntracks_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_nMatchPFCand").c_str(), &sv_nMatchPFCand_, (prefix_ + "sv_nMatchPFCand_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_nMatchLostTrk").c_str(), &sv_nMatchLostTrk_, (prefix_ + "sv_nMatchLostTrk_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_nUnmatchedTrk").c_str(), &sv_nUnmatchedTrk_, (prefix_ + "sv_nUnmatchedTrk_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_nMatchPFCand").c_str(), &sv_nMatchPFCand_, (prefix_ + "sv_nMatchPFCand_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_nMatchLostTrk").c_str(), &sv_nMatchLostTrk_, (prefix_ + "sv_nMatchLostTrk_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_nUnmatchedTrk").c_str(), &sv_nUnmatchedTrk_, (prefix_ + "sv_nUnmatchedTrk_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_chi2").c_str(), &sv_chi2_, (prefix_ + "sv_chi2_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_ndf").c_str(), &sv_ndf_, (prefix_ + "sv_ndf_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_normchi2").c_str(), &sv_normchi2_, (prefix_ + "sv_normchi2_[" + prefix_ + "sv_num_]/F").c_str());
@@ -193,25 +193,21 @@ void ntuple_SV::initBranches(TTree* tree) {
     addBranch(tree, (prefix_ + "sv_d3derr").c_str(), &sv_d3derr_, (prefix_ + "sv_d3err_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_d3dsig").c_str(), &sv_d3dsig_, (prefix_ + "sv_d3dsig_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_costhetasvpv").c_str(), &sv_costhetasvpv_, (prefix_ + "sv_costhetasvpv_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_enratio").c_str(), &sv_enratio_, (prefix_ + "sv_enratio_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_hcal_frac").c_str(), &sv_hcal_frac_, (prefix_ + "sv_hcal_frac_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_calo_frac").c_str(), &sv_calo_frac_, (prefix_ + "sv_calo_frac_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_dz").c_str(), &sv_dz_, (prefix_ + "sv_dz_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_pfd2dval").c_str(), &sv_pfd2dval_, (prefix_ + "sv_pfd2dval_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_pfd2dsig").c_str(), &sv_pfd2dsig_, (prefix_ + "sv_pfd2dsig_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_pfd3dval").c_str(), &sv_pfd3dval_, (prefix_ + "sv_pfd3dval_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_pfd3dsig").c_str(), &sv_pfd3dsig_, (prefix_ + "sv_pfd3dsig_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_puppiw").c_str(), &sv_puppiw_, (prefix_ + "sv_puppiw_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_charge_sum").c_str(), &sv_charge_sum_, (prefix_ + "sv_charge_sum_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_time").c_str(), &sv_time_, (prefix_ + "sv_time_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_enratio").c_str(), &sv_enratio_, (prefix_ + "sv_enratio_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_hcal_frac").c_str(), &sv_hcal_frac_, (prefix_ + "sv_hcal_frac_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_calo_frac").c_str(), &sv_calo_frac_, (prefix_ + "sv_calo_frac_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_dz").c_str(), &sv_dz_, (prefix_ + "sv_dz_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_pfd2dval").c_str(), &sv_pfd2dval_, (prefix_ + "sv_pfd2dval_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_pfd2dsig").c_str(), &sv_pfd2dsig_, (prefix_ + "sv_pfd2dsig_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_pfd3dval").c_str(), &sv_pfd3dval_, (prefix_ + "sv_pfd3dval_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_pfd3dsig").c_str(), &sv_pfd3dsig_, (prefix_ + "sv_pfd3dsig_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_puppiw").c_str(), &sv_puppiw_, (prefix_ + "sv_puppiw_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_charge_sum").c_str(), &sv_charge_sum_, (prefix_ + "sv_charge_sum_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_time").c_str(), &sv_time_, (prefix_ + "sv_time_[" + prefix_ + "sv_num_]/F").c_str());
 
-    addBranch(tree, (prefix_ + "svReco_pt").c_str(), &svReco_pt_);
-    addBranch(tree, (prefix_ + "svReco_eta").c_str(), &svReco_eta_);
-    addBranch(tree, (prefix_ + "svReco_phi").c_str(), &svReco_phi_);
-
-    // addBranch(tree, (prefix_ + "svReco_pt").c_str(), &svReco_pt_);
-    // addBranch(tree, (prefix_ + "svReco_eta").c_str(), &svReco_eta_);
-    // addBranch(tree, (prefix_ + "svReco_phi").c_str(), &svReco_phi_);
+    // No leaf type exists for STL containers
+    tree->Branch((prefix_ + "sv_jetIdx").c_str(), &sv_jetIdx_);
+    tree->Branch((prefix_ + "sv_matchJetIdx").c_str(), &sv_matchJetIdx_);
 
     // add2DBranch(tree, (prefix_ + "sv_ptGenVsPtReco").c_str(), &sv_ptGenVsPtReco_, (prefix_ + "sv_ptGenVsPtReco_[" + prefix_ + "sv_num_]/F").c_str());
 }
@@ -229,6 +225,16 @@ void ntuple_SV::readEvent(const edm::Event& iEvent) {
     iEvent.getByToken(lost_tracks_token_, lost_tracks_);
     iEvent.getByToken(pf_mcmatch_token_, pf_mcmatch_);
     iEvent.getByToken(lt_mcmatch_token_, lt_mcmatch_);
+
+    sv_jetIdx_ = new std::vector<int>;
+    sv_matchJetIdx_ = new std::vector<int>;
+}
+
+
+void ntuple_SV::deleteContainers() {
+
+    delete sv_jetIdx_;
+    delete sv_matchJetIdx_;
 }
 
 
@@ -280,45 +286,31 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
 
     // std::cout << " NTuple jet   pt eta phi " << jet.pt() << " " << jet.eta() << " " << jet.phi() << "   nSV " << nSV << std::endl;
 
-    for (unsigned int isv = 0; isv < max_sv; isv++) {
-        svReco_pt_[isv].clear();
-        svReco_eta_[isv].clear();
-        svReco_phi_[isv].clear();
-    }
-
     for (const reco::VertexCompositePtrCandidate& sv : cpvtx) {
         if (reco::deltaR(sv, jet) > jet_radius) continue;
 
         if ((int) max_sv > sv_num_) { // limit number of SVs
             std::cout << "new vertex ---------------------------------------------------------" << std::endl;
-            svReco_pt_[sv_num_].push_back(sv.pt());
-            svReco_eta_[sv_num_].push_back(sv.eta());
-            svReco_phi_[sv_num_].push_back(sv.phi());
-
-            // svReco_pt_[sv_num_] = sv.pt();
-            // svReco_eta_[sv_num_] = sv.eta();
-            // svReco_phi_[sv_num_] = sv.phi();
-
-            sv_pt_[sv_num_] = sv.pt();
-            sv_eta_[sv_num_] = sv.eta();
-            sv_phi_[sv_num_] = sv.phi();
-            sv_etarel_[sv_num_] = catchInfsAndBound(fabs(sv.eta()-jet.eta()) - 0.5, 0, -2, 0);
+            // sv_pt_[sv_num_] = sv.pt();
+            // sv_eta_[sv_num_] = sv.eta();
+            // sv_phi_[sv_num_] = sv.phi();
+            sv_etarel_[sv_num_] = catchInfsAndBound(fabs(sv.eta() - jet.eta()) - 0.5, 0, -2, 0);
             sv_phirel_[sv_num_] = catchInfsAndBound(fabs(reco::deltaPhi(sv.phi(), jet.phi())) - 0.5, 0, -2, 0);
             sv_deltaR_[sv_num_] = catchInfsAndBound(fabs(reco::deltaR(sv, jet)) - 0.5, 0, -2, 0);
-            sv_mass_[sv_num_] = sv.mass();
-            sv_ntracks_[sv_num_] = sv.numberOfDaughters();
-            sv_chi2_[sv_num_] = sv.vertexChi2();
-            sv_ndf_[sv_num_] = sv.vertexNdof();
-            sv_normchi2_[sv_num_] = catchInfsAndBound(sv_chi2_[sv_num_] / sv_ndf_[sv_num_], 1000, -1000, 1000);
-            sv_dxy_[sv_num_] = vertexDxy(sv, pv).value();
-            sv_dxyerr_[sv_num_] = catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0);
-            sv_dxysig_[sv_num_] = catchInfsAndBound(sv_dxy_[sv_num_] / vertexDxy(sv, pv).error(), 0, -1, 800);
-            sv_d3d_[sv_num_] = vertexD3d(sv, pv).value();
-            sv_d3derr_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0);
-            sv_d3dsig_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800);
-            sv_costhetasvpv_[sv_num_] = vertexDdotP(sv, pv); // the pointing angle (i.e. the angle between the sum of the momentum of the tracks in the SV and the flight direction betwen PV and SV)
+            // sv_mass_[sv_num_] = sv.mass();
+            // sv_ntracks_[sv_num_] = sv.numberOfDaughters();
+            // sv_chi2_[sv_num_] = sv.vertexChi2();
+            // sv_ndf_[sv_num_] = sv.vertexNdof();
+            // sv_normchi2_[sv_num_] = catchInfsAndBound(sv_chi2_[sv_num_] / sv_ndf_[sv_num_], 1000, -1000, 1000);
+            // sv_dxy_[sv_num_] = vertexDxy(sv, pv).value();
+            // sv_dxyerr_[sv_num_] = catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0);
+            // sv_dxysig_[sv_num_] = catchInfsAndBound(sv_dxy_[sv_num_] / vertexDxy(sv, pv).error(), 0, -1, 800);
+            // sv_d3d_[sv_num_] = vertexD3d(sv, pv).value();
+            // sv_d3derr_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0);
+            // sv_d3dsig_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800);
+            // sv_costhetasvpv_[sv_num_] = vertexDdotP(sv, pv); // the pointing angle (i.e. the angle between the sum of the momentum of the tracks in the SV and the flight direction betwen PV and SV)
             sv_enratio_[sv_num_] = sv.energy() / jet_uncorr_e;
-            sv_e_[sv_num_] = sv.energy();
+            // sv_e_[sv_num_] = sv.energy();
 
             float calo_frac = 0.0;
             float hcal_frac = 0.0;
@@ -337,43 +329,43 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
             for (unsigned idx = 0; idx < sv.numberOfDaughters(); ++idx) {
                 const pat::PackedCandidate* PackedCandidate_ = dynamic_cast<const pat::PackedCandidate*>(sv.daughter(idx));
 
-                int pfCandMatchIdx = findPFCandIdx(*PackedCandidate_, pfCands);
-                int ltMatchIdx = findLostTrackIdx(*PackedCandidate_, lostTracks);
-                if (pfCandMatchIdx >= 0) {
-                    pat::PackedCandidateRef tempTrkRef = pat::PackedCandidateRef(pf_cand_, (unsigned int) pfCandMatchIdx);
-                    reco::GenParticleRef trkTruthRef = PFCandMCTruth[tempTrkRef];
-                    if (trkTruthRef.isNonnull()) {
-                        // std::cout << "matched pf candidate" << std::endl;
-                        // std::cout << "pt: " << tempTrkRef->pt() << ", " << trkTruthRef->pt() << std::endl;
-                        std::cout << "number of mothers = " << trkTruthRef->numberOfMothers() << std::endl;
-                        if (trkTruthRef->numberOfMothers() == 1) {
-                            const reco::Candidate* truthMother = trkTruthRef->mother();
-                            std::cout << "mother pt = " << truthMother->pt() << std::endl;
-                        }
-                        else {
-                            std::cout << "wrong number of mothers!!" << std::endl;
-                        }
-                        pfCandMatchCount++;
-                    }
-                    else {
-                        // std::cout << "no matched pf candidates found" << std::endl;
-                    }
-                }
-                else if (ltMatchIdx >= 0) {
-                    pat::PackedCandidateRef tempTrkRef = pat::PackedCandidateRef(lost_tracks_, (unsigned int) ltMatchIdx);
-                    reco::GenParticleRef trkTruthRef = LostTrackMCTruth[tempTrkRef];
-                    if (trkTruthRef.isNonnull()) {
-                        std::cout << "matched lost track" << std::endl;
-                        std::cout << "pt: " << tempTrkRef->pt() << ", " << trkTruthRef->pt() << std::endl;
-                        lostTrackMatchCount++;
-                    }
-                    else {
-                        // std::cout << "no matched lost tracks found" << std::endl;
-                    }
-                }
-                else {
-                    // std::cout << "no matched pf candidates or lost tracks found" << std::endl;
-                }
+                // int pfCandMatchIdx = findPFCandIdx(*PackedCandidate_, pfCands);
+                // int ltMatchIdx = findLostTrackIdx(*PackedCandidate_, lostTracks);
+                // if (pfCandMatchIdx >= 0) {
+                //     pat::PackedCandidateRef tempTrkRef = pat::PackedCandidateRef(pf_cand_, (unsigned int) pfCandMatchIdx);
+                //     reco::GenParticleRef trkTruthRef = PFCandMCTruth[tempTrkRef];
+                //     if (trkTruthRef.isNonnull()) {
+                //         // std::cout << "matched pf candidate" << std::endl;
+                //         // std::cout << "pt: " << tempTrkRef->pt() << ", " << trkTruthRef->pt() << std::endl;
+                //         std::cout << "number of mothers = " << trkTruthRef->numberOfMothers() << std::endl;
+                //         if (trkTruthRef->numberOfMothers() == 1) {
+                //             const reco::Candidate* truthMother = trkTruthRef->mother();
+                //             std::cout << "mother pt = " << truthMother->pt() << std::endl;
+                //         }
+                //         else {
+                //             std::cout << "wrong number of mothers!!" << std::endl;
+                //         }
+                //         pfCandMatchCount++;
+                //     }
+                //     else {
+                //         // std::cout << "no matched pf candidates found" << std::endl;
+                //     }
+                // }
+                // else if (ltMatchIdx >= 0) {
+                //     pat::PackedCandidateRef tempTrkRef = pat::PackedCandidateRef(lost_tracks_, (unsigned int) ltMatchIdx);
+                //     reco::GenParticleRef trkTruthRef = LostTrackMCTruth[tempTrkRef];
+                //     if (trkTruthRef.isNonnull()) {
+                //         std::cout << "matched lost track" << std::endl;
+                //         std::cout << "pt: " << tempTrkRef->pt() << ", " << trkTruthRef->pt() << std::endl;
+                //         lostTrackMatchCount++;
+                //     }
+                //     else {
+                //         // std::cout << "no matched lost tracks found" << std::endl;
+                //     }
+                // }
+                // else {
+                //     // std::cout << "no matched pf candidates or lost tracks found" << std::endl;
+                // }
 
                 calo_frac = calo_frac + PackedCandidate_->caloFraction();
                 hcal_frac = hcal_frac + PackedCandidate_->hcalFraction();
@@ -471,7 +463,64 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
 
 bool ntuple_SV::fillBranches() {
 
+    std::cout << "the other fillBranches() in ntuple_SV" << std::endl;
+
+    // Sorting described here: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideOfflinePrimaryVertexProduction
+    const reco::Vertex& pv = vertices()->at(0); // Most likely the signal vertex
+    spvp_ = &vertices()->at(0);
+
+    reco::VertexCompositePtrCandidateCollection cpvtx = *secVertices();
+    std::sort(cpvtx.begin(), cpvtx.end(), ntuple_SV::compareDxyDxyErr);
+
     const edm::View<pat::Jet> jetCollection = *jets();
+
+    sv_jetIdx_->clear();
+    sv_matchJetIdx_->clear();
+
+    sv_num_ = 0;
+    for (const reco::VertexCompositePtrCandidate& sv : cpvtx) {
+        if (sv_num_ < (int) max_sv) {
+            sv_pt_[sv_num_] = sv.pt();
+            sv_eta_[sv_num_] = sv.eta();
+            sv_phi_[sv_num_] = sv.phi();
+            sv_mass_[sv_num_] = sv.mass();
+            sv_e_[sv_num_] = sv.energy();
+            sv_ntracks_[sv_num_] = sv.numberOfDaughters();
+            sv_chi2_[sv_num_] = sv.vertexChi2();
+            sv_ndf_[sv_num_] = sv.vertexNdof();
+            sv_normchi2_[sv_num_] = catchInfsAndBound(sv_chi2_[sv_num_] / sv_ndf_[sv_num_], 1000, -1000, 1000);
+            sv_dxy_[sv_num_] = vertexDxy(sv, pv).value();
+            sv_dxyerr_[sv_num_] = catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0);
+            sv_dxysig_[sv_num_] = catchInfsAndBound(sv_dxy_[sv_num_] / vertexDxy(sv, pv).error(), 0, -1, 800);
+            sv_d3d_[sv_num_] = vertexD3d(sv, pv).value();
+            sv_d3derr_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0);
+            sv_d3dsig_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800);
+            sv_costhetasvpv_[sv_num_] = vertexDdotP(sv, pv); // the pointing angle (i.e. the angle between the sum of the momentum of the tracks in the SV and the flight direction betwen PV and SV)
+
+            // Match to a jet based on deltaR
+            for (unsigned int j = 0; j < jetCollection.size(); j++) {
+
+                const pat::Jet& jet = jetCollection.at(j);
+
+                double jet_radius = jetR();
+                if (jet_radius < 0) {
+                    // subjets: use maxDR(subjet, pfcand)
+                    for (unsigned idau = 0; idau < jet.numberOfDaughters(); ++idau) {
+                        double dR = reco::deltaR(*jet.daughter(idau), jet);
+                        if (dR > jet_radius)
+                            jet_radius = dR;
+                    }
+                }
+
+                if (reco::deltaR(sv, jet) > jet_radius) continue;
+
+                sv_jetIdx_->push_back(j);
+                sv_matchJetIdx_->push_back(sv_num_);
+            }
+        }
+        sv_num_++;
+    }
+    nsv_ = sv_num_;
 
     return false;
 }

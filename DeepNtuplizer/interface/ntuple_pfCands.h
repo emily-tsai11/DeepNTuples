@@ -20,17 +20,19 @@ public:
     ntuple_pfCands():ntuple_content(),jetradius_(0.4),
     n_Cpfcand_(0),n_Npfcand_(0){}
 
-    void setJetRadius(const float& radius){jetradius_=radius;}
     void getInput(const edm::ParameterSet& iConfig);
     void initBranches(TTree* );
     void readEvent(const edm::Event& iEvent);
     void readSetup(const edm::EventSetup& iSetup);
+    void deleteContainers() {}
 
     //use either of these functions
 
 //$$    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0);
     bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0, float EventTime = -1);
     bool fillBranches() { return false; }
+
+    void setJetRadius(const float& radius){jetradius_=radius;}
     void setTrackBuilderToken(const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord>& track_builder_token) {
 		track_builder_token_ = track_builder_token;
 	}

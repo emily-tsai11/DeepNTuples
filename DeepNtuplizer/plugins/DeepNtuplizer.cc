@@ -92,6 +92,10 @@ class DeepNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
         size_t njetswithgenjet_;
         size_t njetsselected_;
 
+        size_t njetstotal_crossCheck_;
+        size_t njetswithgenjet_crossCheck_;
+        size_t njetsselected_crossCheck_;
+
         ntuple_content* addModule(ntuple_content* m, std::string name = "") {
             modules_.push_back(m);
             module_names_.push_back(name);
@@ -331,18 +335,28 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         }
 
         if ((writejet && applySelection_) || !applySelection_) {
-            tree_->Fill();
+            // tree_->Fill();
             njetsselected_++;
         }
 
         njet++;
     } // End of looping over the jets
 
+    njetstotal_crossCheck_ += jets->size();
+    for (size_t j = 0; j < jets->size(); j++) {
+        if (jets->at(j).genJet()) njetswithgenjet_crossCheck_++;
+    }
     size_t index = 0;
     for (auto& m : modules_) {
-        if (module_names_[index] == "SVNtuple")
+        if (module_names_[index] == "SVNtuple" || module_names_[index] == "jetinfo") {
             m->fillBranches();
+        }
         index++;
+    }
+    tree_->Fill();
+
+    for (auto& m : modules_) {
+        m->deleteContainers();
     }
 }
 
@@ -361,6 +375,10 @@ void DeepNtuplizer::beginJob() {
     njetstotal_ = 0;
     njetswithgenjet_ = 0;
     njetsselected_ = 0;
+
+    njetstotal_crossCheck_ = 0;
+    njetswithgenjet_crossCheck_ = 0;
+    njetsselected_crossCheck_ = 0;
 }
 
 
@@ -372,6 +390,13 @@ void DeepNtuplizer::endJob() {
     std::cout << "total number of selected jets:      " << njetsselected_ << std::endl;
     std::cout << "fraction of selected jets:          " << (float) njetsselected_ / (float) njetstotal_ << std::endl;
     std::cout << "fraction of selected jets with gen: " << (float) njetsselected_ / (float) njetswithgenjet_ << std::endl;
+
+    std::cout << "and now checking with new code" << std::endl;
+    std::cout << "total number of processed jets (check):     " << njetstotal_crossCheck_ << std::endl;
+    std::cout << "total number of jets with gen (check):      " << njetswithgenjet_crossCheck_ << std::endl;
+    std::cout << "total number of selected jets (check):      " << njetsselected_crossCheck_ << std::endl;
+    std::cout << "fraction of selected jets (check):          " << (float) njetsselected_crossCheck_ / (float) njetstotal_crossCheck_ << std::endl;
+    std::cout << "fraction of selected jets with gen (check): " << (float) njetsselected_crossCheck_ / (float) njetswithgenjet_crossCheck_ << std::endl;
 }
 
 // Method fills 'descriptions' with the allowed parameters for the module

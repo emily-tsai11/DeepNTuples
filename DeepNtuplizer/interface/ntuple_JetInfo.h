@@ -5,234 +5,229 @@
  *      Author: jkiesele
  */
 
+
 #ifndef DEEPNTUPLES_DEEPNTUPLIZER_INTERFACE_NTUPLE_JETINFO_H_
 #define DEEPNTUPLES_DEEPNTUPLIZER_INTERFACE_NTUPLE_JETINFO_H_
+
 
 #include "ntuple_content.h"
 #include "TRandom3.h"
 #include <map>
 #include <string>
 
+
 /*
  * For global jet info such as eta, pt, gen info
  */
-class ntuple_JetInfo: public ntuple_content{
-public:
-    ntuple_JetInfo():ntuple_content(),
-    gluonReduction_(0),
-    useherwcompat_matching_(false),
-    isherwig_(false)
-{}
+class ntuple_JetInfo : public ntuple_content {
 
-    void getInput(const edm::ParameterSet& iConfig);
-    void initBranches(TTree* );
-    void readEvent(const edm::Event& iEvent);
+    public:
 
-    //use either of these functions
+        ntuple_JetInfo() : ntuple_content(), gluonReduction_(0), useherwcompat_matching_(false), isherwig_(false) {}
 
-//$$    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0);
-    bool fillBranches(const pat::Jet &, const size_t& jetidx, const  edm::View<pat::Jet> * coll=0, float EventTime = -1);
-    bool fillBranches() { return false; }
+        void getInput(const edm::ParameterSet& iConfig);
+        void initBranches(TTree*);
+        void readEvent(const edm::Event& iEvent);
+        void deleteContainers() {}
 
-    void setAxis2Token(edm::EDGetTokenT<edm::ValueMap<float> > axis2Token) {
-        axis2Token_ = axis2Token;
-    }
+        // Use either of these functions
+        // bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0);
+        bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0, float EventTime = -1);
+        bool fillBranches();
 
-    void setMultToken(edm::EDGetTokenT<edm::ValueMap<int> > multToken) {
-        multToken_ = multToken;
-    }
+        void setAxis2Token(edm::EDGetTokenT<edm::ValueMap<float>> axis2Token) {
+            axis2Token_ = axis2Token;
+        }
 
-    void setPtDToken(edm::EDGetTokenT<edm::ValueMap<float> > ptDToken) {
-        ptDToken_ = ptDToken;
-    }
+        void setMultToken(edm::EDGetTokenT<edm::ValueMap<int>> multToken) {
+            multToken_ = multToken;
+        }
 
-    void setQglToken(edm::EDGetTokenT<edm::ValueMap<float> > qglToken) {
-        qglToken_ = qglToken;
-    }
+        void setPtDToken(edm::EDGetTokenT<edm::ValueMap<float>> ptDToken) {
+            ptDToken_ = ptDToken;
+        }
 
-    void setGenJetMatchReclusterToken(
-            edm::EDGetTokenT<edm::Association<reco::GenJetCollection> > genJetMatchReclusterToken) {
-        genJetMatchReclusterToken_ = genJetMatchReclusterToken;
-    }
+        void setQglToken(edm::EDGetTokenT<edm::ValueMap<float>> qglToken) {
+            qglToken_ = qglToken;
+        }
 
-    void setGenJetMatchWithNuToken(
-            edm::EDGetTokenT<edm::Association<reco::GenJetCollection> > genJetMatchWithNuToken) {
-        genJetMatchWithNuToken_ = genJetMatchWithNuToken;
-    }
+        void setGenJetMatchReclusterToken(edm::EDGetTokenT<edm::Association<reco::GenJetCollection>> genJetMatchReclusterToken) {
+            genJetMatchReclusterToken_ = genJetMatchReclusterToken;
+        }
 
-    void setGenParticlesToken(edm::EDGetTokenT<reco::GenParticleCollection> genParticlesToken) {
-        genParticlesToken_ = genParticlesToken;
-    }
+        void setGenJetMatchWithNuToken(edm::EDGetTokenT<edm::Association<reco::GenJetCollection>> genJetMatchWithNuToken) {
+            genJetMatchWithNuToken_ = genJetMatchWithNuToken;
+        }
 
-    void setPUInfoToken(edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puInfoToken) {
-        puInfoToken_ = puInfoToken;
-    }
+        void setGenParticlesToken(edm::EDGetTokenT<reco::GenParticleCollection> genParticlesToken) {
+            genParticlesToken_ = genParticlesToken;
+        }
 
-    void setMuonsToken(edm::EDGetTokenT<pat::MuonCollection> muonsToken) {
-        muonsToken_ = muonsToken;
-    }
+        void setPUInfoToken(edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puInfoToken) {
+            puInfoToken_ = puInfoToken;
+        }
 
-    void setElectronsToken(edm::EDGetTokenT<pat::ElectronCollection> electronsToken) {
-        electronsToken_ = electronsToken;
-    }
+        void setMuonsToken(edm::EDGetTokenT<pat::MuonCollection> muonsToken) {
+            muonsToken_ = muonsToken;
+        }
 
-    void setUseHerwigCompatibleMatching(const bool use){
-        useherwcompat_matching_=use;
-    }
-    void setIsHerwig(const bool use){
-        isherwig_=use;
-    }
+        void setElectronsToken(edm::EDGetTokenT<pat::ElectronCollection> electronsToken) {
+            electronsToken_ = electronsToken;
+        }
 
+        void setUseHerwigCompatibleMatching(const bool use) {
+            useherwcompat_matching_ = use;
+        }
 
-    //private:
+        void setIsHerwig(const bool use) {
+            isherwig_ = use;
+        }
 
-    double                    jetPtMin_;
-    double                    jetPtMax_;
-    double                    jetAbsEtaMin_;
-    double                    jetAbsEtaMax_;
+    // private:
 
-    //Quark gluon likelihood
-    edm::EDGetTokenT<edm::ValueMap<float>>   qglToken_;
-    edm::EDGetTokenT<edm::ValueMap<float>>   ptDToken_;
-    edm::EDGetTokenT<edm::ValueMap<float>>   axis2Token_;
-    edm::EDGetTokenT<edm::ValueMap<int>>     multToken_;
+        double jetPtMin_;
+        double jetPtMax_;
+        double jetAbsEtaMin_;
+        double jetAbsEtaMax_;
 
-    edm::Handle<edm::ValueMap<float>> qglHandle;
-    edm::Handle<edm::ValueMap<float>> ptDHandle;
-    edm::Handle<edm::ValueMap<float>> axis2Handle;
-    edm::Handle<edm::ValueMap<int>> multHandle;
+        // Quark gluon likelihood
+        edm::EDGetTokenT<edm::ValueMap<float>> qglToken_;
+        edm::EDGetTokenT<edm::ValueMap<float>> ptDToken_;
+        edm::EDGetTokenT<edm::ValueMap<float>> axis2Token_;
+        edm::EDGetTokenT<edm::ValueMap<int>> multToken_;
 
+        edm::Handle<edm::ValueMap<float>> qglHandle;
+        edm::Handle<edm::ValueMap<float>> ptDHandle;
+        edm::Handle<edm::ValueMap<float>> axis2Handle;
+        edm::Handle<edm::ValueMap<int>> multHandle;
 
-    edm::EDGetTokenT<edm::Association<reco::GenJetCollection> > genJetMatchReclusterToken_;
-    edm::EDGetTokenT<edm::Association<reco::GenJetCollection> > genJetMatchWithNuToken_;
+        edm::EDGetTokenT<edm::Association<reco::GenJetCollection>> genJetMatchReclusterToken_;
+        edm::EDGetTokenT<edm::Association<reco::GenJetCollection>> genJetMatchWithNuToken_;
 
-    edm::EDGetTokenT<reco::GenParticleCollection> genParticlesToken_;
-  edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puInfoToken_;
+        edm::EDGetTokenT<reco::GenParticleCollection> genParticlesToken_;
+        edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puInfoToken_;
 
-    edm::EDGetTokenT<pat::MuonCollection> muonsToken_;       
-    edm::EDGetTokenT<pat::ElectronCollection> electronsToken_;
+        edm::EDGetTokenT<pat::MuonCollection> muonsToken_;
+        edm::EDGetTokenT<pat::ElectronCollection> electronsToken_;
 
-    edm::Handle<edm::Association<reco::GenJetCollection> > genJetMatchRecluster;
-    edm::Handle<edm::Association<reco::GenJetCollection> > genJetMatchWithNu;
+        edm::Handle<edm::Association<reco::GenJetCollection>> genJetMatchRecluster;
+        edm::Handle<edm::Association<reco::GenJetCollection>> genJetMatchWithNu;
 
-    edm::Handle<reco::GenParticleCollection> genParticlesHandle;
-    edm::Handle<std::vector <PileupSummaryInfo> > PUInfo;
+        edm::Handle<reco::GenParticleCollection> genParticlesHandle;
+        edm::Handle<std::vector <PileupSummaryInfo>> PUInfo;
 
-    edm::Handle<pat::MuonCollection> muonsHandle;
-    edm::Handle<pat::ElectronCollection> electronsHandle;
+        edm::Handle<pat::MuonCollection> muonsHandle;
+        edm::Handle<pat::ElectronCollection> electronsHandle;
 
+        TRandom3 TRandom_;
+        float gluonReduction_;
 
-    TRandom3 TRandom_;
-    float gluonReduction_;
+        std::vector <reco::GenParticle> neutrinosLepB;
+        std::vector <reco::GenParticle> neutrinosLepB_C;
 
-    std::vector <reco::GenParticle> neutrinosLepB;
-    std::vector <reco::GenParticle> neutrinosLepB_C;
+        std::vector<reco::GenParticle> gToBB;
+        std::vector<reco::GenParticle> gToCC;
+        std::vector<reco::GenParticle> alltaus_;
 
-    std::vector<reco::GenParticle> gToBB;
-    std::vector<reco::GenParticle> gToCC;
-    std::vector<reco::GenParticle> alltaus_;
+        std::vector<reco::GenParticle> Bhadron_;
+        std::vector<reco::GenParticle> Bhadron_daughter_;
 
-    std::vector<reco::GenParticle> Bhadron_;
-    std::vector<reco::GenParticle> Bhadron_daughter_;
+        bool useherwcompat_matching_;
+        bool isherwig_;
 
+        // Branches
 
+        // Labels (MC truth)
 
-    bool useherwcompat_matching_;
-    bool isherwig_;
+        // Regressions pt, deta, dphi
+        float gen_pt_;
+        float Delta_gen_pt_;
 
-    /////////branches
+        // Classification
+        int isB_;
+        int isGBB_;
+        int isBB_;
+        int isC_;
+        int isGCC_;
+        int isCC_;
+        int isUD_;
+        int isS_;
+        int isG_;
+        int isUndefined_;
+        float genDecay_;
+        int isLeptonicB_;
+        int isLeptonicB_C_;
+        int isTau_;
 
-    // labels (MC truth)
-    // regressions pt, Deta, Dphi
-    float gen_pt_;
-    float Delta_gen_pt_;
-    //classification
-    int isB_;
-    int isGBB_;
-    int isBB_;
-    int isC_;
-    int isGCC_;
-    int isCC_;
-    int isUD_;
-    int isS_;
-    int isG_;
-    int isUndefined_;
-    float genDecay_;
-    int isLeptonicB_;
-    int isLeptonicB_C_;
-    int isTau_;
+        // Truth labeling with fallback to physics definition for light/gluon/undefined of standard flavor definition
+        int isPhysB_;
+        int isPhysGBB_;
+        int isPhysBB_;
+        int isPhysC_;
+        int isPhysGCC_;
+        int isPhysCC_;
+        int isPhysUD_;
+        int isPhysS_;
+        int isPhysG_;
+        int isPhysUndefined_;
+        int isPhysLeptonicB_;
+        int isPhysLeptonicB_C_;
+        int isPhysTau_;
 
-    //truth labeling with fallback to physics definition for light/gluon/undefined of standard flavor definition
-    int isPhysB_;
-    int isPhysGBB_;
-    int isPhysBB_;
-    int isPhysC_;
-    int isPhysGCC_;
-    int isPhysCC_;
-    int isPhysUD_;
-    int isPhysS_;
-    int isPhysG_;
-    int isPhysUndefined_;
-    int isPhysLeptonicB_;
-    int isPhysLeptonicB_C_;
-    int isPhysTau_;
+        // Global variables
+        float npv_;
+        float npv_0_z_;
+        float PU_rho_;
+        float ntrueInt_;
+        float rho_;
+        unsigned int event_no_;
+        unsigned int jet_no_;
 
-    // global variables
-    float npv_;
-    float npv_0_z_;
-    float PU_rho_;
-    float ntrueInt_;
-    float rho_;
-    unsigned int event_no_;
-    unsigned int jet_no_;
+        // Jet variables
+        float jet_pt_;
+        float jet_corr_pt_;
+        float  jet_eta_;
+        float  jet_phi_;
+        float  jet_mass_;
+        float  jet_energy_;
+        float jet_looseId_;
 
-    // jet variables
-    float jet_pt_;
-    float jet_corr_pt_;
-    float  jet_eta_;
-    float  jet_phi_;
-    float  jet_mass_;
-    float  jet_energy_;
+        // Quark/gluon
+        float jet_qgl_;
+        float QG_ptD_;
+        float QG_axis2_;
+        float QG_mult_;
 
-    float jet_looseId_;
+        float y_multiplicity_;
+        float y_charged_multiplicity_;
+        float y_neutral_multiplicity_;
+        float y_ptD_;
+        float y_axis1_;
+        float y_axis2_;
+        float y_pt_dr_log_;
 
-    // quark/gluon
-    float jet_qgl_;
-    float QG_ptD_;
-    float QG_axis2_;
-    float QG_mult_;
+        static constexpr std::size_t max_num_lept = 5;
+        int muons_isLooseMuon_[max_num_lept];
+        int muons_isTightMuon_[max_num_lept];
+        int muons_isSoftMuon_[max_num_lept];
+        int muons_isHighPtMuon_[max_num_lept];
+        float muons_pt_[max_num_lept];
+        float muons_relEta_[max_num_lept];
+        float muons_relPhi_[max_num_lept];
+        float muons_energy_[max_num_lept];
+        float electrons_pt_[max_num_lept];
+        float electrons_relEta_[max_num_lept];
+        float electrons_relPhi_[max_num_lept];
+        float electrons_energy_[max_num_lept];
 
+        int muons_number_ = 0;
+        int electrons_number_ = 0;
 
-    float y_multiplicity_;
-    float y_charged_multiplicity_;
-    float y_neutral_multiplicity_;
-    float y_ptD_;
-    float y_axis1_;
-    float y_axis2_;
-    float y_pt_dr_log_;
-
-    static constexpr std::size_t max_num_lept = 5;
-    int muons_isLooseMuon_[max_num_lept];
-    int muons_isTightMuon_[max_num_lept];
-    int muons_isSoftMuon_[max_num_lept];
-    int muons_isHighPtMuon_[max_num_lept]; 
-    float muons_pt_[max_num_lept]; 
-    float muons_relEta_[max_num_lept]; 
-    float muons_relPhi_[max_num_lept]; 
-    float muons_energy_[max_num_lept]; 
-    float electrons_pt_[max_num_lept]; 
-    float electrons_relEta_[max_num_lept]; 
-    float electrons_relPhi_[max_num_lept]; 
-    float electrons_energy_[max_num_lept];
-
-    int muons_number_ = 0;
-    int electrons_number_ = 0;
-
-    float gen_pt_Recluster_;
-    float gen_pt_WithNu_;
-    float Delta_gen_pt_Recluster_;
-    float Delta_gen_pt_WithNu_;
-    std::map<std::string, float> discriminators_;
+        float gen_pt_Recluster_;
+        float gen_pt_WithNu_;
+        float Delta_gen_pt_Recluster_;
+        float Delta_gen_pt_WithNu_;
+        std::map<std::string, float> discriminators_;
 };
 
 

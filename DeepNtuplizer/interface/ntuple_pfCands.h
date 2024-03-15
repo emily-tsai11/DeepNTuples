@@ -24,6 +24,8 @@ public:
     void initBranches(TTree* );
     void readEvent(const edm::Event& iEvent);
     void readSetup(const edm::EventSetup& iSetup);
+    void initContainers() {}
+    void clearContainers() {}
     void deleteContainers() {}
 
     //use either of these functions

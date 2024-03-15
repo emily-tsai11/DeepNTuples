@@ -23,12 +23,15 @@ class ntuple_JetInfo : public ntuple_content {
 
     public:
 
-        ntuple_JetInfo() : ntuple_content(), gluonReduction_(0), useherwcompat_matching_(false), isherwig_(false) {}
+        ntuple_JetInfo();
+        ~ntuple_JetInfo();
 
         void getInput(const edm::ParameterSet& iConfig);
         void initBranches(TTree*);
         void readEvent(const edm::Event& iEvent);
-        void deleteContainers() {}
+        void initContainers();
+        void clearContainers();
+        void deleteContainers();
 
         // Use either of these functions
         // bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0);
@@ -175,21 +178,22 @@ class ntuple_JetInfo : public ntuple_content {
         int isPhysTau_;
 
         // Global variables
+        int nJets_;
         float npv_;
         float npv_0_z_;
         float PU_rho_;
         float ntrueInt_;
         float rho_;
         unsigned int event_no_;
-        unsigned int jet_no_;
+        // unsigned int jet_no_;
 
         // Jet variables
         float jet_pt_;
         float jet_corr_pt_;
-        float  jet_eta_;
-        float  jet_phi_;
-        float  jet_mass_;
-        float  jet_energy_;
+        float jet_eta_;
+        float jet_phi_;
+        float jet_mass_;
+        float jet_energy_;
         float jet_looseId_;
 
         // Quark/gluon

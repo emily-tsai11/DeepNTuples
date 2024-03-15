@@ -249,6 +249,7 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         m->setRhoInfo(rhoInfo.product());
         m->readSetup(iSetup);
         m->readEvent(iEvent);
+        m->initContainers();
     }
 
     // reco::VertexCompositePtrCandidateCollection cpvtx = *(secvertices.product());

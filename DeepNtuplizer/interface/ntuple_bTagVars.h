@@ -22,6 +22,8 @@ public:
     void getInput(const edm::ParameterSet& iConfig);
     void initBranches(TTree* tree);
     void readEvent(const edm::Event& iEvent) {}
+    void initContainers() {}
+    void clearContainers() {}
     void deleteContainers() {}
 
     //use either of these functions

@@ -29,6 +29,12 @@
 using namespace std;
 
 
+ntuple_JetInfo::ntuple_JetInfo() : ntuple_content(), gluonReduction_(0), useherwcompat_matching_(false), isherwig_(false) {}
+
+
+ntuple_JetInfo::~ntuple_JetInfo() {}
+
+
 void ntuple_JetInfo::getInput(const edm::ParameterSet& iConfig) {
 
     gluonReduction_ = (iConfig.getParameter<double>("gluonReduction"));
@@ -47,102 +53,103 @@ void ntuple_JetInfo::getInput(const edm::ParameterSet& iConfig) {
 void ntuple_JetInfo::initBranches(TTree* tree) {
 
     // More general event info, here applied per jet
+    addBranch(tree, "nJets", &nJets_, "nJets/I");
     addBranch(tree, "npv", &npv_, "npv/F");
     addBranch(tree, "npv_0_z", &npv_0_z_, "npv_0_z/F");
-    addBranch(tree, "PUrho", &PU_rho_, "PU_rho/F");
-    addBranch(tree, "rho", &rho_, "rho/F");
+    addBranch(tree, "PU_rho", &PU_rho_, "PU_rho/F");
     addBranch(tree, "ntrueInt", &ntrueInt_, "ntrueInt/F");
+    addBranch(tree, "rho", &rho_, "rho/F");
     addBranch(tree, "event_no", &event_no_, "event_no/I");
-    addBranch(tree, "jet_no", &jet_no_, "jet_no/I");
+    // addBranch(tree, "jet_no", &jet_no_, "jet_no/I");
 
     // Truth labels
-    addBranch(tree, "gen_pt", &gen_pt_, "gen_pt_/F");
-    addBranch(tree, "Delta_gen_pt", &Delta_gen_pt_, "Delta_gen_pt_/F");
-    addBranch(tree, "isB", &isB_, "isB_/I");
-    addBranch(tree, "isGBB", &isGBB_, "isGBB_/I");
-    addBranch(tree, "isBB", &isBB_, "isBB_/I");
-    addBranch(tree, "isLeptonicB", &isLeptonicB_, "isLeptonicB_/I");
-    addBranch(tree, "isLeptonicB_C", &isLeptonicB_C_, "isLeptonicB_C_/I");
-    addBranch(tree, "isC", &isC_, "isC_/I");
-    addBranch(tree, "isGCC", &isGCC_, "isGCC_/I");
-    addBranch(tree, "isCC", &isCC_, "isCC_/I");
-    // addBranch(tree, "isTau", &isTau_, "isTau_/I");
-    addBranch(tree, "isUD", &isUD_, "isUD_/I");
-    addBranch(tree, "isS", &isS_, "isS_/I");
-    addBranch(tree, "isG", &isG_, "isG_/I");
-    addBranch(tree, "isUndefined", &isUndefined_, "isUndefined_/I");
-    addBranch(tree, "genDecay", &genDecay_, "genDecay_/F"); // dxy corresponds to the distance the Bhadron traveled
+    // addBranch(tree, "gen_pt", &gen_pt_, "gen_pt_/F");
+    // addBranch(tree, "Delta_gen_pt", &Delta_gen_pt_, "Delta_gen_pt_/F");
+    // addBranch(tree, "isB", &isB_, "isB_/I");
+    // addBranch(tree, "isGBB", &isGBB_, "isGBB_/I");
+    // addBranch(tree, "isBB", &isBB_, "isBB_/I");
+    // addBranch(tree, "isLeptonicB", &isLeptonicB_, "isLeptonicB_/I");
+    // addBranch(tree, "isLeptonicB_C", &isLeptonicB_C_, "isLeptonicB_C_/I");
+    // addBranch(tree, "isC", &isC_, "isC_/I");
+    // addBranch(tree, "isGCC", &isGCC_, "isGCC_/I");
+    // addBranch(tree, "isCC", &isCC_, "isCC_/I");
+    // // addBranch(tree, "isTau", &isTau_, "isTau_/I");
+    // addBranch(tree, "isUD", &isUD_, "isUD_/I");
+    // addBranch(tree, "isS", &isS_, "isS_/I");
+    // addBranch(tree, "isG", &isG_, "isG_/I");
+    // addBranch(tree, "isUndefined", &isUndefined_, "isUndefined_/I");
+    // addBranch(tree, "genDecay", &genDecay_, "genDecay_/F"); // dxy corresponds to the distance the Bhadron traveled
 
     // Truth labeling with fallback to physics definition for light/gluon/undefined of standard flavor definition
-    addBranch(tree, "isPhysB", &isPhysB_, "isPhysB_/I");
-    addBranch(tree, "isPhysGBB", &isPhysGBB_, "isPhysGBB_/I");
-    addBranch(tree, "isPhysBB", &isPhysBB_, "isPhysBB_/I");
-    addBranch(tree, "isPhysLeptonicB", &isPhysLeptonicB_, "isPhysLeptonicB_/I");
-    addBranch(tree, "isPhysLeptonicB_C", &isPhysLeptonicB_C_, "isPhysLeptonicB_C_/I");
-    addBranch(tree, "isPhysC", &isPhysC_, "isPhysC_/I");
-    addBranch(tree, "isPhysGCC", &isPhysGCC_, "isPhysGCC_/I");
-    addBranch(tree, "isPhysCC", &isPhysCC_, "isPhysCC_/I");
-    // addBranch(tree, "isPhysTau", &isPhysTau_, "isPhysTau_/I");
-    addBranch(tree, "isPhysUD", &isPhysUD_, "isPhysUD_/I");
-    addBranch(tree, "isPhysS", &isPhysS_, "isPhysS_/I");
-    addBranch(tree, "isPhysG", &isPhysG_, "isPhysG_/I");
-    addBranch(tree, "isPhysUndefined", &isPhysUndefined_, "isPhysUndefined_/I");
+    // addBranch(tree, "isPhysB", &isPhysB_, "isPhysB_/I");
+    // addBranch(tree, "isPhysGBB", &isPhysGBB_, "isPhysGBB_/I");
+    // addBranch(tree, "isPhysBB", &isPhysBB_, "isPhysBB_/I");
+    // addBranch(tree, "isPhysLeptonicB", &isPhysLeptonicB_, "isPhysLeptonicB_/I");
+    // addBranch(tree, "isPhysLeptonicB_C", &isPhysLeptonicB_C_, "isPhysLeptonicB_C_/I");
+    // addBranch(tree, "isPhysC", &isPhysC_, "isPhysC_/I");
+    // addBranch(tree, "isPhysGCC", &isPhysGCC_, "isPhysGCC_/I");
+    // addBranch(tree, "isPhysCC", &isPhysCC_, "isPhysCC_/I");
+    // // addBranch(tree, "isPhysTau", &isPhysTau_, "isPhysTau_/I");
+    // addBranch(tree, "isPhysUD", &isPhysUD_, "isPhysUD_/I");
+    // addBranch(tree, "isPhysS", &isPhysS_, "isPhysS_/I");
+    // addBranch(tree, "isPhysG", &isPhysG_, "isPhysG_/I");
+    // addBranch(tree, "isPhysUndefined", &isPhysUndefined_, "isPhysUndefined_/I");
 
     // Jet variables
-    // b = tree->Branch("jet_pt", &jet_pt_);
-    addBranch(tree, "jet_pt", &jet_pt_);
-    addBranch(tree, "jet_corr_pt", &jet_corr_pt_);
-    addBranch(tree, "jet_eta", &jet_eta_);
-    addBranch(tree, "jet_phi", &jet_phi_);
-    addBranch(tree, "jet_mass", &jet_mass_);
-    addBranch(tree, "jet_energy", &jet_energy_);
+    // // b = tree->Branch("jet_pt", &jet_pt_);
+    // addBranch(tree, "jet_pt", &jet_pt_);
+    // addBranch(tree, "jet_corr_pt", &jet_corr_pt_);
+    // addBranch(tree, "jet_eta", &jet_eta_);
+    // addBranch(tree, "jet_phi", &jet_phi_);
+    // addBranch(tree, "jet_mass", &jet_mass_);
+    // addBranch(tree, "jet_energy", &jet_energy_);
 
     // Jet id
-    addBranch(tree, "jet_looseId", &jet_looseId_);
+    // addBranch(tree, "jet_looseId", &jet_looseId_);
 
     // Quark gluon
-    addBranch(tree, "jet_qgl", &jet_qgl_); // qg tagger from jmar
-    addBranch(tree, "QG_ptD", &QG_ptD_); // momentum fraction per jet constituent
-    addBranch(tree, "QG_axis2", &QG_axis2_); // jet shape i.e. gluon are wider than quarks
-    addBranch(tree, "QG_mult", &QG_mult_); // multiplicity i.e. total num of PFcands reconstructed
+    // addBranch(tree, "jet_qgl", &jet_qgl_); // qg tagger from jmar
+    // addBranch(tree, "QG_ptD", &QG_ptD_); // momentum fraction per jet constituent
+    // addBranch(tree, "QG_axis2", &QG_axis2_); // jet shape i.e. gluon are wider than quarks
+    // addBranch(tree, "QG_mult", &QG_mult_); // multiplicity i.e. total num of PFcands reconstructed
 
     // Yutas quark-gluon info
-    addBranch(tree, "y_multiplicity", &y_multiplicity_, "y_multiplicity_/F");
-    addBranch(tree, "y_charged_multiplicity", &y_charged_multiplicity_, "y_charged_multiplicity_/F");
-    addBranch(tree, "y_neutral_multiplicity", &y_neutral_multiplicity_, "y_neutral_multiplicity_/F");
-    addBranch(tree, "y_ptD", &y_ptD_, "y_ptD_/F");
-    addBranch(tree, "y_axis1", &y_axis1_, "y_axis1_/F");
-    addBranch(tree, "y_axis2", &y_axis2_, "y_axis2_/F");
-    addBranch(tree, "y_pt_dr_log", &y_pt_dr_log_, "y_pt_dr_log_/F");
+    // addBranch(tree, "y_multiplicity", &y_multiplicity_, "y_multiplicity_/F");
+    // addBranch(tree, "y_charged_multiplicity", &y_charged_multiplicity_, "y_charged_multiplicity_/F");
+    // addBranch(tree, "y_neutral_multiplicity", &y_neutral_multiplicity_, "y_neutral_multiplicity_/F");
+    // addBranch(tree, "y_ptD", &y_ptD_, "y_ptD_/F");
+    // addBranch(tree, "y_axis1", &y_axis1_, "y_axis1_/F");
+    // addBranch(tree, "y_axis2", &y_axis2_, "y_axis2_/F");
+    // addBranch(tree, "y_pt_dr_log", &y_pt_dr_log_, "y_pt_dr_log_/F");
 
     // In the jet
-    addBranch(tree, "muons_number", &muons_number_, "muons_number_/I");
-    addBranch(tree, "muons_isLooseMuon", &muons_isLooseMuon_, "muons_isLooseMuon_[muons_number_]/I");
-    addBranch(tree, "muons_isTightMuon", &muons_isTightMuon_, "muons_isTightMuon_[muons_number_]/I");
-    addBranch(tree, "muons_isSoftMuon", &muons_isSoftMuon_, "muons_isSoftMuon_[muons_number_]/I");
-    addBranch(tree, "muons_isHighPtMuon", &muons_isHighPtMuon_, "muons_isHighPtMuon_[muons_number_]/I");
-    addBranch(tree, "muons_pt", &muons_pt_, "muons_pt_[muons_number_]/F");
-    addBranch(tree, "muons_relEta", &muons_relEta_, "muons_relEta_[muons_number_]/F");
-    addBranch(tree, "muons_relPhi", &muons_relPhi_, "muons_relPhi_[muons_number_]/F");
-    addBranch(tree, "muons_energy", &muons_energy_, "muons_energy_[muons_number_]/F");
-    addBranch(tree, "electrons_number", &electrons_number_, "electrons_number_/I");
-    addBranch(tree, "electrons_pt", &electrons_pt_, "electrons_pt_[electrons_number_]/F");
-    addBranch(tree, "electrons_relEta", &electrons_relEta_, "electrons_relEta_[electrons_number_]/F");
-    addBranch(tree, "electrons_relPhi", &electrons_relPhi_, "electrons_relPhi_[electrons_number_]/F");
-    addBranch(tree, "electrons_energy", &electrons_energy_, "electrons_energy_[electrons_number_]/F");
+    // addBranch(tree, "muons_number", &muons_number_, "muons_number_/I");
+    // addBranch(tree, "muons_isLooseMuon", &muons_isLooseMuon_, "muons_isLooseMuon_[muons_number_]/I");
+    // addBranch(tree, "muons_isTightMuon", &muons_isTightMuon_, "muons_isTightMuon_[muons_number_]/I");
+    // addBranch(tree, "muons_isSoftMuon", &muons_isSoftMuon_, "muons_isSoftMuon_[muons_number_]/I");
+    // addBranch(tree, "muons_isHighPtMuon", &muons_isHighPtMuon_, "muons_isHighPtMuon_[muons_number_]/I");
+    // addBranch(tree, "muons_pt", &muons_pt_, "muons_pt_[muons_number_]/F");
+    // addBranch(tree, "muons_relEta", &muons_relEta_, "muons_relEta_[muons_number_]/F");
+    // addBranch(tree, "muons_relPhi", &muons_relPhi_, "muons_relPhi_[muons_number_]/F");
+    // addBranch(tree, "muons_energy", &muons_energy_, "muons_energy_[muons_number_]/F");
+    // addBranch(tree, "electrons_number", &electrons_number_, "electrons_number_/I");
+    // addBranch(tree, "electrons_pt", &electrons_pt_, "electrons_pt_[electrons_number_]/F");
+    // addBranch(tree, "electrons_relEta", &electrons_relEta_, "electrons_relEta_[electrons_number_]/F");
+    // addBranch(tree, "electrons_relPhi", &electrons_relPhi_, "electrons_relPhi_[electrons_number_]/F");
+    // addBranch(tree, "electrons_energy", &electrons_energy_, "electrons_energy_[electrons_number_]/F");
 
-    addBranch(tree, "gen_pt_Recluster", &gen_pt_Recluster_, "gen_pt_Recluster_/F");
-    addBranch(tree, "gen_pt_WithNu", &gen_pt_WithNu_, "gen_pt_WithNu_/F");
-    addBranch(tree, "Delta_gen_pt_Recluster", &Delta_gen_pt_Recluster_, "Delta_gen_pt_Recluster_/F");
-    addBranch(tree, "Delta_gen_pt_WithNu", &Delta_gen_pt_WithNu_, "Delta_gen_pt_WithNu_/F");
+    // addBranch(tree, "gen_pt_Recluster", &gen_pt_Recluster_, "gen_pt_Recluster_/F");
+    // addBranch(tree, "gen_pt_WithNu", &gen_pt_WithNu_, "gen_pt_WithNu_/F");
+    // addBranch(tree, "Delta_gen_pt_Recluster", &Delta_gen_pt_Recluster_, "Delta_gen_pt_Recluster_/F");
+    // addBranch(tree, "Delta_gen_pt_WithNu", &Delta_gen_pt_WithNu_, "Delta_gen_pt_WithNu_/F");
 
-    if (1) { // discriminators might need to be filled differently -- FIXME
-        for (auto& entry : discriminators_) {
-            string better_name(entry.first);
-            std::replace(better_name.begin(), better_name.end(), ':', '_');
-            addBranch(tree, better_name.c_str(), &entry.second, (better_name + "/F").c_str());
-        }
-    }
+    // if (1) { // discriminators might need to be filled differently -- FIXME
+    //     for (auto& entry : discriminators_) {
+    //         string better_name(entry.first);
+    //         std::replace(better_name.begin(), better_name.end(), ':', '_');
+    //         addBranch(tree, better_name.c_str(), &entry.second, (better_name + "/F").c_str());
+    //     }
+    // }
 }
 
 
@@ -249,6 +256,24 @@ void ntuple_JetInfo::readEvent(const edm::Event& iEvent) {
 }
 
 
+void ntuple_JetInfo::initContainers() {
+
+    // TODO
+}
+
+
+void ntuple_JetInfo::clearContainers() {
+
+    // TODO
+}
+
+
+void ntuple_JetInfo::deleteContainers() {
+
+    // TODO
+}
+
+
 // Use either of these functions
 // bool ntuple_JetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, const edm::View<pat::Jet>* coll) {
 bool ntuple_JetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, const edm::View<pat::Jet>* coll, float EventTime) {
@@ -273,9 +298,10 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, con
         entry.second = catchInfs(jet.bDiscriminator(entry.first), -0.1);
     }
 
-    npv_ = vertices()->size();
+    /*
+    // npv_ = vertices()->size();
 
-    npv_0_z_ = vertices()->at(0).z();
+    // npv_0_z_ = vertices()->at(0).z();
 
     float PUrho = 0;
     std::vector<PileupSummaryInfo>::const_iterator ipu;
@@ -300,7 +326,7 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, con
     // float cons = 0.09319;
     // float mean = -0.0045;
     // float sig = 4.28;
-    // float numPU = nPU; 
+    // float numPU = nPU;
 
     // TF1 fungaus("fungaus", "gaus", -25.0, 25.0);
     // fungaus.SetParameters(cons, mean, sig);
@@ -514,7 +540,7 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, con
     y_axis1_ = std::get<4>(qgtuple);
     y_axis2_ = std::get<5>(qgtuple);
     y_pt_dr_log_ = std::get<6>(qgtuple);
-
+    */
     return returnval;
 }
 
@@ -523,7 +549,36 @@ bool ntuple_JetInfo::fillBranches() {
 
     std::cout << "the other fillBranches() in ntuple_JetInfo" << std::endl;
 
-    // TODO
+    clearContainers();
+
+    const edm::View<pat::Jet> jetCollection = *jets();
+
+    if (jetCollection.size() == 0) throw std::runtime_error("ntuple_JetInfo::fillBranches (other): no jet collection");
+
+    nJets_ = jetCollection.size();
+    npv_ = vertices()->size();
+    npv_0_z_ = vertices()->at(0).z();
+
+    float PUrho = 0;
+    std::vector<PileupSummaryInfo>::const_iterator ipu;
+    for (ipu = PUInfo->begin(); ipu != PUInfo->end(); ++ipu) {
+        if (ipu->getBunchCrossing() != 0) continue; // storing detailed PU info only for BX=0
+
+        for (unsigned int i = 0; i < ipu->getPU_zpositions().size(); ++i) {
+            auto PU_z = (ipu->getPU_zpositions())[i];
+            if (std::abs(PU_z - npv_0_z_) < 1) PUrho++;
+        }
+    }
+    PUrho /= 20.0;
+    PU_rho_ = PUrho;
+
+    for (auto const& v : *pupInfo()) {
+        int bx = v.getBunchCrossing();
+        if (bx == 0) {
+            ntrueInt_ = v.getTrueNumInteractions();
+        }
+    }
+    rho_ = rhoInfo()[0];
 
     return false;
 }

@@ -27,6 +27,8 @@ class ntuple_SV : public ntuple_content {
         void initBranches(TTree*);
         void readEvent(const edm::Event& iEvent);
         void readSetup(const edm::EventSetup& iSetup);
+        void initContainers();
+        void clearContainers();
         void deleteContainers();
 
         // Use either of these functions

@@ -26,6 +26,8 @@ public:
 	void getInput(const edm::ParameterSet& iConfig) override;
 	void initBranches(TTree* tree) override;
 	void readEvent(const edm::Event& iEvent) override;
+	void initContainers() {}
+	void clearContainers() {}
 	void deleteContainers() {}
 
 //$$	bool fillBranches(const pat::Jet &jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll) override;

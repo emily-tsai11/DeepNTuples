@@ -44,6 +44,8 @@ class ntuple_content {
         virtual void initBranches(TTree*) = 0;
         virtual void readEvent(const edm::Event& iEvent) = 0;
         virtual void readSetup(const edm::EventSetup& iSetup) {}
+        virtual void initContainers() = 0;
+        virtual void clearContainers() = 0;
         virtual void deleteContainers() = 0;
 
         // Use either of these functions

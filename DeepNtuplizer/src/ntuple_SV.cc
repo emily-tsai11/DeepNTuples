@@ -225,9 +225,20 @@ void ntuple_SV::readEvent(const edm::Event& iEvent) {
     iEvent.getByToken(lost_tracks_token_, lost_tracks_);
     iEvent.getByToken(pf_mcmatch_token_, pf_mcmatch_);
     iEvent.getByToken(lt_mcmatch_token_, lt_mcmatch_);
+}
+
+
+void ntuple_SV::initContainers() {
 
     sv_jetIdx_ = new std::vector<int>;
     sv_matchJetIdx_ = new std::vector<int>;
+}
+
+
+void ntuple_SV::clearContainers() {
+
+    sv_jetIdx_->clear();
+    sv_matchJetIdx_->clear();
 }
 
 
@@ -465,6 +476,8 @@ bool ntuple_SV::fillBranches() {
 
     std::cout << "the other fillBranches() in ntuple_SV" << std::endl;
 
+    clearContainers();
+
     // Sorting described here: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideOfflinePrimaryVertexProduction
     const reco::Vertex& pv = vertices()->at(0); // Most likely the signal vertex
     spvp_ = &vertices()->at(0);
@@ -473,9 +486,6 @@ bool ntuple_SV::fillBranches() {
     std::sort(cpvtx.begin(), cpvtx.end(), ntuple_SV::compareDxyDxyErr);
 
     const edm::View<pat::Jet> jetCollection = *jets();
-
-    sv_jetIdx_->clear();
-    sv_matchJetIdx_->clear();
 
     sv_num_ = 0;
     for (const reco::VertexCompositePtrCandidate& sv : cpvtx) {
@@ -514,7 +524,7 @@ bool ntuple_SV::fillBranches() {
 
                 if (reco::deltaR(sv, jet) > jet_radius) continue;
 
-                sv_jetIdx_->push_back(j);
+                sv_jetIdx_->push_back((int) j);
                 sv_matchJetIdx_->push_back(sv_num_);
             }
         }

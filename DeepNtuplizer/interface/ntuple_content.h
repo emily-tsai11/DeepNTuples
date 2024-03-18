@@ -51,7 +51,7 @@ class ntuple_content {
         // Use either of these functions
         // virtual bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0) = 0;
         virtual bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0, float EventTime = -1) = 0;
-        virtual bool fillBranches() = 0;
+        virtual void fillBranches(bool applySelection) = 0;
 
         void setPrimaryVertices(const reco::VertexCollection* v) { vertices_ = v; }
         void setSecVertices(const std::vector<reco::VertexCompositePtrCandidate>* v) { secvertices_ = v; }

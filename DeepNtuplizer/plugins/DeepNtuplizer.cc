@@ -317,6 +317,7 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     for (size_t j = 0; j < indices.size(); j++) {
         njetstotal_++;
         size_t jetidx = indices.at(j);
+        std::cout << "INDICES: " << j << ", " << jetidx << std::endl;
         jetIter = jets->begin() + jetidx;
         const pat::Jet& jet = *jetIter;
 
@@ -343,6 +344,10 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         njet++;
     } // End of looping over the jets
 
+
+
+
+
     njetstotal_crossCheck_ += jets->size();
     for (size_t j = 0; j < jets->size(); j++) {
         if (jets->at(j).genJet()) njetswithgenjet_crossCheck_++;
@@ -350,7 +355,7 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     size_t index = 0;
     for (auto& m : modules_) {
         if (module_names_[index] == "SVNtuple" || module_names_[index] == "jetinfo") {
-            m->fillBranches();
+            m->fillBranches(applySelection_);
         }
         index++;
     }

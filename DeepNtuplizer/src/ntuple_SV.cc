@@ -175,9 +175,9 @@ void ntuple_SV::initBranches(TTree* tree) {
     addBranch(tree, (prefix_ + "sv_eta").c_str(), &sv_eta_, (prefix_ + "sv_eta_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_phi").c_str(), &sv_phi_, (prefix_ + "sv_phi_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_e").c_str(), &sv_e_, (prefix_ + "sv_e_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_etarel").c_str(), &sv_etarel_, (prefix_ + "sv_etarel_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_phirel").c_str(), &sv_phirel_, (prefix_ + "sv_phirel_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_deltaR").c_str(), &sv_deltaR_, (prefix_ + "sv_deltaR_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "sv_etarel").c_str(), &sv_etarel_);
+    addBranch(tree, (prefix_ + "sv_phirel").c_str(), &sv_phirel_);
+    addBranch(tree, (prefix_ + "sv_deltaR").c_str(), &sv_deltaR_);
     addBranch(tree, (prefix_ + "sv_mass").c_str(), &sv_mass_, (prefix_ + "sv_mass_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_ntracks").c_str(), &sv_ntracks_, (prefix_ + "sv_ntracks_[" + prefix_ + "sv_num_]/F").c_str());
     // addBranch(tree, (prefix_ + "sv_nMatchPFCand").c_str(), &sv_nMatchPFCand_, (prefix_ + "sv_nMatchPFCand_[" + prefix_ + "sv_num_]/F").c_str());
@@ -193,21 +193,21 @@ void ntuple_SV::initBranches(TTree* tree) {
     addBranch(tree, (prefix_ + "sv_d3derr").c_str(), &sv_d3derr_, (prefix_ + "sv_d3err_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_d3dsig").c_str(), &sv_d3dsig_, (prefix_ + "sv_d3dsig_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_costhetasvpv").c_str(), &sv_costhetasvpv_, (prefix_ + "sv_costhetasvpv_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_enratio").c_str(), &sv_enratio_, (prefix_ + "sv_enratio_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_hcal_frac").c_str(), &sv_hcal_frac_, (prefix_ + "sv_hcal_frac_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_calo_frac").c_str(), &sv_calo_frac_, (prefix_ + "sv_calo_frac_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_dz").c_str(), &sv_dz_, (prefix_ + "sv_dz_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_pfd2dval").c_str(), &sv_pfd2dval_, (prefix_ + "sv_pfd2dval_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_pfd2dsig").c_str(), &sv_pfd2dsig_, (prefix_ + "sv_pfd2dsig_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_pfd3dval").c_str(), &sv_pfd3dval_, (prefix_ + "sv_pfd3dval_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_pfd3dsig").c_str(), &sv_pfd3dsig_, (prefix_ + "sv_pfd3dsig_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_puppiw").c_str(), &sv_puppiw_, (prefix_ + "sv_puppiw_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_charge_sum").c_str(), &sv_charge_sum_, (prefix_ + "sv_charge_sum_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "sv_enratio").c_str(), &sv_enratio_);
+    addBranch(tree, (prefix_ + "sv_calo_frac").c_str(), &sv_calo_frac_, (prefix_ + "sv_calo_frac_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "sv_hcal_frac").c_str(), &sv_hcal_frac_, (prefix_ + "sv_hcal_frac_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "sv_puppiw").c_str(), &sv_puppiw_, (prefix_ + "sv_puppiw_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "sv_dz").c_str(), &sv_dz_, (prefix_ + "sv_dz_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "sv_charge_sum").c_str(), &sv_charge_sum_, (prefix_ + "sv_charge_sum_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "sv_pfd2dval").c_str(), &sv_pfd2dval_);
+    addBranch(tree, (prefix_ + "sv_pfd2dsig").c_str(), &sv_pfd2dsig_);
+    addBranch(tree, (prefix_ + "sv_pfd3dval").c_str(), &sv_pfd3dval_);
+    addBranch(tree, (prefix_ + "sv_pfd3dsig").c_str(), &sv_pfd3dsig_);
     // addBranch(tree, (prefix_ + "sv_time").c_str(), &sv_time_, (prefix_ + "sv_time_[" + prefix_ + "sv_num_]/F").c_str());
 
-    // No leaf type exists for STL containers
-    tree->Branch((prefix_ + "sv_jetIdx").c_str(), &sv_jetIdx_);
-    tree->Branch((prefix_ + "sv_matchJetIdx").c_str(), &sv_matchJetIdx_);
+    // Used for matching
+    tree->Branch((prefix_ + "sv_svIdx").c_str(), &sv_svIdx_);
+    tree->Branch((prefix_ + "sv_jetPt").c_str(), &sv_jetPt_);
 
     // add2DBranch(tree, (prefix_ + "sv_ptGenVsPtReco").c_str(), &sv_ptGenVsPtReco_, (prefix_ + "sv_ptGenVsPtReco_[" + prefix_ + "sv_num_]/F").c_str());
 }
@@ -230,22 +230,49 @@ void ntuple_SV::readEvent(const edm::Event& iEvent) {
 
 void ntuple_SV::initContainers() {
 
-    sv_jetIdx_ = new std::vector<int>;
-    sv_matchJetIdx_ = new std::vector<int>;
+    sv_svIdx_ = new std::vector<int>;
+    sv_jetPt_ = new std::vector<int>;
+
+    sv_etarel_ = new std::vector<float>;
+    sv_phirel_ = new std::vector<float>;
+    sv_deltaR_ = new std::vector<float>;
+    sv_enratio_ = new std::vector<float>;
+    sv_pfd2dval_ = new std::vector<float>;
+    sv_pfd2dsig_ = new std::vector<float>;
+    sv_pfd3dval_ = new std::vector<float>;
+    sv_pfd3dsig_ = new std::vector<float>;
 }
 
 
 void ntuple_SV::clearContainers() {
 
-    sv_jetIdx_->clear();
-    sv_matchJetIdx_->clear();
+    sv_svIdx_->clear();
+    sv_jetPt_->clear();
+
+    sv_etarel_->clear();
+    sv_phirel_->clear();
+    sv_deltaR_->clear();
+    sv_enratio_->clear();
+    sv_pfd2dval_->clear();
+    sv_pfd2dsig_->clear();
+    sv_pfd3dval_->clear();
+    sv_pfd3dsig_->clear();
 }
 
 
 void ntuple_SV::deleteContainers() {
 
-    delete sv_jetIdx_;
-    delete sv_matchJetIdx_;
+    delete sv_svIdx_;
+    delete sv_jetPt_;
+
+    delete sv_etarel_;
+    delete sv_phirel_;
+    delete sv_deltaR_;
+    delete sv_enratio_;
+    delete sv_pfd2dval_;
+    delete sv_pfd2dsig_;
+    delete sv_pfd3dval_;
+    delete sv_pfd3dsig_;
 }
 
 
@@ -253,22 +280,23 @@ void ntuple_SV::deleteContainers() {
 // bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const edm::View<pat::Jet>* coll) {
 bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const edm::View<pat::Jet>* coll, float EventTime) {
 
-    const float jet_uncorr_e = jet.correctedJet("Uncorrected").energy();
+    /*
+    // const float jet_uncorr_e = jet.correctedJet("Uncorrected").energy();
 
     // Sorting described here: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideOfflinePrimaryVertexProduction
-    const reco::Vertex& pv = vertices()->at(0); // Most likely the signal vertex
+    // const reco::Vertex& pv = vertices()->at(0); // Most likely the signal vertex
 
-    math::XYZVector jetDir = jet.momentum().Unit();
-    GlobalVector jetRefTrackDir(jet.px(), jet.py(), jet.pz());
+    // math::XYZVector jetDir = jet.momentum().Unit();
+    // GlobalVector jetRefTrackDir(jet.px(), jet.py(), jet.pz());
 
-    sv_num_ = 0;
+    // sv_num_ = 0;
 
-    reco::VertexCompositePtrCandidateCollection cpvtx = *secVertices();
+    // reco::VertexCompositePtrCandidateCollection cpvtx = *secVertices();
 
-    spvp_ = &vertices()->at(0);
-    std::sort(cpvtx.begin(), cpvtx.end(), ntuple_SV::compareDxyDxyErr);
+    // spvp_ = &vertices()->at(0);
+    // std::sort(cpvtx.begin(), cpvtx.end(), ntuple_SV::compareDxyDxyErr);
 
-    SVTrackInfoBuilder trackinfo(builder_);
+    // SVTrackInfoBuilder trackinfo(builder_);
 
     const pat::PackedCandidateCollection& pfCands(*(pf_cand_.product()));
     const pat::PackedCandidateCollection& lostTracks(*(lost_tracks_.product()));
@@ -280,34 +308,34 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
     etasign++; // avoid unused warning
     if (jet.eta() < 0) etasign =- 1;
 
-    double jet_radius = jetR();
-    if (jet_radius < 0) {
-        // subjets: use maxDR(subjet, pfcand)
-        for (unsigned idau = 0; idau < jet.numberOfDaughters(); ++idau) {
-            double dR = reco::deltaR(*jet.daughter(idau), jet);
-            if (dR > jet_radius)
-                jet_radius = dR;
-        }
-    }
+    // double jet_radius = jetR();
+    // if (jet_radius < 0) {
+    //     // subjets: use maxDR(subjet, pfcand)
+    //     for (unsigned idau = 0; idau < jet.numberOfDaughters(); ++idau) {
+    //         double dR = reco::deltaR(*jet.daughter(idau), jet);
+    //         if (dR > jet_radius)
+    //             jet_radius = dR;
+    //     }
+    // }
 
-    int nSV = -2;
-    const reco::CandSecondaryVertexTagInfo* candSVTagInfo = jet.tagInfoCandSecondaryVertex("pfInclusiveSecondaryVertexFinder");
-    if (candSVTagInfo != nullptr) nSV = candSVTagInfo->nVertices();
-    if (nSV > 0 && candSVTagInfo->vertexTracks().size() == 0) nSV = -1;
+    // int nSV = -2;
+    // const reco::CandSecondaryVertexTagInfo* candSVTagInfo = jet.tagInfoCandSecondaryVertex("pfInclusiveSecondaryVertexFinder");
+    // if (candSVTagInfo != nullptr) nSV = candSVTagInfo->nVertices();
+    // if (nSV > 0 && candSVTagInfo->vertexTracks().size() == 0) nSV = -1;
 
     // std::cout << " NTuple jet   pt eta phi " << jet.pt() << " " << jet.eta() << " " << jet.phi() << "   nSV " << nSV << std::endl;
 
-    for (const reco::VertexCompositePtrCandidate& sv : cpvtx) {
-        if (reco::deltaR(sv, jet) > jet_radius) continue;
+    // for (const reco::VertexCompositePtrCandidate& sv : cpvtx) {
+        // if (reco::deltaR(sv, jet) > jet_radius) continue;
 
-        if ((int) max_sv > sv_num_) { // limit number of SVs
-            std::cout << "new vertex ---------------------------------------------------------" << std::endl;
+        // if ((int) max_sv_ > sv_num_) { // limit number of SVs
+            // std::cout << "new vertex ---------------------------------------------------------" << std::endl;
             // sv_pt_[sv_num_] = sv.pt();
             // sv_eta_[sv_num_] = sv.eta();
             // sv_phi_[sv_num_] = sv.phi();
-            sv_etarel_[sv_num_] = catchInfsAndBound(fabs(sv.eta() - jet.eta()) - 0.5, 0, -2, 0);
-            sv_phirel_[sv_num_] = catchInfsAndBound(fabs(reco::deltaPhi(sv.phi(), jet.phi())) - 0.5, 0, -2, 0);
-            sv_deltaR_[sv_num_] = catchInfsAndBound(fabs(reco::deltaR(sv, jet)) - 0.5, 0, -2, 0);
+            // sv_etarel_[sv_num_] = catchInfsAndBound(fabs(sv.eta() - jet.eta()) - 0.5, 0, -2, 0);
+            // sv_phirel_[sv_num_] = catchInfsAndBound(fabs(reco::deltaPhi(sv.phi(), jet.phi())) - 0.5, 0, -2, 0);
+            // sv_deltaR_[sv_num_] = catchInfsAndBound(fabs(reco::deltaR(sv, jet)) - 0.5, 0, -2, 0);
             // sv_mass_[sv_num_] = sv.mass();
             // sv_ntracks_[sv_num_] = sv.numberOfDaughters();
             // sv_chi2_[sv_num_] = sv.vertexChi2();
@@ -320,25 +348,25 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
             // sv_d3derr_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0);
             // sv_d3dsig_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800);
             // sv_costhetasvpv_[sv_num_] = vertexDdotP(sv, pv); // the pointing angle (i.e. the angle between the sum of the momentum of the tracks in the SV and the flight direction betwen PV and SV)
-            sv_enratio_[sv_num_] = sv.energy() / jet_uncorr_e;
+            // sv_enratio_[sv_num_] = sv.energy() / jet_uncorr_e;
             // sv_e_[sv_num_] = sv.energy();
 
-            float calo_frac = 0.0;
-            float hcal_frac = 0.0;
-            float puppiw = 0.0;
-            float charge = 0.0;
-            float dz = 0.0;
+            // float calo_frac = 0.0;
+            // float hcal_frac = 0.0;
+            // float puppiw = 0.0;
+            // float charge = 0.0;
+            // float dz = 0.0;
 
-            float pfd3dval = 0.0;
-            float pfd3dsig = 0.0;
-            float pfd2dval = 0.0;
-            float pfd2dsig = 0.0;
-            float pfcount = 0.0;
+            // float pfd3dval = 0.0;
+            // float pfd3dsig = 0.0;
+            // float pfd2dval = 0.0;
+            // float pfd2dsig = 0.0;
+            // float pfcount = 0.0;
 
             float pfCandMatchCount = 0.0;
             float lostTrackMatchCount = 0.0;
-            for (unsigned idx = 0; idx < sv.numberOfDaughters(); ++idx) {
-                const pat::PackedCandidate* PackedCandidate_ = dynamic_cast<const pat::PackedCandidate*>(sv.daughter(idx));
+            // for (unsigned idx = 0; idx < sv.numberOfDaughters(); ++idx) {
+            //     const pat::PackedCandidate* PackedCandidate_ = dynamic_cast<const pat::PackedCandidate*>(sv.daughter(idx));
 
                 // int pfCandMatchIdx = findPFCandIdx(*PackedCandidate_, pfCands);
                 // int ltMatchIdx = findLostTrackIdx(*PackedCandidate_, lostTracks);
@@ -378,35 +406,35 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
                 //     // std::cout << "no matched pf candidates or lost tracks found" << std::endl;
                 // }
 
-                calo_frac = calo_frac + PackedCandidate_->caloFraction();
-                hcal_frac = hcal_frac + PackedCandidate_->hcalFraction();
-                puppiw = puppiw + PackedCandidate_->puppiWeight();
-                charge = charge + PackedCandidate_->charge();
-                dz = dz + PackedCandidate_->dz();
-                if (PackedCandidate_->charge() != 0 and PackedCandidate_->pt() > 0.95) { // TODO: understand these "track" cuts
-                    trackinfo.buildTrackInfo(PackedCandidate_, jetDir, jetRefTrackDir, pv);
-                    pfd3dval = pfd3dval + catchInfsAndBound(trackinfo.getTrackSip3dVal(), 0, -1, 1e5);
-                    pfd3dsig = pfd3dsig + catchInfsAndBound(trackinfo.getTrackSip3dSig(), 0, -1, 4e4);
-                    pfd2dval = pfd2dval + catchInfsAndBound(trackinfo.getTrackSip2dVal(), 0, -1, 70);
-                    pfd2dsig = pfd2dsig + catchInfsAndBound(trackinfo.getTrackSip2dSig(), 0, -1, 4e4);
-                    pfcount = pfcount + 1.0;
-                }
-            }
+            //     calo_frac = calo_frac + PackedCandidate_->caloFraction();
+            //     hcal_frac = hcal_frac + PackedCandidate_->hcalFraction();
+            //     puppiw = puppiw + PackedCandidate_->puppiWeight();
+            //     charge = charge + PackedCandidate_->charge();
+            //     dz = dz + PackedCandidate_->dz();
+            //     if (PackedCandidate_->charge() != 0 and PackedCandidate_->pt() > 0.95) { // TODO: understand these "track" cuts
+            //         trackinfo.buildTrackInfo(PackedCandidate_, jetDir, jetRefTrackDir, pv);
+            //         pfd3dval = pfd3dval + catchInfsAndBound(trackinfo.getTrackSip3dVal(), 0, -1, 1e5);
+            //         pfd3dsig = pfd3dsig + catchInfsAndBound(trackinfo.getTrackSip3dSig(), 0, -1, 4e4);
+            //         pfd2dval = pfd2dval + catchInfsAndBound(trackinfo.getTrackSip2dVal(), 0, -1, 70);
+            //         pfd2dsig = pfd2dsig + catchInfsAndBound(trackinfo.getTrackSip2dSig(), 0, -1, 4e4);
+            //         pfcount = pfcount + 1.0;
+            //     }
+            // }
 
             sv_nMatchPFCand_[sv_num_] = pfCandMatchCount;
             sv_nMatchLostTrk_[sv_num_] = lostTrackMatchCount;
             sv_nUnmatchedTrk_[sv_num_] = sv.numberOfDaughters() - (pfCandMatchCount + lostTrackMatchCount);
 
-            sv_calo_frac_[sv_num_] = calo_frac / sv.numberOfDaughters();
-            sv_hcal_frac_[sv_num_] = hcal_frac / sv.numberOfDaughters();
-            sv_puppiw_[sv_num_] = puppiw / sv.numberOfDaughters();
-            sv_dz_[sv_num_] = dz / sv.numberOfDaughters();
-            sv_charge_sum_[sv_num_] = charge;
+            // sv_calo_frac_[sv_num_] = calo_frac / sv.numberOfDaughters();
+            // sv_hcal_frac_[sv_num_] = hcal_frac / sv.numberOfDaughters();
+            // sv_puppiw_[sv_num_] = puppiw / sv.numberOfDaughters();
+            // sv_dz_[sv_num_] = dz / sv.numberOfDaughters();
+            // sv_charge_sum_[sv_num_] = charge;
 
-            sv_pfd3dval_[sv_num_] = pfd3dval / pfcount;
-            sv_pfd3dsig_[sv_num_] = pfd3dsig / pfcount;
-            sv_pfd2dval_[sv_num_] = pfd2dval / pfcount;
-            sv_pfd2dsig_[sv_num_] = pfd2dsig / pfcount;
+            // sv_pfd3dval_[sv_num_] = pfd3dval / pfcount;
+            // sv_pfd3dsig_[sv_num_] = pfd3dsig / pfcount;
+            // sv_pfd2dval_[sv_num_] = pfd2dval / pfcount;
+            // sv_pfd2dsig_[sv_num_] = pfd2dsig / pfcount;
 
             // Get the vertex time
             // Matching VertexCompositePtrCandidate (reconstructed) and tagInfoCandSecondaryVertex (information used to compute b (&c?) tag discriminator)...
@@ -464,15 +492,16 @@ bool ntuple_SV::fillBranches(const pat::Jet& jet, const size_t& jetidx, const ed
             sv_time_[sv_num_] = vertex_time;
 
             sv_num_++;
-        } // end if max_sv > sv_num_
+        } // end if max_sv_ > sv_num_
     } // end of looping over the reconstructed secondary vertices
     nsv_ = sv_num_;
 
+    */
     return true;
 }
 
 
-bool ntuple_SV::fillBranches() {
+void ntuple_SV::fillBranches(bool applySelection) {
 
     std::cout << "the other fillBranches() in ntuple_SV" << std::endl;
 
@@ -489,7 +518,7 @@ bool ntuple_SV::fillBranches() {
 
     sv_num_ = 0;
     for (const reco::VertexCompositePtrCandidate& sv : cpvtx) {
-        if (sv_num_ < (int) max_sv) {
+        if (sv_num_ < (int) max_sv_) { // limit number of SVs
             sv_pt_[sv_num_] = sv.pt();
             sv_eta_[sv_num_] = sv.eta();
             sv_phi_[sv_num_] = sv.phi();
@@ -506,6 +535,27 @@ bool ntuple_SV::fillBranches() {
             sv_d3derr_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0);
             sv_d3dsig_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800);
             sv_costhetasvpv_[sv_num_] = vertexDdotP(sv, pv); // the pointing angle (i.e. the angle between the sum of the momentum of the tracks in the SV and the flight direction betwen PV and SV)
+
+            SVTrackInfoBuilder trackinfo(builder_);
+
+            float calo_frac = 0.0;
+            float hcal_frac = 0.0;
+            float puppiw = 0.0;
+            float dz = 0.0;
+            float charge = 0.0;
+            for (unsigned idx = 0; idx < sv.numberOfDaughters(); ++idx) {
+                const pat::PackedCandidate* PackedCandidate_ = dynamic_cast<const pat::PackedCandidate*>(sv.daughter(idx));
+                calo_frac = calo_frac + PackedCandidate_->caloFraction();
+                hcal_frac = hcal_frac + PackedCandidate_->hcalFraction();
+                puppiw = puppiw + PackedCandidate_->puppiWeight();
+                dz = dz + PackedCandidate_->dz();
+                charge = charge + PackedCandidate_->charge();
+            }
+            sv_calo_frac_[sv_num_] = calo_frac / sv.numberOfDaughters();
+            sv_hcal_frac_[sv_num_] = hcal_frac / sv.numberOfDaughters();
+            sv_puppiw_[sv_num_] = puppiw / sv.numberOfDaughters();
+            sv_dz_[sv_num_] = dz / sv.numberOfDaughters();
+            sv_charge_sum_[sv_num_] = charge;
 
             // Match to a jet based on deltaR
             for (unsigned int j = 0; j < jetCollection.size(); j++) {
@@ -524,15 +574,49 @@ bool ntuple_SV::fillBranches() {
 
                 if (reco::deltaR(sv, jet) > jet_radius) continue;
 
-                sv_jetIdx_->push_back((int) j);
-                sv_matchJetIdx_->push_back(sv_num_);
-            }
-        }
-        sv_num_++;
-    }
-    nsv_ = sv_num_;
+                // Used for jet matching
+                sv_svIdx_->push_back(sv_num_);
+                sv_jetPt_->push_back(jet.correctedJet("Uncorrected").pt());
 
-    return false;
+                sv_etarel_->push_back(catchInfsAndBound(fabs(sv.eta() - jet.eta()) - 0.5, 0, -2, 0));
+                sv_phirel_->push_back(catchInfsAndBound(fabs(reco::deltaPhi(sv.phi(), jet.phi())) - 0.5, 0, -2, 0));
+                sv_deltaR_->push_back(catchInfsAndBound(fabs(reco::deltaR(sv, jet)) - 0.5, 0, -2, 0));
+                sv_enratio_->push_back(sv.energy() / jet.correctedJet("Uncorrected").energy());
+
+                math::XYZVector jetDir = jet.momentum().Unit();
+                GlobalVector jetRefTrackDir(jet.px(), jet.py(), jet.pz());
+                float pfd3dval = 0.0;
+                float pfd3dsig = 0.0;
+                float pfd2dval = 0.0;
+                float pfd2dsig = 0.0;
+                float pfcount = 0.0;
+                for (unsigned idx = 0; idx < sv.numberOfDaughters(); ++idx) {
+                    const pat::PackedCandidate* PackedCandidate_ = dynamic_cast<const pat::PackedCandidate*>(sv.daughter(idx));
+                    if (PackedCandidate_->charge() != 0 and PackedCandidate_->pt() > 0.95) { // TODO: understand these "track" cuts
+                        trackinfo.buildTrackInfo(PackedCandidate_, jetDir, jetRefTrackDir, pv);
+                        pfd3dval = pfd3dval + catchInfsAndBound(trackinfo.getTrackSip3dVal(), 0, -1, 1e5);
+                        pfd3dsig = pfd3dsig + catchInfsAndBound(trackinfo.getTrackSip3dSig(), 0, -1, 4e4);
+                        pfd2dval = pfd2dval + catchInfsAndBound(trackinfo.getTrackSip2dVal(), 0, -1, 70);
+                        pfd2dsig = pfd2dsig + catchInfsAndBound(trackinfo.getTrackSip2dSig(), 0, -1, 4e4);
+                        pfcount = pfcount + 1.0;
+                    }
+                }
+                sv_pfd3dval_->push_back(pfd3dval / pfcount);
+                sv_pfd3dsig_->push_back(pfd3dsig / pfcount);
+                sv_pfd2dval_->push_back(pfd2dval / pfcount);
+                sv_pfd2dsig_->push_back(pfd2dsig / pfcount);
+
+                int nSV = -2;
+                const reco::CandSecondaryVertexTagInfo* candSVTagInfo = jet.tagInfoCandSecondaryVertex("pfInclusiveSecondaryVertexFinder");
+                if (candSVTagInfo != nullptr) nSV = candSVTagInfo->nVertices();
+                if (nSV > 0 && candSVTagInfo->vertexTracks().size() == 0) nSV = -1;
+
+                //
+            } // end loop through jets
+        } // end if sv_num_ < max_sv_
+        sv_num_++;
+    } // end loop through SVs
+    nsv_ = sv_num_;
 }
 
 

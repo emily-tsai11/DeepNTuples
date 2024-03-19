@@ -33,8 +33,8 @@ class ntuple_SV : public ntuple_content {
 
         // Use either of these functions
         // bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0);
-        bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0, float EventTime = -1);
-        void fillBranches(bool applySelection);
+        bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0, float EventTime = -1) { return true; }
+        int fillBranches(bool applySelection, float EventTime = -1);
 
         void setTrackBuilderToken(const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord>& track_builder_token) {
             track_builder_token_ = track_builder_token;
@@ -82,16 +82,13 @@ class ntuple_SV : public ntuple_content {
         float sv_phi_[max_sv_];
         float sv_e_[max_sv_];
 
-        // float sv_etarel_[max_sv_];
-        // float sv_phirel_[max_sv_];
-        // float sv_deltaR_[max_sv_];
         std::vector<float>* sv_etarel_;
         std::vector<float>* sv_phirel_;
         std::vector<float>* sv_deltaR_;
 
         float sv_mass_[max_sv_];
         // float sv_phirel_[max_sv_];
-        // float sv_etarel_[max_sv_];e
+        // float sv_etarel_[max_sv_];
         float sv_ntracks_[max_sv_];
         float sv_nMatchPFCand_[max_sv_];
         float sv_nMatchLostTrk_[max_sv_];
@@ -107,7 +104,6 @@ class ntuple_SV : public ntuple_content {
         float sv_d3dsig_[max_sv_];
         float sv_costhetasvpv_[max_sv_];
 
-        // float sv_enratio_[max_sv_];
         std::vector<float>* sv_enratio_;
 
         float sv_calo_frac_[max_sv_];
@@ -116,20 +112,16 @@ class ntuple_SV : public ntuple_content {
         float sv_dz_[max_sv_];
         float sv_charge_sum_[max_sv_];
 
-        // float sv_pfd2dval_[max_sv_];
-        // float sv_pfd2dsig_[max_sv_];
-        // float sv_pfd3dval_[max_sv_];
-        // float sv_pfd3dsig_[max_sv_];
         std::vector<float>* sv_pfd2dval_;
         std::vector<float>* sv_pfd2dsig_;
         std::vector<float>* sv_pfd3dval_;
         std::vector<float>* sv_pfd3dsig_;
 
-        float sv_time_[max_sv_];
+        std::vector<float>* sv_time_;
 
+        // Use sv_jetPt_ to match SV to jet from ntuple_JetInfo
         std::vector<int>* sv_svIdx_; // The index of the SV (that is matched to the corresponding jet in sv_jetPt_)
         std::vector<int>* sv_jetPt_; // The (uncorrected) pt of the jet (that the SV at sv_svIdx_[i] is matched to)
-        // Use sv_jetPt_ to match SV to jet from ntuple_JetInfo
 
         static const reco::Vertex* spvp_;
 

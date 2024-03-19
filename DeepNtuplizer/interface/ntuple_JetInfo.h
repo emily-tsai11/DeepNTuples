@@ -35,8 +35,8 @@ class ntuple_JetInfo : public ntuple_content {
 
         // Use either of these functions
         // bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0);
-        bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0, float EventTime = -1);
-        void fillBranches(bool applySelection);
+        bool fillBranches(const pat::Jet&, const size_t& jetidx, const edm::View<pat::Jet>* coll = 0, float EventTime = -1) { return true; }
+        int fillBranches(bool applySelection, float EventTime = -1);
 
         void setAxis2Token(edm::EDGetTokenT<edm::ValueMap<float>> axis2Token) {
             axis2Token_ = axis2Token;
@@ -143,20 +143,6 @@ class ntuple_JetInfo : public ntuple_content {
         // Labels (MC truth)
 
         // Classification
-        // int isB_;
-        // int isGBB_;
-        // int isBB_;
-        // int isC_;
-        // int isGCC_;
-        // int isCC_;
-        // int isUD_;
-        // int isS_;
-        // int isG_;
-        // int isUndefined_;
-        // float genDecay_;
-        // int isLeptonicB_;
-        // int isLeptonicB_C_;
-        // int isTau_;
         std::vector<int>* isB_;
         std::vector<int>* isGBB_;
         std::vector<int>* isBB_;
@@ -173,19 +159,6 @@ class ntuple_JetInfo : public ntuple_content {
         std::vector<float>* genDecay_;
 
         // Truth labeling with fallback to physics definition for light/gluon/undefined of standard flavor definition
-        // int isPhysB_;
-        // int isPhysGBB_;
-        // int isPhysBB_;
-        // int isPhysC_;
-        // int isPhysGCC_;
-        // int isPhysCC_;
-        // int isPhysUD_;
-        // int isPhysS_;
-        // int isPhysG_;
-        // int isPhysUndefined_;
-        // int isPhysLeptonicB_;
-        // int isPhysLeptonicB_C_;
-        // int isPhysTau_;
         std::vector<int>* isPhysB_;
         std::vector<int>* isPhysGBB_;
         std::vector<int>* isPhysBB_;
@@ -211,13 +184,6 @@ class ntuple_JetInfo : public ntuple_content {
         // unsigned int jet_no_;
 
         // Jet variables
-        // float jet_pt_;
-        // float jet_corr_pt_;
-        // float jet_eta_;
-        // float jet_phi_;
-        // float jet_mass_;
-        // float jet_energy_;
-        // float jet_looseId_;
         std::vector<float>* jet_pt_;
         std::vector<float>* jet_corr_pt_;
         std::vector<float>* jet_eta_;
@@ -227,22 +193,11 @@ class ntuple_JetInfo : public ntuple_content {
         std::vector<float>* jet_looseId_;
 
         // Quark/gluon
-        // float jet_qgl_;
-        // float QG_ptD_;
-        // float QG_axis2_;
-        // float QG_mult_;
         std::vector<float>* jet_qgl_;
         std::vector<float>* QG_ptD_;
         std::vector<float>* QG_axis2_;
         std::vector<float>* QG_mult_;
 
-        // float y_multiplicity_;
-        // float y_charged_multiplicity_;
-        // float y_neutral_multiplicity_;
-        // float y_ptD_;
-        // float y_axis1_;
-        // float y_axis2_;
-        // float y_pt_dr_log_;
         std::vector<float>* y_multiplicity_;
         std::vector<float>* y_charged_multiplicity_;
         std::vector<float>* y_neutral_multiplicity_;
@@ -252,21 +207,6 @@ class ntuple_JetInfo : public ntuple_content {
         std::vector<float>* y_pt_dr_log_;
 
         static constexpr std::size_t max_num_lept_ = 5;
-        // int muons_isLooseMuon_[max_num_lept_];
-        // int muons_isTightMuon_[max_num_lept_];
-        // int muons_isSoftMuon_[max_num_lept_];
-        // int muons_isHighPtMuon_[max_num_lept_];
-        // float muons_pt_[max_num_lept_];
-        // float muons_relEta_[max_num_lept_];
-        // float muons_relPhi_[max_num_lept_];
-        // float muons_energy_[max_num_lept_];
-        // float electrons_pt_[max_num_lept_];
-        // float electrons_relEta_[max_num_lept_];
-        // float electrons_relPhi_[max_num_lept_];
-        // float electrons_energy_[max_num_lept_];
-
-        // int muons_number_ = 0;
-        // int electrons_number_ = 0;
 
         // These vectors have the same number of entries per event as the number of jets
         std::vector<int>* muons_number_;
@@ -290,12 +230,6 @@ class ntuple_JetInfo : public ntuple_content {
         std::vector<float>* electrons_energy_;
 
         // Regressions pt, deta, dphi (truth)
-        // float gen_pt_;
-        // float gen_pt_Recluster_;
-        // float gen_pt_WithNu_;
-        // float Delta_gen_pt_;
-        // float Delta_gen_pt_Recluster_;
-        // float Delta_gen_pt_WithNu_;
         std::vector<float>* gen_pt_;
         std::vector<float>* gen_pt_Recluster_;
         std::vector<float>* gen_pt_WithNu_;
@@ -303,7 +237,7 @@ class ntuple_JetInfo : public ntuple_content {
         std::vector<float>* Delta_gen_pt_Recluster_;
         std::vector<float>* Delta_gen_pt_WithNu_;
 
-        std::map<std::string, float> discriminators_;
+        std::map<std::string, std::vector<float>*> discriminators_;
 };
 
 

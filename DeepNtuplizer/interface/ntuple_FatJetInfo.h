@@ -32,7 +32,7 @@ public:
 
 //$$	bool fillBranches(const pat::Jet &jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll) override;
 	bool fillBranches(const pat::Jet &jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll, float EventTime = -1) override;
-	void fillBranches(bool applySelection) {}
+	int fillBranches(bool applySelection, float EventTime = -1) { return 0; }
 
 	void setGenParticleToken(const edm::EDGetTokenT<reco::GenParticleCollection>& genPartToken) {
 		genParticleToken_ = genPartToken;

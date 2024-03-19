@@ -327,7 +327,6 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         size_t idx = 0;
         for (auto& m : modules_) {
             // std::cout << module_names_[idx] << std::endl;
-            // if (module_names_[idx] == "SVNtuple") writejet = false;
             // if (!m->fillBranches(jet, jetidx, jets.product())) {
             if (!m->fillBranches(jet, jetidx, jets.product(), event_time)) {
                 writejet = false;
@@ -355,11 +354,15 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     size_t index = 0;
     for (auto& m : modules_) {
         if (module_names_[index] == "SVNtuple" || module_names_[index] == "jetinfo") {
-            m->fillBranches(applySelection_);
+            int nJetsSelected = m->fillBranches(applySelection_, event_time);
+            if (module_names_[index] == "jetinfo")
+                njetsselected_crossCheck_ += nJetsSelected;
         }
         index++;
     }
+    std::cout << "FILLING TREE" << std::endl;
     tree_->Fill();
+    std::cout << "DONE FILLING TREE" << std::endl;
 
     for (auto& m : modules_) {
         m->deleteContainers();
@@ -391,11 +394,11 @@ void DeepNtuplizer::beginJob() {
 // Method called once each job just after ending the event loop
 void DeepNtuplizer::endJob() {
 
-    std::cout << "total number of processed jets:     " << njetstotal_ << std::endl;
-    std::cout << "total number of jets with gen:      " << njetswithgenjet_ << std::endl;
-    std::cout << "total number of selected jets:      " << njetsselected_ << std::endl;
-    std::cout << "fraction of selected jets:          " << (float) njetsselected_ / (float) njetstotal_ << std::endl;
-    std::cout << "fraction of selected jets with gen: " << (float) njetsselected_ / (float) njetswithgenjet_ << std::endl;
+    // std::cout << "total number of processed jets:     " << njetstotal_ << std::endl;
+    // std::cout << "total number of jets with gen:      " << njetswithgenjet_ << std::endl;
+    // std::cout << "total number of selected jets:      " << njetsselected_ << std::endl;
+    // std::cout << "fraction of selected jets:          " << (float) njetsselected_ / (float) njetstotal_ << std::endl;
+    // std::cout << "fraction of selected jets with gen: " << (float) njetsselected_ / (float) njetswithgenjet_ << std::endl;
 
     std::cout << "and now checking with new code" << std::endl;
     std::cout << "total number of processed jets (check):     " << njetstotal_crossCheck_ << std::endl;

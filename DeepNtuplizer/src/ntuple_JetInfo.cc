@@ -45,7 +45,7 @@ void ntuple_JetInfo::getInput(const edm::ParameterSet& iConfig) {
 
     vector<string> disc_names = iConfig.getParameter<vector<string>>("bDiscriminators");
     for (auto& name : disc_names) {
-        discriminators_[name] = 0.0;
+        discriminators_[name] = 0;
     }
 }
 
@@ -112,13 +112,13 @@ void ntuple_JetInfo::initBranches(TTree* tree) {
     addBranch(tree, "QG_mult", &QG_mult_); // multiplicity i.e. total num of PFcands reconstructed
 
     // Yutas quark-gluon info
-    // addBranch(tree, "y_multiplicity", &y_multiplicity_, "y_multiplicity_/F");
-    // addBranch(tree, "y_charged_multiplicity", &y_charged_multiplicity_, "y_charged_multiplicity_/F");
-    // addBranch(tree, "y_neutral_multiplicity", &y_neutral_multiplicity_, "y_neutral_multiplicity_/F");
-    // addBranch(tree, "y_ptD", &y_ptD_, "y_ptD_/F");
-    // addBranch(tree, "y_axis1", &y_axis1_, "y_axis1_/F");
-    // addBranch(tree, "y_axis2", &y_axis2_, "y_axis2_/F");
-    // addBranch(tree, "y_pt_dr_log", &y_pt_dr_log_, "y_pt_dr_log_/F");
+    addBranch(tree, "y_multiplicity", &y_multiplicity_);
+    addBranch(tree, "y_charged_multiplicity", &y_charged_multiplicity_);
+    addBranch(tree, "y_neutral_multiplicity", &y_neutral_multiplicity_);
+    addBranch(tree, "y_ptD", &y_ptD_);
+    addBranch(tree, "y_axis1", &y_axis1_);
+    addBranch(tree, "y_axis2", &y_axis2_);
+    addBranch(tree, "y_pt_dr_log", &y_pt_dr_log_);
 
     // In the jet
     addBranch(tree, "muons_number", &muons_number_);
@@ -144,13 +144,13 @@ void ntuple_JetInfo::initBranches(TTree* tree) {
     addBranch(tree, "Delta_gen_pt_Recluster", &Delta_gen_pt_Recluster_);
     addBranch(tree, "Delta_gen_pt_WithNu", &Delta_gen_pt_WithNu_);
 
-    // if (1) { // discriminators might need to be filled differently -- FIXME
-    //     for (auto& entry : discriminators_) {
-    //         string better_name(entry.first);
-    //         std::replace(better_name.begin(), better_name.end(), ':', '_');
-    //         addBranch(tree, better_name.c_str(), &entry.second, (better_name + "/F").c_str());
-    //     }
-    // }
+    if (1) { // discriminators might need to be filled differently -- FIXME
+        for (auto& entry : discriminators_) {
+            string better_name(entry.first);
+            std::replace(better_name.begin(), better_name.end(), ':', '_');
+            addBranch(tree, better_name.c_str(), &entry.second);
+        }
+    }
 }
 
 
@@ -335,6 +335,11 @@ void ntuple_JetInfo::initContainers() {
     y_axis1_ = new std::vector<float>;
     y_axis2_ = new std::vector<float>;
     y_pt_dr_log_ = new std::vector<float>;
+
+    // Add if statement later, like above?
+    for (auto& entry : discriminators_) {
+        entry.second = new std::vector<float>;
+    }
 }
 
 
@@ -416,6 +421,10 @@ void ntuple_JetInfo::clearContainers() {
     y_axis1_->clear();
     y_axis2_->clear();
     y_pt_dr_log_->clear();
+
+    for (auto& entry : discriminators_) {
+        entry.second->clear();
+    }
 }
 
 
@@ -497,9 +506,14 @@ void ntuple_JetInfo::deleteContainers() {
     delete y_axis1_;
     delete y_axis2_;
     delete y_pt_dr_log_;
+
+    for (auto& entry : discriminators_) {
+        delete entry.second;
+    }
 }
 
 
+/*
 // Use either of these functions
 // bool ntuple_JetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, const edm::View<pat::Jet>* coll) {
 bool ntuple_JetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, const edm::View<pat::Jet>* coll, float EventTime) {
@@ -509,7 +523,6 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, con
     // Cuts
     bool returnval = true;
 
-    /*
     // Some cuts to constrain training region
     if (jet.pt() < jetPtMin_ || jet.pt() > jetPtMax_) returnval = false; // Apply jet pT cut
     if (fabs(jet.eta()) < jetAbsEtaMin_ || fabs(jet.eta()) > jetAbsEtaMax_) returnval = false; // Apply jet eta cut
@@ -660,19 +673,6 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, con
     // Skip event, if neither standard flavor definition nor physics definition fallback define a "proper flavor"
     if (isUndefined_ && isPhysUndefined_) returnval = false;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
     pat::JetCollection h;
 
     jet_pt_ = jet.correctedJet("Uncorrected").pt();
@@ -777,12 +777,14 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, con
     y_axis1_ = std::get<4>(qgtuple);
     y_axis2_ = std::get<5>(qgtuple);
     y_pt_dr_log_ = std::get<6>(qgtuple);
-    */
+
     return returnval;
 }
+*/
 
 
-void ntuple_JetInfo::fillBranches(bool applySelection) {
+// Returns number of selected jets after cuts
+int ntuple_JetInfo::fillBranches(bool applySelection, float EventTime) {
 
     std::cout << "the other fillBranches() in ntuple_JetInfo" << std::endl;
 
@@ -823,6 +825,7 @@ void ntuple_JetInfo::fillBranches(bool applySelection) {
     if (applySelection)
         std::random_shuffle(indices.begin(), indices.end());
 
+    int nJetsSelected = 0;
     edm::View<pat::Jet>::const_iterator jetIter;
     for (size_t jetIdx : indices) {
 
@@ -841,11 +844,6 @@ void ntuple_JetInfo::fillBranches(bool applySelection) {
         }
 
         if (jet.genJet() == NULL) continue;
-
-        // Branch fills
-        // for (auto& entry : discriminators_) {
-        //     entry.second = catchInfs(jet.bDiscriminator(entry.first), -0.1);
-        // }
 
         // Note that jets with gluon->bb (cc) and x->bb (cc) are in the same categories
         int isB = 0;
@@ -947,6 +945,11 @@ void ntuple_JetInfo::fillBranches(bool applySelection) {
         isPhysLeptonicB_C_->push_back(isPhysLeptonicB_C);
         isPhysTau_->push_back(isPhysTau);
         isPhysUndefined_->push_back(isPhysUndefined);
+
+        // Branch fills
+        for (auto& entry : discriminators_) {
+            entry.second->push_back(catchInfs(jet.bDiscriminator(entry.first), -0.1));
+        }
 
         const auto jetRef = reco::CandidatePtr(jetCollection->ptrs().at(jetIdx));
         jet_qgl_->push_back((*qglHandle_)[jetRef]);
@@ -1089,5 +1092,9 @@ void ntuple_JetInfo::fillBranches(bool applySelection) {
         y_axis1_->push_back(std::get<4>(qgtuple));
         y_axis2_->push_back(std::get<5>(qgtuple));
         y_pt_dr_log_->push_back(std::get<6>(qgtuple));
+
+        nJetsSelected++;
     } // End of loop over jets
+
+    return nJetsSelected;
 }

@@ -138,6 +138,11 @@ e.g.
 ```
 cmsRun DeepNtuplizer.py inputFiles=root://cms-xrd-global.cern.ch//store/mc/Phase2Spring23DIGIRECOMiniAOD/TT_TuneCP5_14TeV-powheg-pythia8/GEN-SIM-DIGI-RAW-MINIAOD/PU200_L1TFix_Trk1GeV_131X_mcRun4_realistic_v9-v1/50000/005bc30b-cf79-4b3b-9ec1-a80e13072afd.root
 ```
+To check the contents of a root file, do:
+```
+edmDumpEventContent root://cms-xrd-global.cern.ch//store/mc/Phase2Spring23DIGIRECOMiniAOD/TT_TuneCP5_14TeV-powheg-pythia8/GEN-SIM-DIGI-RAW-MINIAOD/PU200_L1TFix_Trk1GeV_131X_mcRun4_realistic_v9-v1/50000/005bc30b-cf79-4b3b-9ec1-a80e13072afd.root
+```
+Testing sample: https://cmsweb.cern.ch/das/request?input=dataset%3D%2FTT_TuneCP5_14TeV-powheg-pythia8%2FPhase2Spring23DIGIRECOMiniAOD-PU200_L1TFix_Trk1GeV_131X_mcRun4_realistic_v9-v1%2FGEN-SIM-DIGI-RAW-MINIAOD&instance=prod/global
 
 Production
 ==========

@@ -14,6 +14,7 @@
 #include "FWCore/Utilities/interface/ESGetToken.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
+#include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
 
 
 class ntuple_SV : public ntuple_content {
@@ -40,6 +41,10 @@ class ntuple_SV : public ntuple_content {
             track_builder_token_ = track_builder_token;
         }
 
+        void setGenVertexToken(const edm::EDGetTokenT<TrackingVertexCollection>& genVertices_token) {
+            genVertices_token_ = genVertices_token;
+        }
+
         void setPFCandToken(const edm::EDGetTokenT<pat::PackedCandidateCollection>& pf_cand_token) {
             pf_cand_token_ = pf_cand_token;
         }
@@ -64,12 +69,14 @@ class ntuple_SV : public ntuple_content {
         std::string prefix_;
 
         edm::ESHandle<TransientTrackBuilder> builder_;
+        edm::Handle<TrackingVertexCollection> genVertices_;
         edm::Handle<pat::PackedCandidateCollection> pf_cand_;
         edm::Handle<pat::PackedCandidateCollection> lost_tracks_;
         edm::Handle<edm::Association<reco::GenParticleCollection>> pf_mcmatch_;
         edm::Handle<edm::Association<reco::GenParticleCollection>> lt_mcmatch_;
 
         edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> track_builder_token_;
+        edm::EDGetTokenT<TrackingVertexCollection> genVertices_token_;
         edm::EDGetTokenT<pat::PackedCandidateCollection> pf_cand_token_;
         edm::EDGetTokenT<pat::PackedCandidateCollection> lost_tracks_token_;
         edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>> pf_mcmatch_token_;
@@ -121,7 +128,7 @@ class ntuple_SV : public ntuple_content {
 
         // Use sv_jetPt_ to match SV to jet from ntuple_JetInfo
         std::vector<int>* sv_svIdx_; // The index of the SV (that is matched to the corresponding jet in sv_jetPt_)
-        std::vector<int>* sv_jetPt_; // The (uncorrected) pt of the jet (that the SV at sv_svIdx_[i] is matched to)
+        std::vector<float>* sv_jetPt_; // The (uncorrected) pt of the jet (that the SV at sv_svIdx_[i] is matched to)
 
         static const reco::Vertex* spvp_;
 

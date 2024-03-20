@@ -22,8 +22,6 @@
 #include "DataFormats/Candidate/interface/VertexCompositePtrCandidate.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
-#include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
-#include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 
 #include "TTree.h"
@@ -36,7 +34,6 @@ class ntuple_content {
     public:
 
         ntuple_content() : ntuple_content(0.4) {}
-        // ntuple_content(double jetR) : vertices_(0), secvertices_(0), genvertices_(0), pupInfo_(0), rhoInfo_(0), jetR_(jetR), read_(false) {}
         ntuple_content(double jetR) : vertices_(0), secvertices_(0), pupInfo_(0), rhoInfo_(0), jetR_(jetR), read_(false) {}
         virtual ~ntuple_content();
 
@@ -55,7 +52,6 @@ class ntuple_content {
 
         void setPrimaryVertices(const reco::VertexCollection* v) { vertices_ = v; }
         void setSecVertices(const std::vector<reco::VertexCompositePtrCandidate>* v) { secvertices_ = v; }
-        // void setGenVertices(const TrackingVertexCollection* v) { genvertices_ = v; }
         void setJets(const edm::View<pat::Jet>* v) { jets_ = v; }
         void setPuInfo(const std::vector<PileupSummaryInfo>* v) { pupInfo_ = v; }
         void setRhoInfo(const double* v) { rhoInfo_ = v; }
@@ -88,7 +84,6 @@ class ntuple_content {
 
         const reco::VertexCollection* vertices() const;
         const std::vector<reco::VertexCompositePtrCandidate>* secVertices() const;
-        // const TrackingVertexCollection* genVertices() const;
         const edm::View<pat::Jet>* jets() const;
         const std::vector<PileupSummaryInfo>* pupInfo() const;
         const double* rhoInfo() const;
@@ -127,7 +122,6 @@ class ntuple_content {
 
         const reco::VertexCollection* vertices_;
         const std::vector<reco::VertexCompositePtrCandidate>* secvertices_;
-        // const TrackingVertexCollection* genvertices_;
         const edm::View<pat::Jet>* jets_;
         const std::vector<PileupSummaryInfo>* pupInfo_;
         const double* rhoInfo_;

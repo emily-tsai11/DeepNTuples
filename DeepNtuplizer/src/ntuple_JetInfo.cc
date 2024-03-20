@@ -828,9 +828,6 @@ int ntuple_JetInfo::fillBranches(bool applySelection, float EventTime) {
     int nJetsSelected = 0;
     edm::View<pat::Jet>::const_iterator jetIter;
     for (size_t jetIdx : indices) {
-
-        std::cout << "jetIdx = " << jetIdx << std::endl;
-
         jetIter = jetCollection->begin() + jetIdx;
         const pat::Jet& jet = *jetIter;
 

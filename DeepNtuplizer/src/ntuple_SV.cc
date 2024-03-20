@@ -19,6 +19,7 @@
 #include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
 
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+// #include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 #include "TrackingTools/IPTools/interface/IPTools.h"
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
@@ -221,6 +222,7 @@ void ntuple_SV::readSetup(const edm::EventSetup& iSetup) {
 
 void ntuple_SV::readEvent(const edm::Event& iEvent) {
 
+    iEvent.getByToken(genVertices_token_, genVertices_);
     iEvent.getByToken(pf_cand_token_, pf_cand_);
     iEvent.getByToken(lost_tracks_token_, lost_tracks_);
     iEvent.getByToken(pf_mcmatch_token_, pf_mcmatch_);
@@ -231,7 +233,7 @@ void ntuple_SV::readEvent(const edm::Event& iEvent) {
 void ntuple_SV::initContainers() {
 
     sv_svIdx_ = new std::vector<int>;
-    sv_jetPt_ = new std::vector<int>;
+    sv_jetPt_ = new std::vector<float>;
 
     sv_etarel_ = new std::vector<float>;
     sv_phirel_ = new std::vector<float>;
@@ -522,6 +524,37 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
 
     const edm::View<pat::Jet> jetCollection = *jets();
 
+    typedef TrackingVertex::genv_iterator GenVtxIter;
+    typedef TrackingVertex::GenVertexRef GenVtxRef;
+    typedef HepMC::GenVertex::particles_in_const_iterator GenPtclIter;
+    typedef HepMC::GenParticle* GenPtclPtr;
+    std::cout << "TrackingVertex count : " << genVertices_->size() << std::endl;
+    for (unsigned int vtxIdx = 0; vtxIdx < genVertices_->size(); vtxIdx++) {
+        TrackingVertex trackingVtx = genVertices_->at(vtxIdx);
+        int nG4SimVertex = trackingVtx.g4Vertices().size();
+        int nHepMCGenVertex = trackingVtx.genVertices().size();
+        if (nG4SimVertex != 1 || nHepMCGenVertex != 0) {
+            std::cout << "VERTEX " << vtxIdx << std::endl;
+            std::cout << "G4 SimVertex count   : " << nG4SimVertex << std::endl;
+            std::cout << "HepMC GenVertex count: " << nHepMCGenVertex << std::endl;
+        }
+        if (nHepMCGenVertex > 0) {
+            for (GenVtxIter iter = trackingVtx.genVertices_begin(); iter != trackingVtx.genVertices_end(); iter++) {
+                const GenVtxRef genVtx = *iter;
+                for (GenPtclIter part_in = genVtx->particles_in_const_begin(); part_in != genVtx->particles_in_const_end(); part_in++) {
+                    GenPtclPtr ptcl = *part_in;
+                    int pdg_id = abs(ptcl->pdg_id());
+                    int hundreths = abs(pdg_id / 100);
+                    int thousandths = abs(pdg_id / 1000);
+                    if (pdg_id == 4 || pdg_id == 5 || hundreths == 4 || hundreths == 5 || thousandths == 4 || thousandths == 5) {
+                        genVtx->print();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     sv_num_ = 0;
     for (const reco::VertexCompositePtrCandidate& sv : cpvtx) {
         if (sv_num_ < (int) max_sv_) { // Limit number of SVs
@@ -656,7 +689,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                                     vertex_timeNtk += 1;
                                     vertex_timeWeight += time_weight;
                                     vertex_time += track_time * time_weight;
-                                    std::cout << "  => matched track " << it << " to " << i << " time " << track_time << std::endl;
+                                    // std::cout << "  => matched track " << it << " to " << i << " time " << track_time << std::endl;
                                 }
                             } // End loop on all tracks in jet
                         } // End loop on tracks from SV in jet
@@ -665,10 +698,10 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                         vertex_time = vertex_time / vertex_timeWeight - EventTime;
                         vertex_time = TMath::Abs(vertex_time);
                     } // Time of flight?
-                    else vertex_time = -1; 
+                    else vertex_time = -1.0; 
                 } // End if nSV > 0 && sv.pt() > 0.0
                 else vertex_time = -1.0;
-                std::cout << " NTuple sv " << sv_num_ << " pt eta phi " << sv.pt() << " " << sv.eta() << " " << sv.phi() << " time " << vertex_time << std::endl;
+                // std::cout << " NTuple sv " << sv_num_ << " pt eta phi " << sv.pt() << " " << sv.eta() << " " << sv.phi() << " time " << vertex_time << std::endl;
                 sv_time_->push_back(vertex_time);
             } // End loop through jets
         } // End if sv_num_ < max_sv_

@@ -1,0 +1,9 @@
+universe    = vanilla
+executable  = run_job.sh
+arguments   = $(inputFile) TTToHadronic_noPU $(Process)
+output      = status/run$(Process).out
+log         = status/run$(Process).log
+error       = status/run$(Process).err
++JobFlavour = "longlunch"
+
+queue inputFile from TTToHadronic_noPU.list

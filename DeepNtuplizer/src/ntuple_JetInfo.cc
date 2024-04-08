@@ -786,8 +786,6 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet& jet, const size_t& jetidx, con
 // Returns number of selected jets after cuts
 int ntuple_JetInfo::fillBranches(bool applySelection, float EventTime) {
 
-    std::cout << "the other fillBranches() in ntuple_JetInfo" << std::endl;
-
     clearContainers();
 
     const edm::View<pat::Jet>* jetCollection = jets();

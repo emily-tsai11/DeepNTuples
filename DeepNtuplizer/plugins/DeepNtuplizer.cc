@@ -17,6 +17,7 @@
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
+#include "DataFormats/JetMatching/interface/JetFlavourInfoMatching.h"
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
 
 #include "TrackingTools/IPTools/interface/IPTools.h"
@@ -135,13 +136,17 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
 
     ntuple_SV* svmodule = new ntuple_SV("", jetR);
     svmodule->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
-    svmodule->setGenVertexToken(consumes<TrackingVertexCollection>(edm::InputTag("mix", "MergedTrackTruth")));
+    // svmodule->setGenVertexToken(consumes<TrackingVertexCollection>(edm::InputTag("mix", "MergedTrackTruth")));
+    svmodule->setGenParticlesToken(consumes<reco::GenParticleCollection>(edm::InputTag("genParticles")));
+    svmodule->setGenJetFlavourInfoToken(consumes<reco::JetFlavourInfoMatchingCollection>(edm::InputTag("slimmedGenJetsFlavourInfos")));
+    // svmodule->setGenParticlesT0(consumes<float>(edm::InputTag("genParticles", "t0")));
+    // svmodule->setGenParticlesXYZ0(consumes<ntuple_SV::PositionVector>(edm::InputTag("genParticles", "xyz0")));
 
-    svmodule->setPFCandToken(consumes<pat::PackedCandidateCollection>(edm::InputTag("packedPFCandidates")));
-    svmodule->setLostTracksToken(consumes<pat::PackedCandidateCollection>(edm::InputTag("lostTracks")));
+    // svmodule->setPFCandToken(consumes<pat::PackedCandidateCollection>(edm::InputTag("packedPFCandidates")));
+    // svmodule->setLostTracksToken(consumes<pat::PackedCandidateCollection>(edm::InputTag("lostTracks")));
 
-    svmodule->setPFMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("packedPFCandidateToGenAssociation")));
-    svmodule->setLTMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("lostTracksToGenAssociation")));
+    // svmodule->setPFMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("packedPFCandidateToGenAssociation")));
+    // svmodule->setLTMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("lostTracksToGenAssociation")));
 
     addModule(svmodule, "SVNtuple");
 

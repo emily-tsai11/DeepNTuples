@@ -18,7 +18,8 @@
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
 #include "DataFormats/JetMatching/interface/JetFlavourInfoMatching.h"
-#include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
+#include "SimDataFormats/Track/interface/SimTrackContainer.h"
+// #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
 
 #include "TrackingTools/IPTools/interface/IPTools.h"
 #if defined( __GXX_EXPERIMENTAL_CXX0X__)
@@ -136,18 +137,19 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
 
     ntuple_SV* svmodule = new ntuple_SV("", jetR);
     svmodule->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
-    // svmodule->setGenVertexToken(consumes<TrackingVertexCollection>(edm::InputTag("mix", "MergedTrackTruth")));
-    svmodule->setGenParticlesToken(consumes<reco::GenParticleCollection>(edm::InputTag("genParticles")));
+    svmodule->setGenParticlesToken(consumes<pat::PackedGenParticleCollection>(edm::InputTag("packedGenParticles::BTV")));
     svmodule->setGenJetFlavourInfoToken(consumes<reco::JetFlavourInfoMatchingCollection>(edm::InputTag("slimmedGenJetsFlavourInfos")));
-    // svmodule->setGenParticlesT0(consumes<float>(edm::InputTag("genParticles", "t0")));
-    // svmodule->setGenParticlesXYZ0(consumes<ntuple_SV::PositionVector>(edm::InputTag("genParticles", "xyz0")));
-
+    svmodule->setSimTracksToken(consumes<edm::SimTrackContainer>(edm::InputTag("g4SimHits::SIM")));
     // svmodule->setPFCandToken(consumes<pat::PackedCandidateCollection>(edm::InputTag("packedPFCandidates")));
-    // svmodule->setLostTracksToken(consumes<pat::PackedCandidateCollection>(edm::InputTag("lostTracks")));
-
     // svmodule->setPFMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("packedPFCandidateToGenAssociation")));
-    // svmodule->setLTMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("lostTracksToGenAssociation")));
-
+    svmodule->setRecoTracksToken(consumes<reco::TrackCollection>(edm::InputTag("generalTracks::HLT")));
+    // svmodule->setGenVertexToken(consumes<TrackingVertexCollection>(edm::InputTag("mix", "MergedTrackTruth")));
+    svmodule->setPVsToken(consumes<reco::VertexCollection>(edm::InputTag("offlinePrimaryVertices::BTV")));
+    svmodule->setInclusiveSVsToken(consumes<reco::VertexCollection>(edm::InputTag("inclusiveVertexFinder")));
+    svmodule->setInclusiveSVsMTDTimingToken(consumes<reco::VertexCollection>(edm::InputTag("inclusiveVertexFinderMTDTiming")));
+    svmodule->setTimeValueMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("tofPID:t0")));
+    svmodule->setTimeErrorMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("tofPID:sigmat0")));
+    svmodule->setTimeQualityMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("mtdTrackQualityMVA:mtdQualMVA")));
     addModule(svmodule, "SVNtuple");
 
     // ntuple_DeepVertex* dvmodule = new ntuple_DeepVertex(jetR);
@@ -170,26 +172,19 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
     jetinfo->setPtDToken(consumes<edm::ValueMap<float>>(edm::InputTag(t_qgtagger, "ptD")));
     jetinfo->setAxis2Token(consumes<edm::ValueMap<float>>(edm::InputTag(t_qgtagger, "axis2")));
     jetinfo->setMultToken(consumes<edm::ValueMap<int>>(edm::InputTag(t_qgtagger, "mult")));
-
     jetinfo->setUseHerwigCompatibleMatching(useHerwigCompatibleMatching);
     jetinfo->setIsHerwig(isHerwig);
-
     jetinfo->setGenJetMatchReclusterToken(consumes<edm::Association<reco::GenJetCollection>>(iConfig.getParameter<edm::InputTag>("genJetMatchRecluster")));
     jetinfo->setGenJetMatchWithNuToken(consumes<edm::Association<reco::GenJetCollection>>(iConfig.getParameter<edm::InputTag>("genJetMatchWithNu")));
-
     jetinfo->setGenParticlesToken(consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("pruned")));
-
     jetinfo->setMuonsToken(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons")));
     jetinfo->setElectronsToken(consumes<pat::ElectronCollection>(iConfig.getParameter<edm::InputTag>("electrons")));
-
     jetinfo->setPUInfoToken(consumes<std::vector<PileupSummaryInfo>>(edm::InputTag("slimmedAddPileupInfo")));
-
     addModule(jetinfo, "jetinfo");
 
     ntuple_pfCands* pfcands = new ntuple_pfCands();
     pfcands->setJetRadius(jetR);
 	pfcands->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
-
     addModule(pfcands, "pfcands");
 
     // std::cout << "PFcands Check" << std::endl;

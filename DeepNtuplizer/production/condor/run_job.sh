@@ -30,4 +30,4 @@ export HOME=/afs/cern.ch/user/e/etsai
 echo Home is $HOME
 echo Output directory: /eos/cms/store/group/phys_btag/etsai/output_$sample
 echo Input file: $inputFile
-cmsRun DeepNtuplizer.py inputFiles=root://cms-xrd-global.cern.ch/$inputFile outputFile=/eos/cms/store/group/phys_btag/etsai/output_$sample/output_$index
+cmsRun DeepNtuplizer.py inputFiles=root://cms-xrd-global.cern.ch/$inputFile outputFile=/eos/cms/store/group/phys_btag/etsai/output_$sample/output_$index maxEvents=-1

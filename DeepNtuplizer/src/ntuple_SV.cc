@@ -26,6 +26,8 @@
 #include "RecoVertex/VertexTools/interface/VertexDistance3D.h"
 #include "TVector3.h"
 
+#include <algorithm>
+
 
 class SVTrackInfoBuilder {
 
@@ -156,34 +158,27 @@ class GenVertex {
 
     public:
 
-        // GenVertex() : motherPdgId_(0), pt_(-1.0), nDaughters_(0),
-        //               daughterMatchIdx_(0), daughterPdgId_(0), daughterPt_(0), daughterEta_(0), daughterPhi_(0) {}
         GenVertex() : pt_(-1.0), x_(-1.0), y_(-1.0), z_(-1.0), daughters_(0) {}
-        // ~GenVertex();
-
-        // void setMotherPdgId(int pdgId) { motherPdgId_ = pdgId; }
-        // void setPt(float pt) { pt_ = pt; }
-        // void setNDaughters(int nDaughters) { nDaughters_ = nDaughters; }
-
-        // const reco::GenParticle mother() const { return mother_; }
 
         const float pt() const { return pt_; }
         const float x() const { return x_; }
         const float y() const { return y_; }
         const float z() const { return z_; }
-        const float motherPdgId() const { return mother_->pdgId(); }
-        const float nDaughters() const { return mother_->numberOfDaughters(); }
+        const float motherEta() const { return mother_->eta(); }
+        const int motherPdgId() const { return mother_->pdgId(); }
+        const unsigned int nDaughters() const { return nDaughters_; }
         const std::vector<const reco::Candidate*> daughters() const { return daughters_; }
 
-        void setMother(const reco::GenParticle* mother) { mother_ = mother; }
+        void setMother(const pat::PackedGenParticle* mother) { mother_ = mother; }
         void addDaughter(const reco::Candidate* daughter) { daughters_.push_back(daughter); }
         void setGenVertexAttributes() {
             if (!mother_) {
-                std::cout << "ERROR in setGenVertexAttributes(): add mother particle first!" << std::endl;
+                std::cout << "WARNING in GenVertex::setGenVertexAttributes() in ntuple_SV.cc: add mother particle first!" << std::endl;
                 return;
             }
+            nDaughters_ = daughters_.size();
             if (nDaughters() <= 1) {
-                std::cout << "ERROR in setGenVertexAttributes(): add daughter particles first!" << std::endl;
+                std::cout << "WARNING in GenVertex::setGenVertexAttributes() in ntuple_SV.cc: add daughter particles first!" << std::endl;
                 return;
             }
             pt_ = mother_->pt();
@@ -200,7 +195,7 @@ class GenVertex {
             std::cout << "    vertex z        = " << z() << std::endl;
             std::cout << "    mother pdg id   = " << motherPdgId() << std::endl;
             std::cout << "    mother pt       = " << mother_->pt() << std::endl;
-            std::cout << "    mother eta      = " << mother_->eta() << std::endl;
+            std::cout << "    mother eta      = " << motherEta() << std::endl;
             std::cout << "    mother phi      = " << mother_->phi() << std::endl;
             std::cout << "    nDaughters      = " << nDaughters() << std::endl;
             std::cout << "    daughter pdgIds = ";
@@ -225,16 +220,14 @@ class GenVertex {
 
     private:
 
-        const reco::GenParticle* mother_;
+        const pat::PackedGenParticle* mother_;
         float pt_; // the pt of the incoming particle
         float x_; // take vertex position of daughters as position of GenVertex
         float y_;
         float z_;
+        unsigned int nDaughters_;
         std::vector<const reco::Candidate*> daughters_;
 };
-
-
-// TODO: static enum MatchStatus
 
 
 const reco::Vertex* ntuple_SV::spvp_;
@@ -249,35 +242,43 @@ ntuple_SV::ntuple_SV(std::string prefix, double jetR) : ntuple_content(jetR), sv
 ntuple_SV::~ntuple_SV() {}
 
 
-void ntuple_SV::getInput(const edm::ParameterSet& iConfig) {}
+void ntuple_SV::getInput(const edm::ParameterSet& iConfig) {
+
+    timeQualityCut_ = iConfig.getParameter<double>("timeQualityCut");
+    matchGVdR_ = iConfig.getParameter<double>("matchGVdR");
+    jetPtMin_ = iConfig.getParameter<double>("jetPtMin");
+    jetPtMax_ = iConfig.getParameter<double>("jetPtMax");
+    jetAbsEtaMin_ = iConfig.getParameter<double>("jetAbsEtaMin");
+    jetAbsEtaMax_ = iConfig.getParameter<double>("jetAbsEtaMax");
+    genJetMatchdR_ = iConfig.getParameter<double>("genJetMatchdR");
+}
 
 
 void ntuple_SV::initBranches(TTree* tree) {
 
     // SV candidates
     addBranch(tree, (prefix_ + "n_sv").c_str(), &sv_num_, (prefix_ + "sv_num_/I").c_str());
-    addBranch(tree, (prefix_ + "nsv").c_str(), &nsv_, (prefix_ + "nsv_/F").c_str());
+    // addBranch(tree, (prefix_ + "nsv").c_str(), &nsv_, (prefix_ + "nsv_/F").c_str());
     // addBranch(tree, (prefix_ + "sv_pt").c_str(), &sv_pt_, (prefix_ + "sv_pt_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_eta").c_str(), &sv_eta_, (prefix_ + "sv_eta_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_phi").c_str(), &sv_phi_, (prefix_ + "sv_phi_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_e").c_str(), &sv_e_, (prefix_ + "sv_e_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_eta").c_str(), &sv_eta_, (prefix_ + "sv_eta_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_phi").c_str(), &sv_phi_, (prefix_ + "sv_phi_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_e").c_str(), &sv_e_, (prefix_ + "sv_e_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_etarel").c_str(), &sv_etarel_);
     addBranch(tree, (prefix_ + "sv_phirel").c_str(), &sv_phirel_);
     addBranch(tree, (prefix_ + "sv_deltaR").c_str(), &sv_deltaR_);
-    addBranch(tree, (prefix_ + "sv_mass").c_str(), &sv_mass_, (prefix_ + "sv_mass_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_mass").c_str(), &sv_mass_, (prefix_ + "sv_mass_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_ntracks").c_str(), &sv_ntracks_, (prefix_ + "sv_ntracks_[" + prefix_ + "sv_num_]/F").c_str());
     // addBranch(tree, (prefix_ + "sv_nMatchPFCand").c_str(), &sv_nMatchPFCand_, (prefix_ + "sv_nMatchPFCand_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_nMatchLostTrk").c_str(), &sv_nMatchLostTrk_, (prefix_ + "sv_nMatchLostTrk_[" + prefix_ + "sv_num_]/F").c_str());
     // addBranch(tree, (prefix_ + "sv_nUnmatchedTrk").c_str(), &sv_nUnmatchedTrk_, (prefix_ + "sv_nUnmatchedTrk_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_chi2").c_str(), &sv_chi2_, (prefix_ + "sv_chi2_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_ndf").c_str(), &sv_ndf_, (prefix_ + "sv_ndf_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_normchi2").c_str(), &sv_normchi2_, (prefix_ + "sv_normchi2_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_chi2").c_str(), &sv_chi2_, (prefix_ + "sv_chi2_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_ndf").c_str(), &sv_ndf_, (prefix_ + "sv_ndf_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_normchi2").c_str(), &sv_normchi2_, (prefix_ + "sv_normchi2_[" + prefix_ + "sv_num_]/F").c_str());
     // addBranch(tree, (prefix_ + "sv_dxy").c_str(), &sv_dxy_, (prefix_ + "sv_dxy_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_dxyerr").c_str(), &sv_dxyerr_, (prefix_ + "sv_dxyerr_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_dxyerr").c_str(), &sv_dxyerr_, (prefix_ + "sv_dxyerr_[" + prefix_ + "sv_num_]/F").c_str());
     // addBranch(tree, (prefix_ + "sv_dxysig").c_str(), &sv_dxysig_, (prefix_ + "sv_dxysig_[" + prefix_ + "sv_num_]/F").c_str());
     // addBranch(tree, (prefix_ + "sv_d3d").c_str(), &sv_d3d_, (prefix_ + "sv_d3d_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_d3derr").c_str(), &sv_d3derr_, (prefix_ + "sv_d3err_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_d3dsig").c_str(), &sv_d3dsig_, (prefix_ + "sv_d3dsig_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_d3derr").c_str(), &sv_d3derr_, (prefix_ + "sv_d3err_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_d3dsig").c_str(), &sv_d3dsig_, (prefix_ + "sv_d3dsig_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_costhetasvpv").c_str(), &sv_costhetasvpv_, (prefix_ + "sv_costhetasvpv_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_enratio").c_str(), &sv_enratio_);
     addBranch(tree, (prefix_ + "sv_calo_frac").c_str(), &sv_calo_frac_, (prefix_ + "sv_calo_frac_[" + prefix_ + "sv_num_]/F").c_str());
@@ -291,72 +292,135 @@ void ntuple_SV::initBranches(TTree* tree) {
     addBranch(tree, (prefix_ + "sv_pfd3dsig").c_str(), &sv_pfd3dsig_);
     addBranch(tree, (prefix_ + "sv_time").c_str(), &sv_time_);
 
-    // Used for matching
-    addBranch(tree, (prefix_ + "sv_svIdx").c_str(), &sv_svIdx_);
-    addBranch(tree, (prefix_ + "sv_jetPt").c_str(), &sv_jetPt_);
+    addBranch(tree, (prefix_ + "gp_strange_status").c_str(), &gp_strange_status_);
+    addBranch(tree, (prefix_ + "gp_strange_pdgId").c_str(), &gp_strange_pdgId_);
+    addBranch(tree, (prefix_ + "gp_strange_nDaughters").c_str(), &gp_strange_nDaughters_);
+    addBranch(tree, (prefix_ + "gp_strange_daughterPdgIds").c_str(), &gp_strange_daughterPdgIds_);
+    addBranch(tree, (prefix_ + "gp_strange_pt").c_str(), &gp_strange_pt_);
+    addBranch(tree, (prefix_ + "gp_strange_eta").c_str(), &gp_strange_eta_);
 
-    // add2DBranch(tree, (prefix_ + "sv_ptGenVsPtReco").c_str(), &sv_ptGenVsPtReco_, (prefix_ + "sv_ptGenVsPtReco_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "st_pt").c_str(), &st_pt_);
+    addBranch(tree, (prefix_ + "st_eta").c_str(), &st_eta_);
+    addBranch(tree, (prefix_ + "st_phi").c_str(), &st_phi_);
+    addBranch(tree, (prefix_ + "st_charge").c_str(), &st_charge_);
+
+    addBranch(tree, (prefix_ + "rt_pt").c_str(), &rt_pt_);
+    addBranch(tree, (prefix_ + "rt_eta").c_str(), &rt_eta_);
+    addBranch(tree, (prefix_ + "rt_phi").c_str(), &rt_phi_);
+    addBranch(tree, (prefix_ + "rt_charge").c_str(), &rt_charge_);
+    addBranch(tree, (prefix_ + "rt_chi2").c_str(), &rt_chi2_);
+    addBranch(tree, (prefix_ + "rt_ndof").c_str(), &rt_ndof_);
+    addBranch(tree, (prefix_ + "rt_chi2dof").c_str(), &rt_chi2dof_);
+    addBranch(tree, (prefix_ + "rt_dxy").c_str(), &rt_dxy_);
+    addBranch(tree, (prefix_ + "rt_dxyerr").c_str(), &rt_dxyerr_);
+    addBranch(tree, (prefix_ + "rt_d0").c_str(), &rt_d0_);
+    addBranch(tree, (prefix_ + "rt_d0err").c_str(), &rt_d0err_);
+    addBranch(tree, (prefix_ + "rt_dz").c_str(), &rt_dz_);
+    addBranch(tree, (prefix_ + "rt_dzerr").c_str(), &rt_dzerr_);
 
     addBranch(tree, (prefix_ + "gv_pt").c_str(), &gv_pt_);
     addBranch(tree, (prefix_ + "gv_x").c_str(), &gv_x_);
     addBranch(tree, (prefix_ + "gv_y").c_str(), &gv_y_);
     addBranch(tree, (prefix_ + "gv_z").c_str(), &gv_z_);
+    addBranch(tree, (prefix_ + "gv_motherEta").c_str(), &gv_motherEta_);
     addBranch(tree, (prefix_ + "gv_motherPdgId").c_str(), &gv_motherPdgId_);
     addBranch(tree, (prefix_ + "gv_nDaughters").c_str(), &gv_nDaughters_);
+    addBranch(tree, (prefix_ + "gv_daughterPt").c_str(), &gv_daughterPt_);
+    addBranch(tree, (prefix_ + "gv_daughterEta").c_str(), &gv_daughterEta_);
+    addBranch(tree, (prefix_ + "gv_daughterPdgId").c_str(), &gv_daughterPdgId_);
+    addBranch(tree, (prefix_ + "gv_dRtoClosestSV").c_str(), &gv_dRtoClosestSV_);
+    addBranch(tree, (prefix_ + "gv_dRtoAllSV").c_str(), &gv_dRtoAllSV_);
+    addBranch(tree, (prefix_ + "gv_nTimesMatchedToSV").c_str(), &gv_nTimesMatchedToSV_);
+    addBranch(tree, (prefix_ + "gv_nTimesMatchedToSVinJet").c_str(), &gv_nTimesMatchedToSVinJet_);
 
     addBranch(tree, (prefix_ + "gv_matchSV_pt").c_str(), &gv_matchSV_pt_);
     addBranch(tree, (prefix_ + "gv_matchSV_x").c_str(), &gv_matchSV_x_);
     addBranch(tree, (prefix_ + "gv_matchSV_y").c_str(), &gv_matchSV_y_);
     addBranch(tree, (prefix_ + "gv_matchSV_z").c_str(), &gv_matchSV_z_);
-    addBranch(tree, (prefix_ + "gv_matchSV_dRtoSV").c_str(), &gv_matchSV_dRtoSV_);
+    addBranch(tree, (prefix_ + "gv_matchSV_motherEta").c_str(), &gv_matchSV_motherEta_);
     addBranch(tree, (prefix_ + "gv_matchSV_motherPdgId").c_str(), &gv_matchSV_motherPdgId_);
     addBranch(tree, (prefix_ + "gv_matchSV_nDaughters").c_str(), &gv_matchSV_nDaughters_);
+    addBranch(tree, (prefix_ + "gv_matchSV_daughterPt").c_str(), &gv_matchSV_daughterPt_);
+    addBranch(tree, (prefix_ + "gv_matchSV_daughterEta").c_str(), &gv_matchSV_daughterEta_);
+    addBranch(tree, (prefix_ + "gv_matchSV_daughterPdgId").c_str(), &gv_matchSV_daughterPdgId_);
+    addBranch(tree, (prefix_ + "gv_matchSV_dRtoClosestSV").c_str(), &gv_matchSV_dRtoClosestSV_);
 
-    addBranch(tree, (prefix_ + "gv_nTimesMatchedToSV").c_str(), &gv_nTimesMatchedToSV_);
-    addBranch(tree, (prefix_ + "gv_SVmatchJet_nTimesMatchedToSV").c_str(), &gv_SVmatchJet_nTimesMatchedToSV_);
-
-    // addBranch(tree, (prefix_ + "gv_matchJet_pt").c_str(), &gv_matchJet_pt_);
-    // addBranch(tree, (prefix_ + "gv_matchJet_x").c_str(), &gv_matchJet_x_);
-    // addBranch(tree, (prefix_ + "gv_matchJet_y").c_str(), &gv_matchJet_y_);
-    // addBranch(tree, (prefix_ + "gv_matchJet_z").c_str(), &gv_matchJet_z_);
-    // addBranch(tree, (prefix_ + "gv_matchJet_motherPdgId").c_str(), &gv_matchJet_motherPdgId_);
-    // addBranch(tree, (prefix_ + "gv_matchJet_nDaughters").c_str(), &gv_matchJet_nDaughters_);
-
-    // addBranch(tree, (prefix_ + "gv_matchGenJetHadFlav_pt").c_str(), &gv_matchGenJetHadFlav_pt_);
-    // addBranch(tree, (prefix_ + "gv_matchGenJetHadFlav_hadFlav").c_str(), &gv_matchGenJetHadFlav_hadFlav_);
-
-    addBranch(tree, (prefix_ + "sv_pt").c_str(), &sv_pt_);
     addBranch(tree, (prefix_ + "sv_x").c_str(), &sv_x_);
     addBranch(tree, (prefix_ + "sv_y").c_str(), &sv_y_);
     addBranch(tree, (prefix_ + "sv_z").c_str(), &sv_z_);
+    addBranch(tree, (prefix_ + "sv_pt").c_str(), &sv_pt_);
+    addBranch(tree, (prefix_ + "sv_eta").c_str(), &sv_eta_);
+    addBranch(tree, (prefix_ + "sv_phi").c_str(), &sv_phi_);
+    addBranch(tree, (prefix_ + "sv_mass").c_str(), &sv_mass_);
+    addBranch(tree, (prefix_ + "sv_energy").c_str(), &sv_energy_);
+    addBranch(tree, (prefix_ + "sv_chi2").c_str(), &sv_chi2_);
+    addBranch(tree, (prefix_ + "sv_ndof").c_str(), &sv_ndof_);
+    addBranch(tree, (prefix_ + "sv_chi2dof").c_str(), &sv_chi2dof_);
     addBranch(tree, (prefix_ + "sv_dxy").c_str(), &sv_dxy_);
+    addBranch(tree, (prefix_ + "sv_dxyerr").c_str(), &sv_dxyerr_);
+    addBranch(tree, (prefix_ + "sv_dxysig").c_str(), &sv_dxysig_);
     addBranch(tree, (prefix_ + "sv_dz").c_str(), &sv_dz_);
     addBranch(tree, (prefix_ + "sv_d3D").c_str(), &sv_d3D_);
+    addBranch(tree, (prefix_ + "sv_d3Derr").c_str(), &sv_d3Derr_);
+    addBranch(tree, (prefix_ + "sv_d3Dsig").c_str(), &sv_d3Dsig_);
     addBranch(tree, (prefix_ + "sv_nDaughters").c_str(), &sv_nDaughters_);
 
-    addBranch(tree, (prefix_ + "sv_matchGV_pt").c_str(), &sv_matchGV_pt_);
     addBranch(tree, (prefix_ + "sv_matchGV_x").c_str(), &sv_matchGV_x_);
     addBranch(tree, (prefix_ + "sv_matchGV_y").c_str(), &sv_matchGV_y_);
     addBranch(tree, (prefix_ + "sv_matchGV_z").c_str(), &sv_matchGV_z_);
+    addBranch(tree, (prefix_ + "sv_matchGV_pt").c_str(), &sv_matchGV_pt_);
+    addBranch(tree, (prefix_ + "sv_matchGV_eta").c_str(), &sv_matchGV_eta_);
+    addBranch(tree, (prefix_ + "sv_matchGV_phi").c_str(), &sv_matchGV_phi_);
+    addBranch(tree, (prefix_ + "sv_matchGV_mass").c_str(), &sv_matchGV_mass_);
+    addBranch(tree, (prefix_ + "sv_matchGV_energy").c_str(), &sv_matchGV_energy_);
+    addBranch(tree, (prefix_ + "sv_matchGV_chi2").c_str(), &sv_matchGV_chi2_);
+    addBranch(tree, (prefix_ + "sv_matchGV_ndof").c_str(), &sv_matchGV_ndof_);
+    addBranch(tree, (prefix_ + "sv_matchGV_chi2dof").c_str(), &sv_matchGV_chi2dof_);
     addBranch(tree, (prefix_ + "sv_matchGV_dxy").c_str(), &sv_matchGV_dxy_);
+    addBranch(tree, (prefix_ + "sv_matchGV_dxyerr").c_str(), &sv_matchGV_dxyerr_);
+    addBranch(tree, (prefix_ + "sv_matchGV_dxysig").c_str(), &sv_matchGV_dxysig_);
     addBranch(tree, (prefix_ + "sv_matchGV_dz").c_str(), &sv_matchGV_dz_);
     addBranch(tree, (prefix_ + "sv_matchGV_d3D").c_str(), &sv_matchGV_d3D_);
+    addBranch(tree, (prefix_ + "sv_matchGV_d3Derr").c_str(), &sv_matchGV_d3Derr_);
+    addBranch(tree, (prefix_ + "sv_matchGV_d3Dsig").c_str(), &sv_matchGV_d3Dsig_);
     addBranch(tree, (prefix_ + "sv_matchGV_SVdRtoGV").c_str(), &sv_matchGV_SVdRtoGV_);
     addBranch(tree, (prefix_ + "sv_matchGV_nDaughters").c_str(), &sv_matchGV_nDaughters_);
     addBranch(tree, (prefix_ + "sv_matchGV_GVmotherPdgId").c_str(), &sv_matchGV_GVmotherPdgId_);
 
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_pt").c_str(), &sv_matchGV_matchJet_pt_);
     addBranch(tree, (prefix_ + "sv_matchGV_matchJet_x").c_str(), &sv_matchGV_matchJet_x_);
     addBranch(tree, (prefix_ + "sv_matchGV_matchJet_y").c_str(), &sv_matchGV_matchJet_y_);
     addBranch(tree, (prefix_ + "sv_matchGV_matchJet_z").c_str(), &sv_matchGV_matchJet_z_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_pt").c_str(), &sv_matchGV_matchJet_pt_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_eta").c_str(), &sv_matchGV_matchJet_eta_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_phi").c_str(), &sv_matchGV_matchJet_phi_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_mass").c_str(), &sv_matchGV_matchJet_mass_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_energy").c_str(), &sv_matchGV_matchJet_energy_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_chi2").c_str(), &sv_matchGV_matchJet_chi2_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_ndof").c_str(), &sv_matchGV_matchJet_ndof_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_chi2dof").c_str(), &sv_matchGV_matchJet_chi2dof_);
     addBranch(tree, (prefix_ + "sv_matchGV_matchJet_dxy").c_str(), &sv_matchGV_matchJet_dxy_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_dxyerr").c_str(), &sv_matchGV_matchJet_dxyerr_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_dxysig").c_str(), &sv_matchGV_matchJet_dxysig_);
     addBranch(tree, (prefix_ + "sv_matchGV_matchJet_dz").c_str(), &sv_matchGV_matchJet_dz_);
     addBranch(tree, (prefix_ + "sv_matchGV_matchJet_d3D").c_str(), &sv_matchGV_matchJet_d3D_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_d3Derr").c_str(), &sv_matchGV_matchJet_d3Derr_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_d3Dsig").c_str(), &sv_matchGV_matchJet_d3Dsig_);
     addBranch(tree, (prefix_ + "sv_matchGV_matchJet_SVdRtoGV").c_str(), &sv_matchGV_matchJet_SVdRtoGV_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_genJetFlav").c_str(), &sv_matchGV_matchJet_genJetHadFlav_);
     addBranch(tree, (prefix_ + "sv_matchGV_matchJet_nJets").c_str(), &sv_matchGV_matchJet_nJets_);
+    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_genJetFlav").c_str(), &sv_matchGV_matchJet_genJetHadFlav_);
     addBranch(tree, (prefix_ + "sv_matchGV_matchJet_nDaughters").c_str(), &sv_matchGV_matchJet_nDaughters_);
     addBranch(tree, (prefix_ + "sv_matchGV_matchJet_GVmotherPdgId").c_str(), &sv_matchGV_matchJet_GVmotherPdgId_);
+
+    addBranch(tree, (prefix_ + "nPV").c_str(), &nPV_);
+    addBranch(tree, (prefix_ + "nSV").c_str(), &nSV_);
+    addBranch(tree, (prefix_ + "nSVMTDTiming").c_str(), &nSVMTDTiming_);
+
+    addBranch(tree, (prefix_ + "pv_trk_timeVal").c_str(), &pv_trk_timeVal_);
+    addBranch(tree, (prefix_ + "pv_trk_timeErr").c_str(), &pv_trk_timeErr_);
+    addBranch(tree, (prefix_ + "pv_trk_timeQual").c_str(), &pv_trk_timeQual_);
+    addBranch(tree, (prefix_ + "sv_trk_timeVal").c_str(), &sv_trk_timeVal_);
+    addBranch(tree, (prefix_ + "sv_trk_timeErr").c_str(), &sv_trk_timeErr_);
+    addBranch(tree, (prefix_ + "sv_trk_timeQual").c_str(), &sv_trk_timeQual_);
 
     addBranch(tree, (prefix_ + "jet_pt").c_str(), &jet_pt_);
     addBranch(tree, (prefix_ + "jet_eta").c_str(), &jet_eta_);
@@ -398,22 +462,23 @@ void ntuple_SV::readSetup(const edm::EventSetup& iSetup) {
 
 void ntuple_SV::readEvent(const edm::Event& iEvent) {
 
-    // iEvent.getByToken(genVertices_token_, genVertices_);
     iEvent.getByToken(genParticles_token_, genParticles_);
     iEvent.getByToken(genJetFlavourInfo_token_, genJetFlavourInfo_);
-    // iEvent.getByToken(genParticlesT0_token_, genParticlesT0_);
-    // iEvent.getByToken(genParticlesXYZ0_token_, genParticlesXYZ0_);
+    iEvent.getByToken(simTracks_token_, simTracks_);
     // iEvent.getByToken(pf_cand_token_, pf_cand_);
-    // iEvent.getByToken(lost_tracks_token_, lost_tracks_);
     // iEvent.getByToken(pf_mcmatch_token_, pf_mcmatch_);
-    // iEvent.getByToken(lt_mcmatch_token_, lt_mcmatch_);
+    iEvent.getByToken(recoTracks_token_, recoTracks_);
+    iEvent.getByToken(timeValueMap_token_, timeValueMap_);
+    iEvent.getByToken(timeErrorMap_token_, timeErrorMap_);
+    iEvent.getByToken(timeQualityMap_token_, timeQualityMap_);
+    // iEvent.getByToken(genVertices_token_, genVertices_);
+    iEvent.getByToken(PVs_token_, PVs_);
+    iEvent.getByToken(inclusiveSVs_token_, inclusiveSVs_);
+    iEvent.getByToken(inclusiveSVsMTDTiming_token_, inclusiveSVsMTDTiming_);
 }
 
 
 void ntuple_SV::initContainers() {
-
-    sv_svIdx_ = new std::vector<int>;
-    sv_jetPt_ = new std::vector<float>;
 
     sv_etarel_ = new std::vector<float>;
     sv_phirel_ = new std::vector<float>;
@@ -426,66 +491,131 @@ void ntuple_SV::initContainers() {
 
     sv_time_ = new std::vector<float>;
 
+    gp_strange_status_ = new std::vector<int>;
+    gp_strange_pdgId_ = new std::vector<int>;
+    gp_strange_nDaughters_ = new std::vector<int>;
+    gp_strange_daughterPdgIds_ = new std::vector<int>;
+    gp_strange_pt_ = new std::vector<float>;
+    gp_strange_eta_ = new std::vector<float>;
+
+    st_pt_ = new std::vector<float>;
+    st_eta_ = new std::vector<float>;
+    st_phi_ = new std::vector<float>;
+    st_charge_ = new std::vector<int>;
+
+    rt_pt_ = new std::vector<float>;
+    rt_eta_ = new std::vector<float>;
+    rt_phi_ = new std::vector<float>;
+    rt_charge_ = new std::vector<int>;
+    rt_chi2_ = new std::vector<float>;
+    rt_ndof_ = new std::vector<float>;
+    rt_chi2dof_ = new std::vector<float>;
+    rt_dxy_ = new std::vector<float>;
+    rt_dxyerr_ = new std::vector<float>;
+    rt_d0_ = new std::vector<float>;
+    rt_d0err_ = new std::vector<float>;
+    rt_dz_ = new std::vector<float>;
+    rt_dzerr_ = new std::vector<float>;
+
     gv_pt_ = new std::vector<float>;
     gv_x_ = new std::vector<float>;
     gv_y_ = new std::vector<float>;
     gv_z_ = new std::vector<float>;
+    gv_motherEta_ = new std::vector<float>;
     gv_motherPdgId_ = new std::vector<int>;
     gv_nDaughters_ = new std::vector<int>;
+    gv_daughterPt_ = new std::vector<float>;
+    gv_daughterEta_ = new std::vector<float>;
+    gv_daughterPdgId_ = new std::vector<int>;
+    gv_dRtoClosestSV_ = new std::vector<float>;
+    gv_dRtoAllSV_ = new std::vector<float>;
+    gv_nTimesMatchedToSV_ = new std::vector<int>;
+    gv_nTimesMatchedToSVinJet_ = new std::vector<int>;
 
     gv_matchSV_pt_ = new std::vector<float>;
     gv_matchSV_x_ = new std::vector<float>;
     gv_matchSV_y_ = new std::vector<float>;
     gv_matchSV_z_ = new std::vector<float>;
-    gv_matchSV_dRtoSV_ = new std::vector<float>;
+    gv_matchSV_motherEta_ = new std::vector<float>;
     gv_matchSV_motherPdgId_ = new std::vector<int>;
     gv_matchSV_nDaughters_ = new std::vector<int>;
+    gv_matchSV_daughterPt_ = new std::vector<float>;
+    gv_matchSV_daughterEta_ = new std::vector<float>;
+    gv_matchSV_daughterPdgId_ = new std::vector<int>;
+    gv_matchSV_dRtoClosestSV_ = new std::vector<float>;
 
-    gv_nTimesMatchedToSV_ = new std::vector<int>;
-    gv_SVmatchJet_nTimesMatchedToSV_ = new std::vector<int>;
-
-    // gv_matchJet_pt_ = new std::vector<float>;
-    // gv_matchJet_x_ = new std::vector<float>;
-    // gv_matchJet_y_ = new std::vector<float>;
-    // gv_matchJet_z_ = new std::vector<float>;
-    // gv_matchJet_motherPdgId_ = new std::vector<int>;
-    // gv_matchJet_nDaughters_ = new std::vector<int>;
-
-    // gv_matchGenJetHadFlav_pt_ = new std::vector<float>;
-    // gv_matchGenJetHadFlav_hadFlav_ = new std::vector<int>;
-
-    sv_pt_ = new std::vector<float>;
     sv_x_ = new std::vector<float>;
     sv_y_ = new std::vector<float>;
     sv_z_ = new std::vector<float>;
+    sv_pt_ = new std::vector<float>;
+    sv_eta_ = new std::vector<float>;
+    sv_phi_ = new std::vector<float>;
+    sv_mass_ = new std::vector<float>;
+    sv_energy_ = new std::vector<float>;
+    sv_chi2_ = new std::vector<float>;
+    sv_ndof_ = new std::vector<float>;
+    sv_chi2dof_ = new std::vector<float>;
     sv_dxy_ = new std::vector<float>;
+    sv_dxyerr_ = new std::vector<float>;
+    sv_dxysig_ = new std::vector<float>;
     sv_dz_ = new std::vector<float>;
     sv_d3D_ = new std::vector<float>;
+    sv_d3Derr_ = new std::vector<float>;
+    sv_d3Dsig_ = new std::vector<float>;
     sv_nDaughters_ = new std::vector<int>;
 
-    sv_matchGV_pt_ = new std::vector<float>;
     sv_matchGV_x_ = new std::vector<float>;
     sv_matchGV_y_ = new std::vector<float>;
     sv_matchGV_z_ = new std::vector<float>;
+    sv_matchGV_pt_ = new std::vector<float>;
+    sv_matchGV_eta_ = new std::vector<float>;
+    sv_matchGV_phi_ = new std::vector<float>;
+    sv_matchGV_mass_ = new std::vector<float>;
+    sv_matchGV_energy_ = new std::vector<float>;
+    sv_matchGV_chi2_ = new std::vector<float>;
+    sv_matchGV_ndof_ = new std::vector<float>;
+    sv_matchGV_chi2dof_ = new std::vector<float>;
     sv_matchGV_dxy_ = new std::vector<float>;
+    sv_matchGV_dxyerr_ = new std::vector<float>;
+    sv_matchGV_dxysig_ = new std::vector<float>;
     sv_matchGV_dz_ = new std::vector<float>;
     sv_matchGV_d3D_ = new std::vector<float>;
+    sv_matchGV_d3Derr_ = new std::vector<float>;
+    sv_matchGV_d3Dsig_ = new std::vector<float>;
     sv_matchGV_SVdRtoGV_ = new std::vector<float>;
     sv_matchGV_nDaughters_ = new std::vector<int>;
     sv_matchGV_GVmotherPdgId_ = new std::vector<int>;
 
-    sv_matchGV_matchJet_pt_ = new std::vector<float>;
     sv_matchGV_matchJet_x_ = new std::vector<float>;
     sv_matchGV_matchJet_y_ = new std::vector<float>;
     sv_matchGV_matchJet_z_ = new std::vector<float>;
+    sv_matchGV_matchJet_pt_ = new std::vector<float>;
+    sv_matchGV_matchJet_eta_ = new std::vector<float>;
+    sv_matchGV_matchJet_phi_ = new std::vector<float>;
+    sv_matchGV_matchJet_mass_ = new std::vector<float>;
+    sv_matchGV_matchJet_energy_ = new std::vector<float>;
+    sv_matchGV_matchJet_chi2_ = new std::vector<float>;
+    sv_matchGV_matchJet_ndof_ = new std::vector<float>;
+    sv_matchGV_matchJet_chi2dof_ = new std::vector<float>;
     sv_matchGV_matchJet_dxy_ = new std::vector<float>;
+    sv_matchGV_matchJet_dxyerr_ = new std::vector<float>;
+    sv_matchGV_matchJet_dxysig_ = new std::vector<float>;
     sv_matchGV_matchJet_dz_ = new std::vector<float>;
     sv_matchGV_matchJet_d3D_ = new std::vector<float>;
+    sv_matchGV_matchJet_d3Derr_ = new std::vector<float>;
+    sv_matchGV_matchJet_d3Dsig_ = new std::vector<float>;
     sv_matchGV_matchJet_SVdRtoGV_ = new std::vector<float>;
     sv_matchGV_matchJet_nJets_ = new std::vector<int>;
     sv_matchGV_matchJet_genJetHadFlav_ = new std::vector<int>;
     sv_matchGV_matchJet_nDaughters_ = new std::vector<int>;
     sv_matchGV_matchJet_GVmotherPdgId_ = new std::vector<int>;
+
+    pv_trk_timeVal_ = new std::vector<float>;
+    pv_trk_timeErr_ = new std::vector<float>;
+    pv_trk_timeQual_ = new std::vector<float>;
+    sv_trk_timeVal_ = new std::vector<float>;
+    sv_trk_timeErr_ = new std::vector<float>;
+    sv_trk_timeQual_ = new std::vector<float>;
 
     jet_pt_ = new std::vector<float>;
     jet_eta_ = new std::vector<float>;
@@ -521,9 +651,6 @@ void ntuple_SV::initContainers() {
 
 void ntuple_SV::clearContainers() {
 
-    sv_svIdx_->clear();
-    sv_jetPt_->clear();
-
     sv_etarel_->clear();
     sv_phirel_->clear();
     sv_deltaR_->clear();
@@ -535,66 +662,131 @@ void ntuple_SV::clearContainers() {
 
     sv_time_->clear();
 
+    gp_strange_status_->clear();
+    gp_strange_pdgId_->clear();
+    gp_strange_nDaughters_->clear();
+    gp_strange_daughterPdgIds_->clear();
+    gp_strange_pt_->clear();
+    gp_strange_eta_->clear();
+
+    st_pt_->clear();
+    st_eta_->clear();
+    st_phi_->clear();
+    st_charge_->clear();
+
+    rt_pt_->clear();
+    rt_eta_->clear();
+    rt_phi_->clear();
+    rt_charge_->clear();
+    rt_chi2_->clear();
+    rt_ndof_->clear();
+    rt_chi2dof_->clear();
+    rt_dxy_->clear();
+    rt_dxyerr_->clear();
+    rt_d0_->clear();
+    rt_d0err_->clear();
+    rt_dz_->clear();
+    rt_dzerr_->clear();
+
     gv_pt_->clear();
     gv_x_->clear();
     gv_y_->clear();
     gv_z_->clear();
+    gv_motherEta_->clear();
     gv_motherPdgId_->clear();
     gv_nDaughters_->clear();
+    gv_daughterPt_->clear();
+    gv_daughterEta_->clear();
+    gv_daughterPdgId_->clear();
+    gv_dRtoClosestSV_->clear();
+    gv_dRtoAllSV_->clear();
+    gv_nTimesMatchedToSV_->clear();
+    gv_nTimesMatchedToSVinJet_->clear();
 
     gv_matchSV_pt_->clear();
     gv_matchSV_x_->clear();
     gv_matchSV_y_->clear();
     gv_matchSV_z_->clear();
-    gv_matchSV_dRtoSV_->clear();
+    gv_matchSV_motherEta_->clear();
     gv_matchSV_motherPdgId_->clear();
     gv_matchSV_nDaughters_->clear();
+    gv_matchSV_daughterPt_->clear();
+    gv_matchSV_daughterEta_->clear();
+    gv_matchSV_daughterPdgId_->clear();
+    gv_matchSV_dRtoClosestSV_->clear();
 
-    gv_nTimesMatchedToSV_->clear();
-    gv_SVmatchJet_nTimesMatchedToSV_->clear();
-
-    // gv_matchJet_pt_->clear();
-    // gv_matchJet_x_->clear();
-    // gv_matchJet_y_->clear();
-    // gv_matchJet_z_->clear();
-    // gv_matchJet_motherPdgId_->clear();
-    // gv_matchJet_nDaughters_->clear();
-
-    // gv_matchGenJetHadFlav_pt_->clear();
-    // gv_matchGenJetHadFlav_hadFlav_->clear();
-
-    sv_pt_->clear();
     sv_x_->clear();
     sv_y_->clear();
     sv_z_->clear();
+    sv_pt_->clear();
+    sv_eta_->clear();
+    sv_phi_->clear();
+    sv_mass_->clear();
+    sv_energy_->clear();
+    sv_chi2_->clear();
+    sv_ndof_->clear();
+    sv_chi2dof_->clear();
     sv_dxy_->clear();
+    sv_dxyerr_->clear();
+    sv_dxysig_->clear();
     sv_dz_->clear();
     sv_d3D_->clear();
+    sv_d3Derr_->clear();
+    sv_d3Dsig_->clear();
     sv_nDaughters_->clear();
 
-    sv_matchGV_pt_->clear();
     sv_matchGV_x_->clear();
     sv_matchGV_y_->clear();
     sv_matchGV_z_->clear();
+    sv_matchGV_pt_->clear();
+    sv_matchGV_eta_->clear();
+    sv_matchGV_phi_->clear();
+    sv_matchGV_mass_->clear();
+    sv_matchGV_energy_->clear();
+    sv_matchGV_chi2_->clear();
+    sv_matchGV_ndof_->clear();
+    sv_matchGV_chi2dof_->clear();
     sv_matchGV_dxy_->clear();
+    sv_matchGV_dxyerr_->clear();
+    sv_matchGV_dxysig_->clear();
     sv_matchGV_dz_->clear();
     sv_matchGV_d3D_->clear();
+    sv_matchGV_d3Derr_->clear();
+    sv_matchGV_d3Dsig_->clear();
     sv_matchGV_SVdRtoGV_->clear();
     sv_matchGV_nDaughters_->clear();
     sv_matchGV_GVmotherPdgId_->clear();
 
-    sv_matchGV_matchJet_pt_->clear();
     sv_matchGV_matchJet_x_->clear();
     sv_matchGV_matchJet_y_->clear();
     sv_matchGV_matchJet_z_->clear();
+    sv_matchGV_matchJet_pt_->clear();
+    sv_matchGV_matchJet_eta_->clear();
+    sv_matchGV_matchJet_phi_->clear();
+    sv_matchGV_matchJet_mass_->clear();
+    sv_matchGV_matchJet_energy_->clear();
+    sv_matchGV_matchJet_chi2_->clear();
+    sv_matchGV_matchJet_ndof_->clear();
+    sv_matchGV_matchJet_chi2dof_->clear();
     sv_matchGV_matchJet_dxy_->clear();
+    sv_matchGV_matchJet_dxyerr_->clear();
+    sv_matchGV_matchJet_dxysig_->clear();
     sv_matchGV_matchJet_dz_->clear();
     sv_matchGV_matchJet_d3D_->clear();
+    sv_matchGV_matchJet_d3Derr_->clear();
+    sv_matchGV_matchJet_d3Dsig_->clear();
     sv_matchGV_matchJet_SVdRtoGV_->clear();
     sv_matchGV_matchJet_nJets_->clear();
     sv_matchGV_matchJet_genJetHadFlav_->clear();
     sv_matchGV_matchJet_nDaughters_->clear();
     sv_matchGV_matchJet_GVmotherPdgId_->clear();
+
+    pv_trk_timeVal_->clear();
+    pv_trk_timeErr_->clear();
+    pv_trk_timeQual_->clear();
+    sv_trk_timeVal_->clear();
+    sv_trk_timeErr_->clear();
+    sv_trk_timeQual_->clear();
 
     jet_pt_->clear();
     jet_eta_->clear();
@@ -630,9 +822,6 @@ void ntuple_SV::clearContainers() {
 
 void ntuple_SV::deleteContainers() {
 
-    delete sv_svIdx_;
-    delete sv_jetPt_;
-
     delete sv_etarel_;
     delete sv_phirel_;
     delete sv_deltaR_;
@@ -644,66 +833,131 @@ void ntuple_SV::deleteContainers() {
 
     delete sv_time_;
 
+    delete gp_strange_status_;
+    delete gp_strange_pdgId_;
+    delete gp_strange_nDaughters_;
+    delete gp_strange_daughterPdgIds_;
+    delete gp_strange_pt_;
+    delete gp_strange_eta_;
+
+    delete st_pt_;
+    delete st_eta_;
+    delete st_phi_;
+    delete st_charge_;
+
+    delete rt_pt_;
+    delete rt_eta_;
+    delete rt_phi_;
+    delete rt_charge_;
+    delete rt_chi2_;
+    delete rt_ndof_;
+    delete rt_chi2dof_;
+    delete rt_dxy_;
+    delete rt_dxyerr_;
+    delete rt_d0_;
+    delete rt_d0err_;
+    delete rt_dz_;
+    delete rt_dzerr_;
+
     delete gv_pt_;
     delete gv_x_;
     delete gv_y_;
     delete gv_z_;
+    delete gv_motherEta_;
     delete gv_motherPdgId_;
     delete gv_nDaughters_;
+    delete gv_daughterPt_;
+    delete gv_daughterEta_;
+    delete gv_daughterPdgId_;
+    delete gv_dRtoClosestSV_;
+    delete gv_dRtoAllSV_;
+    delete gv_nTimesMatchedToSV_;
+    delete gv_nTimesMatchedToSVinJet_;
 
     delete gv_matchSV_pt_;
     delete gv_matchSV_x_;
     delete gv_matchSV_y_;
     delete gv_matchSV_z_;
-    delete gv_matchSV_dRtoSV_;
+    delete gv_matchSV_motherEta_;
     delete gv_matchSV_motherPdgId_;
     delete gv_matchSV_nDaughters_;
+    delete gv_matchSV_daughterPt_;
+    delete gv_matchSV_daughterEta_;
+    delete gv_matchSV_daughterPdgId_;
+    delete gv_matchSV_dRtoClosestSV_;
 
-    delete gv_nTimesMatchedToSV_;
-    delete gv_SVmatchJet_nTimesMatchedToSV_;
-
-    // delete gv_matchJet_pt_;
-    // delete gv_matchJet_x_;
-    // delete gv_matchJet_y_;
-    // delete gv_matchJet_z_;
-    // delete gv_matchJet_motherPdgId_;
-    // delete gv_matchJet_nDaughters_;
-
-    // delete gv_matchGenJetHadFlav_pt_;
-    // delete gv_matchGenJetHadFlav_hadFlav_;
-
-    delete sv_pt_;
     delete sv_x_;
     delete sv_y_;
     delete sv_z_;
+    delete sv_pt_;
+    delete sv_eta_;
+    delete sv_phi_;
+    delete sv_mass_;
+    delete sv_energy_;
+    delete sv_chi2_;
+    delete sv_ndof_;
+    delete sv_chi2dof_;
     delete sv_dxy_;
+    delete sv_dxyerr_;
+    delete sv_dxysig_;
     delete sv_dz_;
     delete sv_d3D_;
+    delete sv_d3Derr_;
+    delete sv_d3Dsig_;
     delete sv_nDaughters_;
 
-    delete sv_matchGV_pt_;
     delete sv_matchGV_x_;
     delete sv_matchGV_y_;
     delete sv_matchGV_z_;
+    delete sv_matchGV_pt_;
+    delete sv_matchGV_eta_;
+    delete sv_matchGV_phi_;
+    delete sv_matchGV_mass_;
+    delete sv_matchGV_energy_;
+    delete sv_matchGV_chi2_;
+    delete sv_matchGV_ndof_;
+    delete sv_matchGV_chi2dof_;
     delete sv_matchGV_dxy_;
+    delete sv_matchGV_dxyerr_;
+    delete sv_matchGV_dxysig_;
     delete sv_matchGV_dz_;
     delete sv_matchGV_d3D_;
+    delete sv_matchGV_d3Derr_;
+    delete sv_matchGV_d3Dsig_;
     delete sv_matchGV_SVdRtoGV_;
     delete sv_matchGV_nDaughters_;
     delete sv_matchGV_GVmotherPdgId_;
 
-    delete sv_matchGV_matchJet_pt_;
     delete sv_matchGV_matchJet_x_;
     delete sv_matchGV_matchJet_y_;
     delete sv_matchGV_matchJet_z_;
+    delete sv_matchGV_matchJet_pt_;
+    delete sv_matchGV_matchJet_eta_;
+    delete sv_matchGV_matchJet_phi_;
+    delete sv_matchGV_matchJet_mass_;
+    delete sv_matchGV_matchJet_energy_;
+    delete sv_matchGV_matchJet_chi2_;
+    delete sv_matchGV_matchJet_ndof_;
+    delete sv_matchGV_matchJet_chi2dof_;
     delete sv_matchGV_matchJet_dxy_;
+    delete sv_matchGV_matchJet_dxyerr_;
+    delete sv_matchGV_matchJet_dxysig_;
     delete sv_matchGV_matchJet_dz_;
     delete sv_matchGV_matchJet_d3D_;
+    delete sv_matchGV_matchJet_d3Derr_;
+    delete sv_matchGV_matchJet_d3Dsig_;
     delete sv_matchGV_matchJet_SVdRtoGV_;
     delete sv_matchGV_matchJet_nJets_;
     delete sv_matchGV_matchJet_genJetHadFlav_;
     delete sv_matchGV_matchJet_nDaughters_;
     delete sv_matchGV_matchJet_GVmotherPdgId_;
+
+    delete pv_trk_timeVal_;
+    delete pv_trk_timeErr_;
+    delete pv_trk_timeQual_;
+    delete sv_trk_timeVal_;
+    delete sv_trk_timeErr_;
+    delete sv_trk_timeQual_;
 
     delete jet_pt_;
     delete jet_eta_;
@@ -739,8 +993,6 @@ void ntuple_SV::deleteContainers() {
 
 int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
 
-    // std::cout << "NEW EVENT ------------------------------------------" << std::endl;
-
     clearContainers();
 
     // Sorting described here: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideOfflinePrimaryVertexProduction
@@ -752,61 +1004,111 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
 
     const edm::View<pat::Jet> jetCollection = *jets();
 
+    edm::SimTrackContainer simTracks = *(simTracks_.product());
+    reco::TrackCollection recoTracks = *(recoTracks_.product());
+    const edm::ValueMap<float>& timeValueMap = *(timeValueMap_.product());
+    const edm::ValueMap<float>& timeErrorMap = *(timeErrorMap_.product());
+    const edm::ValueMap<float>& timeQualityMap = *(timeQualityMap_.product());
+    reco::VertexCollection PVs = *(PVs_.product());
+    reco::VertexCollection inclusiveSVs = *(inclusiveSVs_.product());
+    reco::VertexCollection inclusiveSVsMTDTimings = *(inclusiveSVsMTDTiming_.product());
+
+    nPV_ = PVs.size();
+    nSV_ = inclusiveSVs.size();
+    nSVMTDTiming_ = inclusiveSVsMTDTimings.size();
+
+    // Save SimTrack and Track information
+    for (unsigned int iST = 0; iST < simTracks.size(); iST++) {
+        SimTrack st = simTracks.at(iST);
+        st_pt_->push_back(st.momentum().Pt());
+        st_eta_->push_back(st.momentum().Eta());
+        st_phi_->push_back(st.momentum().Phi());
+        st_charge_->push_back(st.charge());
+    }
+    for (unsigned int iRT = 0; iRT < recoTracks.size(); iRT++) {
+        reco::Track rt = recoTracks.at(iRT);
+        rt_pt_->push_back(rt.pt());
+        rt_eta_->push_back(rt.eta());
+        rt_phi_->push_back(rt.phi());
+        rt_charge_->push_back(rt.charge());
+        rt_chi2_->push_back(rt.chi2());
+        rt_ndof_->push_back(rt.ndof());
+        rt_chi2dof_->push_back(rt.normalizedChi2());
+        rt_dxy_->push_back(rt.dxy());
+        rt_dxyerr_->push_back(rt.dxyError());
+        rt_d0_->push_back(rt.d0());
+        rt_d0err_->push_back(rt.d0Error());
+        rt_dz_->push_back(rt.dz());
+        rt_dzerr_->push_back(rt.dzError());
+    }
+
     // Construct gen vertices by looping through list of gen particles
     std::vector<GenVertex*> genVertices(0);
     for (unsigned int iGenPart = 0; iGenPart < genParticles_->size(); iGenPart++) {
-        const reco::GenParticle gp = genParticles_->at(iGenPart);
-        if (gp.numberOfDaughters() > 1) { // First make sure a vertex exists
+        const pat::PackedGenParticle gp = genParticles_->at(iGenPart);
+        int motherPartID = genPartID(gp.pdgId());
 
-            // Check for last instance of B hadron
-            if (isBHadron(gp.pdgId())) {
-                bool lastInstance = true;
-                for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
-                    const reco::Candidate* dau = gp.daughter(iDau);
-                    if (isBHadron(dau->pdgId())) {
-                        lastInstance = false; // Not last instance of B hadron
-                        break;
-                    }
-                }
-                if (lastInstance) {
-                    // Make new GenVertex
-                    GenVertex* newGenVtx = new GenVertex();
-                    newGenVtx->setMother(gp.clone());
-                    for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
-                        const reco::Candidate* dau = gp.daughter(iDau)->clone();
-                        newGenVtx->addDaughter(dau);
-                    }
-                    newGenVtx->setGenVertexAttributes();
-                    genVertices.push_back(newGenVtx);
-                }
+        // APPLY THESE CUTS IN PYTHON SCRIPT
+        // if (gp.pt() < 10.0) continue;
+        // if (abs(gp.eta()) > 2.5) continue;
+        if (motherPartID < 0) continue; // Mother is not interesting hadron
+
+        if (motherPartID == 4) {
+            GenVertex* newGenVtx = new GenVertex();
+            newGenVtx->setMother(gp.clone());
+            // std::cout << "NUMBER OF S BARYON DAUGHTERS = " << gp.numberOfDaughters() << std::endl;
+            gp_strange_status_->push_back((int) (gp.statusFlags().flags_).to_ulong());
+            gp_strange_pdgId_->push_back(gp.pdgId());
+            gp_strange_nDaughters_->push_back(gp.numberOfDaughters());
+            gp_strange_pt_->push_back(gp.pt());
+            gp_strange_eta_->push_back(gp.eta());
+            for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
+                const reco::Candidate* dau = gp.daughter(iDau)->clone();
+                gp_strange_daughterPdgIds_->push_back(dau->pdgId());
+                newGenVtx->addDaughter(dau);
             }
+            newGenVtx->setGenVertexAttributes();
+            // if (gp.numberOfDaughters() > 0)
+            //     newGenVtx->print();
+        }
 
-            // Check for last instance of C hadron
-            if (isCHadron(gp.pdgId())) {
-                bool lastInstance = true;
-                for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
-                    const reco::Candidate* dau = gp.daughter(iDau);
-                    if (isCHadron(dau->pdgId())) {
-                        lastInstance = false; // Not last instance of C hadron
-                        break;
-                    }
-                }
-                if (lastInstance) {
-                    // Make new GenVertex
-                    GenVertex* newGenVtx = new GenVertex();
-                    newGenVtx->setMother(gp.clone());
-                    for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
-                        const reco::Candidate* dau = gp.daughter(iDau)->clone();
-                        newGenVtx->addDaughter(dau);
-                    }
-                    newGenVtx->setGenVertexAttributes();
-                    genVertices.push_back(newGenVtx);
-                }
+        // Check for last instance of interesting hadron
+        bool lastInstance = true;
+        unsigned int nGoodDaughters = 0;
+        for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
+            const reco::Candidate* dau = gp.daughter(iDau);
+            int daughterPartID = genPartID(dau->pdgId());
+
+            // if (dau->pt() < 10.0) continue;
+            // if (abs(dau->eta()) > 2.5) continue;
+
+            nGoodDaughters++;
+            if (daughterPartID == motherPartID) {
+                lastInstance = false; // Not last instance of interesting hadron
+                break;
             }
         }
-    }
 
-    const static float deltaRVtx = 1000.0; // Some really large number
+        if (lastInstance) {
+
+            if (nGoodDaughters < 2) continue; // Make sure a vertex exists
+
+            // Make new GenVertex
+            GenVertex* newGenVtx = new GenVertex();
+            newGenVtx->setMother(gp.clone());
+            for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
+                const reco::Candidate* dau = gp.daughter(iDau)->clone();
+
+                // Only add "good" daughters
+                // if (dau->pt() < 10.0) continue;
+                // if (abs(dau->eta()) > 2.5) continue;
+
+                newGenVtx->addDaughter(dau);
+            }
+            newGenVtx->setGenVertexAttributes();
+            genVertices.push_back(newGenVtx);
+        }
+    }
 
     // GenVertex stuff
     for (unsigned int iGV = 0; iGV < genVertices.size(); iGV++) {
@@ -815,45 +1117,76 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         gv_x_->push_back(genVtx->x());
         gv_y_->push_back(genVtx->y());
         gv_z_->push_back(genVtx->z());
+        gv_motherEta_->push_back(genVtx->motherEta());
         gv_motherPdgId_->push_back(genVtx->motherPdgId());
         gv_nDaughters_->push_back(genVtx->nDaughters());
+        for (const reco::Candidate* dau : genVtx->daughters()) {
+            gv_daughterPt_->push_back(dau->pt());
+            gv_daughterEta_->push_back(dau->eta());
+            gv_daughterPdgId_->push_back(dau->pdgId());
+        }
 
         // Match GV to SV
+        int nMatch = 0;
         int closestSVIdx = -1;
-        float mindR = 99999999.99; // some maximum value
+        float mindR = matchGVdR_; // some maximum value
         for (unsigned int iSV = 0; iSV < cpvtx.size(); iSV++) {
             if (iSV >= max_sv_) break;
             const reco::VertexCompositePtrCandidate& sv = cpvtx.at(iSV);
             float dR3D = deltaR3D(genVtx->x(), sv.vertex().x(), genVtx->y(), sv.vertex().y(), genVtx->z(), sv.vertex().z());
-            if ((dR3D < deltaRVtx) && (dR3D < mindR)) { // TODO: MOVE THIS DELTA R TO CONFIG FILE
-                closestSVIdx = iSV;
-                mindR = dR3D;
+            if (dR3D < matchGVdR_) {
+                gv_dRtoAllSV_->push_back(mindR);
+                nMatch++;
+                if (dR3D < mindR) {
+                    closestSVIdx = iSV;
+                    mindR = dR3D;
+                }
             }
         }
+        gv_dRtoClosestSV_->push_back(mindR);
+        gv_nTimesMatchedToSV_->push_back(nMatch);
         if (closestSVIdx >= 0) {
             gv_matchSV_pt_->push_back(genVtx->pt());
             gv_matchSV_x_->push_back(genVtx->x());
             gv_matchSV_y_->push_back(genVtx->y());
             gv_matchSV_z_->push_back(genVtx->z());
-            gv_matchSV_dRtoSV_->push_back(mindR);
+            gv_matchSV_motherEta_->push_back(genVtx->motherEta());
             gv_matchSV_motherPdgId_->push_back(genVtx->motherPdgId());
             gv_matchSV_nDaughters_->push_back(genVtx->nDaughters());
+            for (const reco::Candidate* dau : genVtx->daughters()) {
+                gv_matchSV_daughterPt_->push_back(dau->pt());
+                gv_matchSV_daughterEta_->push_back(dau->eta());
+                gv_matchSV_daughterPdgId_->push_back(dau->pdgId());
+            }
+            gv_matchSV_dRtoClosestSV_->push_back(mindR);
         }
     }
 
     // Secondary Vertex stuff
-    if (gv_nTimesMatchedToSV_->size() > 0) std::cout << "problem i think ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-    for (unsigned int iGV = 0; iGV < genVertices.size(); iGV++) gv_nTimesMatchedToSV_->push_back(0);
+    for (unsigned int iGV = 0; iGV < genVertices.size(); iGV++) {
+        gv_nTimesMatchedToSVinJet_->push_back(0);
+    }
     for (unsigned int iSV = 0; iSV < cpvtx.size(); iSV++) {
         if (iSV >= max_sv_) break;
         const reco::VertexCompositePtrCandidate& sv = cpvtx.at(iSV);
-        sv_pt_->push_back(sv.pt());
         sv_x_->push_back(sv.vertex().x());
         sv_y_->push_back(sv.vertex().y());
         sv_z_->push_back(sv.vertex().z());
+        sv_pt_->push_back(sv.pt());
+        sv_eta_->push_back(sv.eta());
+        sv_phi_->push_back(sv.phi());
+        sv_mass_->push_back(sv.mass());
+        sv_energy_->push_back(sv.energy());
+        sv_chi2_->push_back(sv.vertexChi2());
+        sv_ndof_->push_back(sv.vertexNdof());
+        sv_chi2dof_->push_back(catchInfsAndBound(sv.vertexChi2() / sv.vertexNdof(), 1000, -1000, 1000));
         sv_dxy_->push_back(vertexDxy(sv, pv).value());
+        sv_dxyerr_->push_back(catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0));
+        sv_dxysig_->push_back(catchInfsAndBound(vertexDxy(sv, pv).value() / vertexDxy(sv, pv).error(), 0, -1, 800));
         sv_dz_->push_back(TMath::Abs(sv.vertex().z() - pv.z()));
         sv_d3D_->push_back(vertexD3d(sv, pv).value());
+        sv_d3Derr_->push_back(catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0));
+        sv_d3Dsig_->push_back(catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800));
         sv_nDaughters_->push_back(sv.numberOfDaughters());
 
         // Match SV to GV
@@ -862,23 +1195,33 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         for (unsigned int iGV = 0; iGV < genVertices.size(); iGV++) {
             const GenVertex* genVtx = genVertices.at(iGV);
             float dR3D = deltaR3D(genVtx->x(), sv.vertex().x(), genVtx->y(), sv.vertex().y(), genVtx->z(), sv.vertex().z());
-            if ((dR3D < deltaRVtx) && (dR3D < mindR)) { // TODO: MOVE THIS DELTA R TO CONFIG FILE
+            if ((dR3D < matchGVdR_) && (dR3D < mindR)) {
                 closestGVIdx = iGV;
                 mindR = dR3D;
             }
         }
         if (closestGVIdx >= 0) {
-            sv_matchGV_pt_->push_back(sv.pt());
             sv_matchGV_x_->push_back(sv.vertex().x());
             sv_matchGV_y_->push_back(sv.vertex().y());
             sv_matchGV_z_->push_back(sv.vertex().z());
+            sv_matchGV_pt_->push_back(sv.pt());
+            sv_matchGV_eta_->push_back(sv.eta());
+            sv_matchGV_phi_->push_back(sv.phi());
+            sv_matchGV_mass_->push_back(sv.mass());
+            sv_matchGV_energy_->push_back(sv.energy());
+            sv_matchGV_chi2_->push_back(sv.vertexChi2());
+            sv_matchGV_ndof_->push_back(sv.vertexNdof());
+            sv_matchGV_chi2dof_->push_back(catchInfsAndBound(sv.vertexChi2() / sv.vertexNdof(), 1000, -1000, 1000));
             sv_matchGV_dxy_->push_back(vertexDxy(sv, pv).value());
+            sv_matchGV_dxyerr_->push_back(catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0));
+            sv_matchGV_dxysig_->push_back(catchInfsAndBound(vertexDxy(sv, pv).value() / vertexDxy(sv, pv).error(), 0, -1, 800));
             sv_matchGV_dz_->push_back(TMath::Abs(sv.vertex().z() - pv.z()));
             sv_matchGV_d3D_->push_back(vertexD3d(sv, pv).value());
+            sv_matchGV_d3Derr_->push_back(catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0));
+            sv_matchGV_d3Dsig_->push_back(catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800));
             sv_matchGV_SVdRtoGV_->push_back(mindR);
             sv_matchGV_nDaughters_->push_back(sv.numberOfDaughters());
             sv_matchGV_GVmotherPdgId_->push_back(genVertices.at(closestGVIdx)->motherPdgId());
-            (gv_nTimesMatchedToSV_->at(closestGVIdx))++;
 
             // Match SV to Jet
             unsigned int nJets = 0;
@@ -886,8 +1229,10 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 const pat::Jet& jet = jetCollection.at(iJet);
 
                 // Some cuts
-                // No pt cut (yet?)
-                if (TMath::Abs(jet.eta()) > 4.0) continue; // TODO: MOVE THIS CUT TO CONFIG FILE
+                // if (jet.pt() < jetPtMin_) continue;
+                // if (jet.pt() > jetPtMax_) continue;
+                // if (TMath::Abs(jet.eta()) < jetAbsEtaMin_) continue;
+                // if (TMath::Abs(jet.eta()) > jetAbsEtaMax_) continue;
 
                 // Calculate Jet radius
                 double jet_radius = jetR();
@@ -899,13 +1244,13 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                     }
                 }
 
-                // Get Gen Jet flavours (might be the same as reco?)
+                // Get GenJet flavours (might be the same as reco?)
                 int genJetHadFlav = -1000;
                 // int genJetPartFlav = -1000;
                 const reco::GenJet* genJet = jet.genJet();
                 if (genJet) {
                     for (const reco::JetFlavourInfoMatching& genJetFlavInfo : *(genJetFlavourInfo_.product())) {
-                        if (reco::deltaR(genJet->p4(), genJetFlavInfo.first->p4()) < 0.1) { // TODO: MOVE THIS DELTA R TO CONFIG FILE
+                        if (reco::deltaR(genJet->p4(), genJetFlavInfo.first->p4()) < genJetMatchdR_) {
                             genJetHadFlav = genJetFlavInfo.second.getHadronFlavour();
                             // genJetPartFlav = genJetFlavInfo.second.getPartonFlavour();
                             break;
@@ -920,13 +1265,25 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             }
 
             if (nJets > 0) {
-                sv_matchGV_matchJet_pt_->push_back(sv.pt());
+                (gv_nTimesMatchedToSVinJet_->at(closestGVIdx))++;
                 sv_matchGV_matchJet_x_->push_back(sv.vertex().x());
                 sv_matchGV_matchJet_y_->push_back(sv.vertex().y());
                 sv_matchGV_matchJet_z_->push_back(sv.vertex().z());
+                sv_matchGV_matchJet_pt_->push_back(sv.pt());
+                sv_matchGV_matchJet_eta_->push_back(sv.eta());
+                sv_matchGV_matchJet_phi_->push_back(sv.phi());
+                sv_matchGV_matchJet_mass_->push_back(sv.mass());
+                sv_matchGV_matchJet_energy_->push_back(sv.energy());
+                sv_matchGV_matchJet_chi2_->push_back(sv.vertexChi2());
+                sv_matchGV_matchJet_ndof_->push_back(sv.vertexNdof());
+                sv_matchGV_matchJet_chi2dof_->push_back(catchInfsAndBound(sv.vertexChi2() / sv.vertexNdof(), 1000, -1000, 1000));
                 sv_matchGV_matchJet_dxy_->push_back(vertexDxy(sv, pv).value());
+                sv_matchGV_matchJet_dxyerr_->push_back(catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0));
+                sv_matchGV_matchJet_dxysig_->push_back(catchInfsAndBound(vertexDxy(sv, pv).value() / vertexDxy(sv, pv).error(), 0, -1, 800));
                 sv_matchGV_matchJet_dz_->push_back(TMath::Abs(sv.vertex().z() - pv.z()));
                 sv_matchGV_matchJet_d3D_->push_back(vertexD3d(sv, pv).value());
+                sv_matchGV_matchJet_d3Derr_->push_back(catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0));
+                sv_matchGV_matchJet_d3Dsig_->push_back(catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800));
                 sv_matchGV_matchJet_SVdRtoGV_->push_back(mindR);
                 sv_matchGV_matchJet_nJets_->push_back(nJets);
                 sv_matchGV_matchJet_nDaughters_->push_back(sv.numberOfDaughters());
@@ -936,14 +1293,14 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
     }
 
     // Jet stuff
-    if (gv_SVmatchJet_nTimesMatchedToSV_->size() > 0) std::cout << "problem again i think ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-    for (unsigned int iGV = 0; iGV < genVertices.size(); iGV++) gv_SVmatchJet_nTimesMatchedToSV_->push_back(0);
     for (unsigned int iJet = 0; iJet < jetCollection.size(); iJet++) {
         const pat::Jet& jet = jetCollection.at(iJet);
 
         // Some cuts
-        // No pt cut (yet?)
-        if (TMath::Abs(jet.eta()) > 4.0) continue; // TODO: MOVE THIS CUT TO CONFIG FILE
+        // if (jet.pt() < jetPtMin_) continue;
+        // if (jet.pt() > jetPtMax_) continue;
+        // if (TMath::Abs(jet.eta()) < jetAbsEtaMin_) continue;
+        // if (TMath::Abs(jet.eta()) > jetAbsEtaMax_) continue;
 
         // Calculate Jet radius
         double jet_radius = jetR();
@@ -961,7 +1318,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         const reco::GenJet* genJet = jet.genJet();
         if (genJet) {
             for (const reco::JetFlavourInfoMatching& genJetFlavInfo : *(genJetFlavourInfo_.product())) {
-                if (reco::deltaR(genJet->p4(), genJetFlavInfo.first->p4()) < 0.1) { // TODO: MOVE THIS DELTA R TO CONFIG FILE
+                if (reco::deltaR(genJet->p4(), genJetFlavInfo.first->p4()) < genJetMatchdR_) {
                     genJetHadFlav = genJetFlavInfo.second.getHadronFlavour();
                     genJetPartFlav = genJetFlavInfo.second.getPartonFlavour();
                     break;
@@ -996,7 +1353,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 for (unsigned int iGV = 0; iGV < genVertices.size(); iGV++) {
                     const GenVertex* genVtx = genVertices.at(iGV);
                     float dR3D = deltaR3D(genVtx->x(), sv.vertex().x(), genVtx->y(), sv.vertex().y(), genVtx->z(), sv.vertex().z());
-                    if ((dR3D < deltaRVtx) && (dR3D < mindR)) { // TODO: MOVE THIS DELTA R TO CONFIG FILE
+                    if ((dR3D < matchGVdR_) && (dR3D < mindR)) {
                         closestGVIdx = iGV;
                         mindR = dR3D;
                     }
@@ -1004,7 +1361,6 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 if (closestGVIdx >= 0) {
                     matchedToGV = true;
                     nGV++;
-                    (gv_SVmatchJet_nTimesMatchedToSV_->at(closestGVIdx))++;
                     jet_matchSV_matchGV_SVdRtoGV_->push_back(mindR);
                 }
             }
@@ -1034,207 +1390,57 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         }
     }
 
-/*
-    // Match GenVertex to SV
-    std::vector<int> matchSV(0);
-    std::vector<int> matchJet(0);
-    for (unsigned int iGenVtx = 0; iGenVtx < genVertices.size(); iGenVtx++) {
-        int closestSVIdx = -10; // NOTE: -10 MEANS NO SV MATCHED TO GENVERTEX
-        float mindR = 99999999.99; // some maximum value
-        int matchedJetIdx = -11; // NOTE: -11 MEANS NO RECO JET MATCHED TO SV
-        const GenVertex* genVtx = genVertices.at(iGenVtx);
-        for (unsigned int iSV = 0; iSV < cpvtx.size(); iSV++) {
-            // if (iSV < (int) max_sv_) {
-            if (iSV >= max_sv_) break;
-
-            const reco::VertexCompositePtrCandidate& sv = cpvtx.at(iSV);
-
-            // Print daughter info as a check
-            // std::cout << "PRINTING SV DAUGHTERS" << std::endl;
-            // std::cout << "vertex (vx,vy,vz) = (" << sv.vertex().x() << "," << sv.vertex().y() << "," << sv.vertex().z() << ")" << std::endl;
-            // for (unsigned int iDau = 0; iDau < sv.numberOfDaughters(); iDau++) {
-            //     const reco::Candidate* sv_dau = sv.daughter(iDau);
-            //     std::cout << "daughter (vx,vy,vz) = (" << sv_dau->vx() << "," << sv_dau->vy() << "," << sv_dau->vz() << ")" << std::endl;
-            // }
-            // std::cout << "DONE -----------------------" << std::endl;
-
-            float dR3D = deltaR3D(genVtx->x(), sv.vertex().x(), genVtx->y(), sv.vertex().y(), genVtx->z(), sv.vertex().z());
-            if (dR3D < 0.1) { // TODO: MOVE THIS CUT TO THE CONFIG FILE
-                // std::cout << "matching SV to GenVertex found, SV " << iSV << " with 3D dR = " << dR3D << std::endl;
-                if (dR3D < mindR) {
-                    closestSVIdx = iSV;
-                    mindR = dR3D;
-
-                    // Match SV to reco jet
-                    for (unsigned int iJet = 0; iJet < jetCollection.size(); iJet++) {
-
-                        // Calculate jet radius(?)
-                        const pat::Jet& jet = jetCollection.at(iJet);
-                        double jet_radius = jetR();
-                        if (jet_radius < 0) {
-                            // Subjets: use maxDR(subjet, pfcand)
-                            for (unsigned idau = 0; idau < jet.numberOfDaughters(); ++idau) {
-                                double dR = reco::deltaR(*jet.daughter(idau), jet);
-                                if (dR > jet_radius)
-                                    jet_radius = dR;
-                            }
-                        }
-                        if (reco::deltaR(sv, jet) < jet_radius) {
-                            if (matchedJetIdx >= 0) std::cout << "MORE THAN ONE MATCHING JET FOUND, BUT IGNORING FOR NOW?!?!?" << std::endl;
-                            // std::cout << "matching jet found" << std::endl;
-                            if (matchedJetIdx < 0) matchedJetIdx = iJet;
-                        }
-                    }
-                    // matchJet.push_back(matchedJetIdx); // NOTE: -11 MEANS NO RECO JET MATCHED TO SV
-                    // std::cout << "DONE -----------------------" << std::endl;
-                }
-                // }
+    // Fill track timing information
+    for (unsigned int iPV = 0; iPV < PVs.size(); iPV++) {
+        const reco::Vertex& prv = PVs.at(iPV);
+        if (prv.isFake()) std::cout << "ntuple_SV::filBranches: This is a fake PV." << std::endl;
+        for (reco::Vertex::trackRef_iterator trk_it = prv.tracks_begin(); trk_it != prv.tracks_end(); trk_it++) {
+            reco::TrackBaseRef trkRef = *trk_it;
+            if (timeValueMap.contains(trkRef.id())) {
+                // if (timeQualityMap[trkRef] < timeQualityCut_) continue;
+                pv_trk_timeVal_->push_back(timeValueMap[trkRef]);
+                pv_trk_timeErr_->push_back(timeErrorMap[trkRef]);
+                pv_trk_timeQual_->push_back(timeQualityMap[trkRef]);
             }
+            else std::cout << "ntuple_SV::filBranches: PV track is not in the track maps." << std::endl;
         }
-        // std::cout << "closest SV is SV " << closestSVIdx << " with dR3D = " << mindR << std::endl;
-        matchSV.push_back(closestSVIdx); // NOTE: -10 MEANS NO MATCHED SV MATCHED TO GENVERTEX
-        if (closestSVIdx == -10) matchJet.push_back(-10); // NOTE: -10 MEANS NO MATCHED SV TO MATCH A JET TO
-        else matchJet.push_back(matchedJetIdx);
     }
-
-    std::vector<int> matchRecoJetHadFlav(0);
-    std::vector<int> matchRecoJetPartFlav(0);
-    std::vector<int> matchGenJetHadFlav(0);
-    std::vector<int> matchGenJetPartFlav(0);
-    for (int iMatch : matchJet) {
-        // std::cout << "match jet " << iMatch << std::endl;
-        // if (matchJet.at(iMatch) >= 0) std::cout << "the hadron flavour is " << jetCollection.at(iMatch).genJet()->hadronFlavour() << std::endl;
-        if (iMatch >= 0) { // There is a Jet matched to the SV
-            const pat::Jet& jet = jetCollection.at(iMatch);
-            matchRecoJetHadFlav.push_back(jet.hadronFlavour()); // 0, 4, 5
-            matchRecoJetPartFlav.push_back(jet.partonFlavour()); // 0, 4, 5
-
-            const reco::GenJet* genJet = jet.genJet();
-
-            if (!genJet) { // NOTE: -12 MEANS NO GENJET MATCHED TO JET
-                matchGenJetHadFlav.push_back(-12);
-                matchGenJetPartFlav.push_back(-12);
+    for (unsigned int iSV = 0; iSV < inclusiveSVs.size(); iSV++) {
+        const reco::Vertex& sv = inclusiveSVs.at(iSV);
+        for (reco::Vertex::trackRef_iterator trk_it = sv.tracks_begin(); trk_it != sv.tracks_end(); trk_it++) {
+            reco::TrackBaseRef trkRef = *trk_it;
+            if (timeValueMap.contains(trkRef.id())) {
+                // if (timeQualityMap[trkRef] < timeQualityCut_) continue;
+                sv_trk_timeVal_->push_back(timeValueMap[trkRef]);
+                sv_trk_timeErr_->push_back(timeErrorMap[trkRef]);
+                sv_trk_timeQual_->push_back(timeQualityMap[trkRef]);
             }
-            else {
-                bool matched = false;
-                for (const reco::JetFlavourInfoMatching& genJetFlavInfo : *(genJetFlavourInfo_.product())) {
-                    if (reco::deltaR(genJet->p4(), genJetFlavInfo.first->p4()) < 0.1) { // TODO: MOVE THIS DELTA R TO CONFIG FILE
-                        matchGenJetHadFlav.push_back(genJetFlavInfo.second.getHadronFlavour());
-                        matchGenJetPartFlav.push_back(genJetFlavInfo.second.getPartonFlavour());
-                        matched = true;
-                        break;
-                    }
-                }
-                if (!matched) { // NOTE: -13 MEANS NO GEN JET FLAVOUR FOUND VIA MATCHING
-                    matchGenJetHadFlav.push_back(-13);
-                    matchGenJetPartFlav.push_back(-13);
-                }
-            }
-        }
-        else if (iMatch == -10) { // NOTE: -10 MEANS NO SV MATCHED TO GENVERTEX
-            matchRecoJetHadFlav.push_back(-10);
-            matchRecoJetPartFlav.push_back(-10);
-            matchGenJetHadFlav.push_back(-10);
-            matchGenJetPartFlav.push_back(-10);
-        }
-        else if (iMatch == -11) { // NOTE: -11 MEANS NO JET MATCHED TO SV
-            matchRecoJetHadFlav.push_back(-11);
-            matchRecoJetPartFlav.push_back(-11);
-            matchGenJetHadFlav.push_back(-11);
-            matchGenJetPartFlav.push_back(-11);
+            else std::cout << "ntuple_SV::filBranches: SV track is not in the track maps." << std::endl;
         }
     }
-
-    // Check that all vectors are of the same length
-    if ((genVertices.size() != matchSV.size())
-     || (genVertices.size() != matchJet.size())
-     || (genVertices.size() != matchRecoJetHadFlav.size())
-     || (genVertices.size() != matchRecoJetPartFlav.size())
-     || (genVertices.size() != matchGenJetHadFlav.size())
-     || (genVertices.size() != matchGenJetPartFlav.size())) {
-        std::cout << "ntuple_SV::fillBranches(): vectors are of different sizes -- the code will probably crash :(" << std::endl;
-        std::cout << "size of genVertices          = " << genVertices.size() << std::endl;
-        std::cout << "size of matchSV              = " << matchSV.size() << std::endl;
-        std::cout << "size of matchJet             = " << matchJet.size() << std::endl;
-        std::cout << "size of matchRecoJetHadFlav  = " << matchRecoJetHadFlav.size() << std::endl;
-        std::cout << "size of matchRecoJetPartFlav = " << matchRecoJetPartFlav.size() << std::endl;
-        std::cout << "size of matchGenJetHadFlav   = " << matchGenJetHadFlav.size() << std::endl;
-        std::cout << "size of matchGenJetPartFlav  = " << matchGenJetPartFlav.size() << std::endl;
-    }
-
-    for (unsigned int iMatch = 0; iMatch < genVertices.size(); iMatch++) {
-        std::cout << "gen vtx mother pdg id         = " << genVertices.at(iMatch)->motherPdgId() << std::endl;
-        std::cout << "match sv                      = " << matchSV.at(iMatch) << std::endl;
-        std::cout << "match jet                     = " << matchJet.at(iMatch) << std::endl;
-        std::cout << "match jet reco hadron flavour = " << matchRecoJetHadFlav.at(iMatch) << std::endl;
-        std::cout << "match jet reco parton flavour = " << matchRecoJetPartFlav.at(iMatch) << std::endl;
-        std::cout << "match jet gen hadron flavour  = " << matchGenJetHadFlav.at(iMatch) << std::endl;
-        std::cout << "match jet gen parton flavour  = " << matchGenJetPartFlav.at(iMatch) << std::endl;
-    }
-
-    // FILL THE HISTOGRAMS
-    for (unsigned int iVtx = 0; iVtx < genVertices.size(); iVtx++) {
-        const GenVertex* gv = genVertices.at(iVtx);
-        const int svIdx = matchSV.at(iVtx);
-        const int jetIdx = matchJet.at(iVtx);
-        const int recoJetHadFlav = matchRecoJetHadFlav.at(iVtx);
-        const int recoJetPartFlav = matchRecoJetPartFlav.at(iVtx);
-        const int genJetHadFlav = matchGenJetHadFlav.at(iVtx);
-        const int genJetPartFlav = matchGenJetPartFlav.at(iVtx);
-
-        gv_pt_->push_back(gv->pt());
-        gv_x_->push_back(gv->x());
-        gv_y_->push_back(gv->y());
-        gv_z_->push_back(gv->z());
-        gv_motherPdgId_->push_back(gv->motherPdgId());
-        gv_nDaughters_->push_back(gv->nDaughters());
-
-        if (svIdx >= 0) {
-            const reco::VertexCompositePtrCandidate& sv = cpvtx.at(svIdx);
-            // any histograms for gen vertices with a matched SV but no matched jet?
-            if (jetIdx >= 0) {
-                const pat::Jet& jet = jetCollection.at(jetIdx);
-
-                gv_matchJet_pt_->push_back(gv->pt());
-                gv_matchJet_x_->push_back(gv->x());
-                gv_matchJet_y_->push_back(gv->y());
-                gv_matchJet_z_->push_back(gv->z());
-                gv_matchJet_motherPdgId_->push_back(gv->motherPdgId());
-                gv_matchJet_nDaughters_->push_back(gv->nDaughters());
-
-                if ((genJetHadFlav != -10) && (genJetHadFlav != -11) && (genJetHadFlav != -12) && (genJetHadFlav != -13)) {
-                    gv_matchGenJetHadFlav_pt_->push_back(gv->pt());
-                    gv_matchGenJetHadFlav_hadFlav_->push_back(genJetHadFlav);
-                }
-            }
-        }
-        // std::cout << "CONST match jet hadron flavour = " << jetHadFlav << std::endl;
-    }
-*/
 
     sv_num_ = 0;
     for (const reco::VertexCompositePtrCandidate& sv : cpvtx) {
         if (sv_num_ < (int) max_sv_) { // Limit number of SVs
 
             // sv_pt_[sv_num_] = sv.pt();
-            sv_eta_[sv_num_] = sv.eta();
-            sv_phi_[sv_num_] = sv.phi();
-            sv_mass_[sv_num_] = sv.mass();
-            sv_e_[sv_num_] = sv.energy();
+            // sv_eta_[sv_num_] = sv.eta();
+            // sv_phi_[sv_num_] = sv.phi();
+            // sv_mass_[sv_num_] = sv.mass();
+            // sv_e_[sv_num_] = sv.energy();
             sv_ntracks_[sv_num_] = sv.numberOfDaughters();
-            sv_chi2_[sv_num_] = sv.vertexChi2();
-            sv_ndf_[sv_num_] = sv.vertexNdof();
-            sv_normchi2_[sv_num_] = catchInfsAndBound(sv_chi2_[sv_num_] / sv_ndf_[sv_num_], 1000, -1000, 1000);
+            // sv_chi2_[sv_num_] = sv.vertexChi2();
+            // sv_ndf_[sv_num_] = sv.vertexNdof();
+            // sv_normchi2_[sv_num_] = catchInfsAndBound(sv_chi2_[sv_num_] / sv_ndf_[sv_num_], 1000, -1000, 1000);
             // sv_dxy_[sv_num_] = vertexDxy(sv, pv).value();
-            sv_dxyerr_[sv_num_] = catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0);
+            // sv_dxyerr_[sv_num_] = catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0);
             // sv_dxysig_[sv_num_] = catchInfsAndBound(sv_dxy_[sv_num_] / vertexDxy(sv, pv).error(), 0, -1, 800);
             // sv_d3d_[sv_num_] = vertexD3d(sv, pv).value();
-            sv_d3derr_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0);
-            sv_d3dsig_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800);
+            // sv_d3derr_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0);
+            // sv_d3dsig_[sv_num_] = catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800);
             sv_costhetasvpv_[sv_num_] = vertexDdotP(sv, pv); // The pointing angle (i.e. the angle between the sum of the momentum of the tracks in the SV and the flight direction betwen PV and SV)
 
             SVTrackInfoBuilder trackinfo(builder_);
-
             float calo_frac = 0.0;
             float hcal_frac = 0.0;
             float puppiw = 0.0;
@@ -1269,10 +1475,6 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                     }
                 }
                 if (reco::deltaR(sv, jet) > jet_radius) continue;
-
-                // Used for jet matching
-                sv_svIdx_->push_back(sv_num_);
-                sv_jetPt_->push_back(jet.correctedJet("Uncorrected").pt());
 
                 sv_etarel_->push_back(catchInfsAndBound(fabs(sv.eta() - jet.eta()) - 0.5, 0, -2, 0));
                 sv_phirel_->push_back(catchInfsAndBound(fabs(reco::deltaPhi(sv.phi(), jet.phi())) - 0.5, 0, -2, 0));
@@ -1365,7 +1567,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         } // End if sv_num_ < max_sv_
         sv_num_++;
     } // End loop through SVs
-    nsv_ = sv_num_;
+    // nsv_ = sv_num_;
 
     return 0;
 }
@@ -1423,58 +1625,59 @@ float ntuple_SV::deltaR3D(float x1, float x2, float y1, float y2, float z1, floa
 }
 
 
-bool ntuple_SV::isBHadron(int pdgId) {
+int ntuple_SV::genPartID(int pdgId) {
 
     int checkPdgId = abs(pdgId);
-    // checking if b meson
-    if (checkPdgId >= 511 && checkPdgId <= 545) return true;
-    // checking if b baryon
-    if (checkPdgId >= 5112 && checkPdgId <= 5554) return true;
-    return false;
+    // B meson
+    if ((checkPdgId == 521) ||
+        (checkPdgId == 511) ||
+        (checkPdgId == 531) ||
+        (checkPdgId == 541)) return 0;
+    // B baryon
+    else if (
+        (checkPdgId == 5122) ||
+        (checkPdgId == 5112) ||
+        (checkPdgId == 5212) ||
+        (checkPdgId == 5222) ||
+        (checkPdgId == 5132) ||
+        (checkPdgId == 5232) ||
+        (checkPdgId == 5332) ||
+        (checkPdgId == 5142) ||
+        (checkPdgId == 5242) ||
+        (checkPdgId == 5342) ||
+        (checkPdgId == 5512) ||
+        (checkPdgId == 5532) ||
+        (checkPdgId == 5542) ||
+        (checkPdgId == 5554)) return 1;
+    // C meson
+    else if (
+        (checkPdgId == 411) ||
+        (checkPdgId == 421) ||
+        (checkPdgId == 431)) return 2;
+    // C baryon
+    else if (
+        (checkPdgId == 4122) ||
+        (checkPdgId == 4222) ||
+        (checkPdgId == 4212) ||
+        (checkPdgId == 4112) ||
+        (checkPdgId == 4232) ||
+        (checkPdgId == 4132) ||
+        (checkPdgId == 4332) ||
+        (checkPdgId == 4412) ||
+        (checkPdgId == 4422) ||
+        (checkPdgId == 4432) ||
+        (checkPdgId == 4444)) return 3;
+    // S baryon
+    else if (
+        (checkPdgId == 3122) ||
+        (checkPdgId == 3222) ||
+        (checkPdgId == 3212) ||
+        (checkPdgId == 3112) ||
+        (checkPdgId == 3322) ||
+        (checkPdgId == 3312) ||
+        (checkPdgId == 3334)) return 4;
+    return -1;
 }
-
-
-// bool ntuple_SV::isBMeson(int pdgId) {
-
-//     int checkPdgId = abs(pdgId);
-//     if (checkPdgId >= 511 && checkPdgId <= 545) return true;
-//     return false;
-// }
-
-
-// bool ntuple_SV::isBBaryon(int pdgId) {
-
-//     int checkPdgId = abs(pdgId);
-//     if (checkPdgId >= 5112 && checkPdgId <= 5554) return true;
-//     return false;
-// }
-
-
-bool ntuple_SV::isCHadron(int pdgId) {
-
-    int checkPdgId = abs(pdgId);
-    // checking if c meson
-    if (checkPdgId >= 411 && checkPdgId <= 435) return true;
-    // checking if c baryon
-    if (checkPdgId >= 4112 && checkPdgId <= 4444) return true;
-    return false;
-}
-
-
-// bool ntuple_SV::isCMeson(int pdgId) {
-
-//     int checkPdgId = abs(pdgId);
-//     if (checkPdgId >= 411 && checkPdgId <= 435) return true;
-//     return false;
-// }
-
-
-// bool ntuple_SV::isCBaryon(int pdgId) {
-
-//     int checkPdgId = abs(pdgId);
-//     if (checkPdgId >= 4112 && checkPdgId <= 4444) return true;
-//     return false;
-// }
 
 
 // int ntuple_SV::findPFCandIdx(const pat::PackedCandidate& trk, const pat::PackedCandidateCollection& pcands) {
@@ -1489,24 +1692,6 @@ bool ntuple_SV::isCHadron(int pdgId) {
 //     }
 //     if (nmatches != 1) {
 //         // std::cout << "ntuple_SV.cc: 0 or more than one PF Candidate match found! Returning -1." << std::endl;
-//         return -1;
-//     }
-//     return matchIdx;
-// }
-
-
-// int ntuple_SV::findLostTrackIdx(const pat::PackedCandidate& trk, const pat::PackedCandidateCollection& lts) {
-
-//     int nmatches = 0;
-//     int matchIdx = 0;
-//     for (unsigned int trkIdx = 0; trkIdx < lts.size(); trkIdx++) {
-//         if (&trk == &lts.at(trkIdx)) {
-//             matchIdx = trkIdx;
-//             nmatches += 1;
-//         }
-//     }
-//     if (nmatches != 1) {
-//         // std::cout << "ntuple_SV.cc: 0 or more than one Lost Track match found! Returning -1." << std::endl;
 //         return -1;
 //     }
 //     return matchIdx;

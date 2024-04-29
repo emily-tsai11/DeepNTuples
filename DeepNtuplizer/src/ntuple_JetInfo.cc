@@ -40,8 +40,8 @@ void ntuple_JetInfo::getInput(const edm::ParameterSet& iConfig) {
     gluonReduction_ = (iConfig.getParameter<double>("gluonReduction"));
     jetPtMin_ = (iConfig.getParameter<double>("jetPtMin"));
     jetPtMax_ = (iConfig.getParameter<double>("jetPtMax"));
-    jetAbsEtaMin_ = (iConfig.getParameter<double>("jetAbsEtaMin"));
-    jetAbsEtaMax_ = (iConfig.getParameter<double>("jetAbsEtaMax"));
+    jetAbsEtaMin_ = (iConfig.getParameter<double>("absEtaMin"));
+    jetAbsEtaMax_ = (iConfig.getParameter<double>("absEtaMax"));
 
     vector<string> disc_names = iConfig.getParameter<vector<string>>("bDiscriminators");
     for (auto& name : disc_names) {

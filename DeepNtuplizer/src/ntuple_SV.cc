@@ -13,7 +13,6 @@
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/Candidate/interface/VertexCompositePtrCandidate.h"
 #include "DataFormats/TrackReco/interface/Track.h"
-#include "TLorentzVector.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "TrackingTools/IPTools/interface/IPTools.h"
 #include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
@@ -158,49 +157,49 @@ class GenVertex {
 
     public:
 
-        GenVertex() : pt_(-1.0), x_(-1.0), y_(-1.0), z_(-1.0), daughters_(0) {}
+        GenVertex() {}
 
-        const float pt() const { return pt_; }
-        const float x() const { return x_; }
-        const float y() const { return y_; }
-        const float z() const { return z_; }
-        const float motherEta() const { return mother_->eta(); }
+        const float x() const { return daughters_.at(0)->vx(); }
+        const float y() const { return daughters_.at(0)->vy(); }
+        const float z() const { return daughters_.at(0)->vz(); }
+        const float pt() const { return mother_->pt(); }
+        const float eta() const { return mother_->eta(); }
+        const float phi() const { return mother_->phi(); }
+        const unsigned int nDaughters() const { return daughters_.size(); }
         const int motherPdgId() const { return mother_->pdgId(); }
-        const unsigned int nDaughters() const { return nDaughters_; }
+
+        const reco::GenParticle* mother() const { return mother_; }
         const std::vector<const reco::Candidate*> daughters() const { return daughters_; }
 
-        void setMother(const pat::PackedGenParticle* mother) { mother_ = mother; }
+        void setMother(const reco::GenParticle* mother) { mother_ = mother; }
         void addDaughter(const reco::Candidate* daughter) { daughters_.push_back(daughter); }
-        void setGenVertexAttributes() {
-            if (!mother_) {
-                std::cout << "WARNING in GenVertex::setGenVertexAttributes() in ntuple_SV.cc: add mother particle first!" << std::endl;
-                return;
-            }
-            nDaughters_ = daughters_.size();
-            if (nDaughters() <= 1) {
-                std::cout << "WARNING in GenVertex::setGenVertexAttributes() in ntuple_SV.cc: add daughter particles first!" << std::endl;
-                return;
-            }
-            pt_ = mother_->pt();
-            x_ = daughters_.at(0)->vx();
-            y_ = daughters_.at(0)->vy();
-            z_ = daughters_.at(0)->vz();
+        bool isValid() {
+            bool valid = true;
+            if (!mother_) valid = false;
+            if (daughters_.size() < 2) valid = false;
+            return valid;
         }
 
         void print() {
             std::cout << "GenVertex:" << std::endl;
-            std::cout << "    vertex pt       = " << pt() << std::endl;
             std::cout << "    vertex x        = " << x() << std::endl;
             std::cout << "    vertex y        = " << y() << std::endl;
             std::cout << "    vertex z        = " << z() << std::endl;
-            std::cout << "    mother pdg id   = " << motherPdgId() << std::endl;
-            std::cout << "    mother pt       = " << mother_->pt() << std::endl;
-            std::cout << "    mother eta      = " << motherEta() << std::endl;
-            std::cout << "    mother phi      = " << mother_->phi() << std::endl;
+            std::cout << "    vertex pt       = " << pt() << std::endl;
+            std::cout << "    vertex eta      = " << eta() << std::endl;
+            std::cout << "    vertex phi      = " << phi() << std::endl;
             std::cout << "    nDaughters      = " << nDaughters() << std::endl;
+            std::cout << "    mother pdg id   = " << motherPdgId() << std::endl;
+
             std::cout << "    daughter pdgIds = ";
             for (unsigned int iDau = 0; iDau < nDaughters(); iDau++) {
                 std::cout << daughters().at(iDau)->pdgId();
+                if (iDau < nDaughters() - 1) std::cout << ", ";
+            }
+            std::cout << std::endl;
+            std::cout << "    daughter pts   = ";
+            for (unsigned int iDau = 0; iDau < nDaughters(); iDau++) {
+                std::cout << daughters().at(iDau)->pt();
                 if (iDau < nDaughters() - 1) std::cout << ", ";
             }
             std::cout << std::endl;
@@ -220,12 +219,7 @@ class GenVertex {
 
     private:
 
-        const pat::PackedGenParticle* mother_;
-        float pt_; // the pt of the incoming particle
-        float x_; // take vertex position of daughters as position of GenVertex
-        float y_;
-        float z_;
-        unsigned int nDaughters_;
+        const reco::GenParticle* mother_;
         std::vector<const reco::Candidate*> daughters_;
 };
 
@@ -244,17 +238,54 @@ ntuple_SV::~ntuple_SV() {}
 
 void ntuple_SV::getInput(const edm::ParameterSet& iConfig) {
 
+    absEtaMin_ = iConfig.getParameter<double>("absEtaMin");
+    absEtaMax_ = iConfig.getParameter<double>("absEtaMax");
+    genPartPtCut_ = iConfig.getParameter<double>("genPartPtCut");
+    genDauPtCut_ = iConfig.getParameter<double>("genDauPtCut");
+    trackPtCut_ = iConfig.getParameter<double>("trackPtCut");
     timeQualityCut_ = iConfig.getParameter<double>("timeQualityCut");
     matchGVdR_ = iConfig.getParameter<double>("matchGVdR");
     jetPtMin_ = iConfig.getParameter<double>("jetPtMin");
     jetPtMax_ = iConfig.getParameter<double>("jetPtMax");
-    jetAbsEtaMin_ = iConfig.getParameter<double>("jetAbsEtaMin");
-    jetAbsEtaMax_ = iConfig.getParameter<double>("jetAbsEtaMax");
     genJetMatchdR_ = iConfig.getParameter<double>("genJetMatchdR");
 }
 
 
 void ntuple_SV::initBranches(TTree* tree) {
+
+    // for (TString collection : gp_collections_) {
+    //     for (TString branch : gp_branches_) {
+    //         TString name = prefix_ + "gp_" + collection + "_" + branch;
+    //         n_.push_back(name);
+    //     }
+    // }
+    for (TString collection : trk_collections_) {
+        for (TString branch : trk_branches_) {
+            TString name = prefix_ + "trk_" + collection + "_" + branch;
+            n_.push_back(name);
+        }
+    }
+    for (TString collection : vtx_collections_) {
+        for (TString branch : vtx_branches_) {
+            TString name = prefix_ + "vtx_" + collection + "_" + branch;
+            n_.push_back(name);
+        }
+    }
+    for (TString collection : jet_collections_) {
+        for (TString branch : jet_branches_) {
+            TString name = prefix_ + "jet_" + collection + "_" + branch;
+            n_.push_back(name);
+        }
+    }
+    for (TString branch : evt_branches_) {
+        TString name = prefix_ + "evt_" + branch;
+        n_.push_back(name);
+    }
+
+    for (TString name : n_) {
+        b_[name] = new std::vector<float>;
+        addBranch(tree, name, &b_[name]);
+    }
 
     // SV candidates
     addBranch(tree, (prefix_ + "n_sv").c_str(), &sv_num_, (prefix_ + "sv_num_/I").c_str());
@@ -262,12 +293,12 @@ void ntuple_SV::initBranches(TTree* tree) {
     // addBranch(tree, (prefix_ + "sv_pt").c_str(), &sv_pt_, (prefix_ + "sv_pt_[" + prefix_ + "sv_num_]/F").c_str());
     // addBranch(tree, (prefix_ + "sv_eta").c_str(), &sv_eta_, (prefix_ + "sv_eta_[" + prefix_ + "sv_num_]/F").c_str());
     // addBranch(tree, (prefix_ + "sv_phi").c_str(), &sv_phi_, (prefix_ + "sv_phi_[" + prefix_ + "sv_num_]/F").c_str());
-    // addBranch(tree, (prefix_ + "sv_e").c_str(), &sv_e_, (prefix_ + "sv_e_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "sv_e").c_str(), &sv_e_, (prefix_ + "sv_e_[" + prefix_ + "sv_num_]/F").c_str());
     addBranch(tree, (prefix_ + "sv_etarel").c_str(), &sv_etarel_);
     addBranch(tree, (prefix_ + "sv_phirel").c_str(), &sv_phirel_);
     addBranch(tree, (prefix_ + "sv_deltaR").c_str(), &sv_deltaR_);
-    // addBranch(tree, (prefix_ + "sv_mass").c_str(), &sv_mass_, (prefix_ + "sv_mass_[" + prefix_ + "sv_num_]/F").c_str());
-    addBranch(tree, (prefix_ + "sv_ntracks").c_str(), &sv_ntracks_, (prefix_ + "sv_ntracks_[" + prefix_ + "sv_num_]/F").c_str());
+    addBranch(tree, (prefix_ + "sv_mass").c_str(), &sv_mass_, (prefix_ + "sv_mass_[" + prefix_ + "sv_num_]/F").c_str());
+    // addBranch(tree, (prefix_ + "sv_ntracks").c_str(), &sv_ntracks_, (prefix_ + "sv_ntracks_[" + prefix_ + "sv_num_]/F").c_str());
     // addBranch(tree, (prefix_ + "sv_nMatchPFCand").c_str(), &sv_nMatchPFCand_, (prefix_ + "sv_nMatchPFCand_[" + prefix_ + "sv_num_]/F").c_str());
     // addBranch(tree, (prefix_ + "sv_nUnmatchedTrk").c_str(), &sv_nUnmatchedTrk_, (prefix_ + "sv_nUnmatchedTrk_[" + prefix_ + "sv_num_]/F").c_str());
     // addBranch(tree, (prefix_ + "sv_chi2").c_str(), &sv_chi2_, (prefix_ + "sv_chi2_[" + prefix_ + "sv_num_]/F").c_str());
@@ -290,167 +321,7 @@ void ntuple_SV::initBranches(TTree* tree) {
     addBranch(tree, (prefix_ + "sv_pfd2dsig").c_str(), &sv_pfd2dsig_);
     addBranch(tree, (prefix_ + "sv_pfd3dval").c_str(), &sv_pfd3dval_);
     addBranch(tree, (prefix_ + "sv_pfd3dsig").c_str(), &sv_pfd3dsig_);
-    addBranch(tree, (prefix_ + "sv_time").c_str(), &sv_time_);
-
-    addBranch(tree, (prefix_ + "gp_strange_status").c_str(), &gp_strange_status_);
-    addBranch(tree, (prefix_ + "gp_strange_pdgId").c_str(), &gp_strange_pdgId_);
-    addBranch(tree, (prefix_ + "gp_strange_nDaughters").c_str(), &gp_strange_nDaughters_);
-    addBranch(tree, (prefix_ + "gp_strange_daughterPdgIds").c_str(), &gp_strange_daughterPdgIds_);
-    addBranch(tree, (prefix_ + "gp_strange_pt").c_str(), &gp_strange_pt_);
-    addBranch(tree, (prefix_ + "gp_strange_eta").c_str(), &gp_strange_eta_);
-
-    addBranch(tree, (prefix_ + "st_pt").c_str(), &st_pt_);
-    addBranch(tree, (prefix_ + "st_eta").c_str(), &st_eta_);
-    addBranch(tree, (prefix_ + "st_phi").c_str(), &st_phi_);
-    addBranch(tree, (prefix_ + "st_charge").c_str(), &st_charge_);
-
-    addBranch(tree, (prefix_ + "rt_pt").c_str(), &rt_pt_);
-    addBranch(tree, (prefix_ + "rt_eta").c_str(), &rt_eta_);
-    addBranch(tree, (prefix_ + "rt_phi").c_str(), &rt_phi_);
-    addBranch(tree, (prefix_ + "rt_charge").c_str(), &rt_charge_);
-    addBranch(tree, (prefix_ + "rt_chi2").c_str(), &rt_chi2_);
-    addBranch(tree, (prefix_ + "rt_ndof").c_str(), &rt_ndof_);
-    addBranch(tree, (prefix_ + "rt_chi2dof").c_str(), &rt_chi2dof_);
-    addBranch(tree, (prefix_ + "rt_dxy").c_str(), &rt_dxy_);
-    addBranch(tree, (prefix_ + "rt_dxyerr").c_str(), &rt_dxyerr_);
-    addBranch(tree, (prefix_ + "rt_d0").c_str(), &rt_d0_);
-    addBranch(tree, (prefix_ + "rt_d0err").c_str(), &rt_d0err_);
-    addBranch(tree, (prefix_ + "rt_dz").c_str(), &rt_dz_);
-    addBranch(tree, (prefix_ + "rt_dzerr").c_str(), &rt_dzerr_);
-
-    addBranch(tree, (prefix_ + "gv_pt").c_str(), &gv_pt_);
-    addBranch(tree, (prefix_ + "gv_x").c_str(), &gv_x_);
-    addBranch(tree, (prefix_ + "gv_y").c_str(), &gv_y_);
-    addBranch(tree, (prefix_ + "gv_z").c_str(), &gv_z_);
-    addBranch(tree, (prefix_ + "gv_motherEta").c_str(), &gv_motherEta_);
-    addBranch(tree, (prefix_ + "gv_motherPdgId").c_str(), &gv_motherPdgId_);
-    addBranch(tree, (prefix_ + "gv_nDaughters").c_str(), &gv_nDaughters_);
-    addBranch(tree, (prefix_ + "gv_daughterPt").c_str(), &gv_daughterPt_);
-    addBranch(tree, (prefix_ + "gv_daughterEta").c_str(), &gv_daughterEta_);
-    addBranch(tree, (prefix_ + "gv_daughterPdgId").c_str(), &gv_daughterPdgId_);
-    addBranch(tree, (prefix_ + "gv_dRtoClosestSV").c_str(), &gv_dRtoClosestSV_);
-    addBranch(tree, (prefix_ + "gv_dRtoAllSV").c_str(), &gv_dRtoAllSV_);
-    addBranch(tree, (prefix_ + "gv_nTimesMatchedToSV").c_str(), &gv_nTimesMatchedToSV_);
-    addBranch(tree, (prefix_ + "gv_nTimesMatchedToSVinJet").c_str(), &gv_nTimesMatchedToSVinJet_);
-
-    addBranch(tree, (prefix_ + "gv_matchSV_pt").c_str(), &gv_matchSV_pt_);
-    addBranch(tree, (prefix_ + "gv_matchSV_x").c_str(), &gv_matchSV_x_);
-    addBranch(tree, (prefix_ + "gv_matchSV_y").c_str(), &gv_matchSV_y_);
-    addBranch(tree, (prefix_ + "gv_matchSV_z").c_str(), &gv_matchSV_z_);
-    addBranch(tree, (prefix_ + "gv_matchSV_motherEta").c_str(), &gv_matchSV_motherEta_);
-    addBranch(tree, (prefix_ + "gv_matchSV_motherPdgId").c_str(), &gv_matchSV_motherPdgId_);
-    addBranch(tree, (prefix_ + "gv_matchSV_nDaughters").c_str(), &gv_matchSV_nDaughters_);
-    addBranch(tree, (prefix_ + "gv_matchSV_daughterPt").c_str(), &gv_matchSV_daughterPt_);
-    addBranch(tree, (prefix_ + "gv_matchSV_daughterEta").c_str(), &gv_matchSV_daughterEta_);
-    addBranch(tree, (prefix_ + "gv_matchSV_daughterPdgId").c_str(), &gv_matchSV_daughterPdgId_);
-    addBranch(tree, (prefix_ + "gv_matchSV_dRtoClosestSV").c_str(), &gv_matchSV_dRtoClosestSV_);
-
-    addBranch(tree, (prefix_ + "sv_x").c_str(), &sv_x_);
-    addBranch(tree, (prefix_ + "sv_y").c_str(), &sv_y_);
-    addBranch(tree, (prefix_ + "sv_z").c_str(), &sv_z_);
-    addBranch(tree, (prefix_ + "sv_pt").c_str(), &sv_pt_);
-    addBranch(tree, (prefix_ + "sv_eta").c_str(), &sv_eta_);
-    addBranch(tree, (prefix_ + "sv_phi").c_str(), &sv_phi_);
-    addBranch(tree, (prefix_ + "sv_mass").c_str(), &sv_mass_);
-    addBranch(tree, (prefix_ + "sv_energy").c_str(), &sv_energy_);
-    addBranch(tree, (prefix_ + "sv_chi2").c_str(), &sv_chi2_);
-    addBranch(tree, (prefix_ + "sv_ndof").c_str(), &sv_ndof_);
-    addBranch(tree, (prefix_ + "sv_chi2dof").c_str(), &sv_chi2dof_);
-    addBranch(tree, (prefix_ + "sv_dxy").c_str(), &sv_dxy_);
-    addBranch(tree, (prefix_ + "sv_dxyerr").c_str(), &sv_dxyerr_);
-    addBranch(tree, (prefix_ + "sv_dxysig").c_str(), &sv_dxysig_);
-    addBranch(tree, (prefix_ + "sv_dz").c_str(), &sv_dz_);
-    addBranch(tree, (prefix_ + "sv_d3D").c_str(), &sv_d3D_);
-    addBranch(tree, (prefix_ + "sv_d3Derr").c_str(), &sv_d3Derr_);
-    addBranch(tree, (prefix_ + "sv_d3Dsig").c_str(), &sv_d3Dsig_);
-    addBranch(tree, (prefix_ + "sv_nDaughters").c_str(), &sv_nDaughters_);
-
-    addBranch(tree, (prefix_ + "sv_matchGV_x").c_str(), &sv_matchGV_x_);
-    addBranch(tree, (prefix_ + "sv_matchGV_y").c_str(), &sv_matchGV_y_);
-    addBranch(tree, (prefix_ + "sv_matchGV_z").c_str(), &sv_matchGV_z_);
-    addBranch(tree, (prefix_ + "sv_matchGV_pt").c_str(), &sv_matchGV_pt_);
-    addBranch(tree, (prefix_ + "sv_matchGV_eta").c_str(), &sv_matchGV_eta_);
-    addBranch(tree, (prefix_ + "sv_matchGV_phi").c_str(), &sv_matchGV_phi_);
-    addBranch(tree, (prefix_ + "sv_matchGV_mass").c_str(), &sv_matchGV_mass_);
-    addBranch(tree, (prefix_ + "sv_matchGV_energy").c_str(), &sv_matchGV_energy_);
-    addBranch(tree, (prefix_ + "sv_matchGV_chi2").c_str(), &sv_matchGV_chi2_);
-    addBranch(tree, (prefix_ + "sv_matchGV_ndof").c_str(), &sv_matchGV_ndof_);
-    addBranch(tree, (prefix_ + "sv_matchGV_chi2dof").c_str(), &sv_matchGV_chi2dof_);
-    addBranch(tree, (prefix_ + "sv_matchGV_dxy").c_str(), &sv_matchGV_dxy_);
-    addBranch(tree, (prefix_ + "sv_matchGV_dxyerr").c_str(), &sv_matchGV_dxyerr_);
-    addBranch(tree, (prefix_ + "sv_matchGV_dxysig").c_str(), &sv_matchGV_dxysig_);
-    addBranch(tree, (prefix_ + "sv_matchGV_dz").c_str(), &sv_matchGV_dz_);
-    addBranch(tree, (prefix_ + "sv_matchGV_d3D").c_str(), &sv_matchGV_d3D_);
-    addBranch(tree, (prefix_ + "sv_matchGV_d3Derr").c_str(), &sv_matchGV_d3Derr_);
-    addBranch(tree, (prefix_ + "sv_matchGV_d3Dsig").c_str(), &sv_matchGV_d3Dsig_);
-    addBranch(tree, (prefix_ + "sv_matchGV_SVdRtoGV").c_str(), &sv_matchGV_SVdRtoGV_);
-    addBranch(tree, (prefix_ + "sv_matchGV_nDaughters").c_str(), &sv_matchGV_nDaughters_);
-    addBranch(tree, (prefix_ + "sv_matchGV_GVmotherPdgId").c_str(), &sv_matchGV_GVmotherPdgId_);
-
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_x").c_str(), &sv_matchGV_matchJet_x_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_y").c_str(), &sv_matchGV_matchJet_y_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_z").c_str(), &sv_matchGV_matchJet_z_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_pt").c_str(), &sv_matchGV_matchJet_pt_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_eta").c_str(), &sv_matchGV_matchJet_eta_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_phi").c_str(), &sv_matchGV_matchJet_phi_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_mass").c_str(), &sv_matchGV_matchJet_mass_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_energy").c_str(), &sv_matchGV_matchJet_energy_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_chi2").c_str(), &sv_matchGV_matchJet_chi2_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_ndof").c_str(), &sv_matchGV_matchJet_ndof_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_chi2dof").c_str(), &sv_matchGV_matchJet_chi2dof_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_dxy").c_str(), &sv_matchGV_matchJet_dxy_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_dxyerr").c_str(), &sv_matchGV_matchJet_dxyerr_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_dxysig").c_str(), &sv_matchGV_matchJet_dxysig_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_dz").c_str(), &sv_matchGV_matchJet_dz_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_d3D").c_str(), &sv_matchGV_matchJet_d3D_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_d3Derr").c_str(), &sv_matchGV_matchJet_d3Derr_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_d3Dsig").c_str(), &sv_matchGV_matchJet_d3Dsig_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_SVdRtoGV").c_str(), &sv_matchGV_matchJet_SVdRtoGV_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_nJets").c_str(), &sv_matchGV_matchJet_nJets_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_genJetFlav").c_str(), &sv_matchGV_matchJet_genJetHadFlav_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_nDaughters").c_str(), &sv_matchGV_matchJet_nDaughters_);
-    addBranch(tree, (prefix_ + "sv_matchGV_matchJet_GVmotherPdgId").c_str(), &sv_matchGV_matchJet_GVmotherPdgId_);
-
-    addBranch(tree, (prefix_ + "nPV").c_str(), &nPV_);
-    addBranch(tree, (prefix_ + "nSV").c_str(), &nSV_);
-    addBranch(tree, (prefix_ + "nSVMTDTiming").c_str(), &nSVMTDTiming_);
-
-    addBranch(tree, (prefix_ + "pv_trk_timeVal").c_str(), &pv_trk_timeVal_);
-    addBranch(tree, (prefix_ + "pv_trk_timeErr").c_str(), &pv_trk_timeErr_);
-    addBranch(tree, (prefix_ + "pv_trk_timeQual").c_str(), &pv_trk_timeQual_);
-    addBranch(tree, (prefix_ + "sv_trk_timeVal").c_str(), &sv_trk_timeVal_);
-    addBranch(tree, (prefix_ + "sv_trk_timeErr").c_str(), &sv_trk_timeErr_);
-    addBranch(tree, (prefix_ + "sv_trk_timeQual").c_str(), &sv_trk_timeQual_);
-
-    addBranch(tree, (prefix_ + "jet_pt").c_str(), &jet_pt_);
-    addBranch(tree, (prefix_ + "jet_eta").c_str(), &jet_eta_);
-    addBranch(tree, (prefix_ + "jet_phi").c_str(), &jet_phi_);
-    addBranch(tree, (prefix_ + "jet_radius").c_str(), &jet_radius_);
-    addBranch(tree, (prefix_ + "jet_hadFlav").c_str(), &jet_hadFlav_);
-    addBranch(tree, (prefix_ + "jet_partFlav").c_str(), &jet_partFlav_);
-    addBranch(tree, (prefix_ + "jet_genHadFlav").c_str(), &jet_genHadFlav_);
-    addBranch(tree, (prefix_ + "jet_genPartFlav").c_str(), &jet_genPartFlav_);
-
-    addBranch(tree, (prefix_ + "jet_matchSV_pt").c_str(), &jet_matchSV_pt_);
-    addBranch(tree, (prefix_ + "jet_matchSV_eta").c_str(), &jet_matchSV_eta_);
-    addBranch(tree, (prefix_ + "jet_matchSV_phi").c_str(), &jet_matchSV_phi_);
-    addBranch(tree, (prefix_ + "jet_matchSV_radius").c_str(), &jet_matchSV_radius_);
-    addBranch(tree, (prefix_ + "jet_matchSV_nSV").c_str(), &jet_matchSV_nSV_);
-    addBranch(tree, (prefix_ + "jet_matchSV_hadFlav").c_str(), &jet_matchSV_hadFlav_);
-    addBranch(tree, (prefix_ + "jet_matchSV_partFlav").c_str(), &jet_matchSV_partFlav_);
-    addBranch(tree, (prefix_ + "jet_matchSV_genHadFlav").c_str(), &jet_matchSV_genHadFlav_);
-    addBranch(tree, (prefix_ + "jet_matchSV_genPartFlav").c_str(), &jet_matchSV_genPartFlav_);
-
-    addBranch(tree, (prefix_ + "jet_matchSV_matchGV_pt").c_str(), &jet_matchSV_matchGV_pt_);
-    addBranch(tree, (prefix_ + "jet_matchSV_matchGV_eta").c_str(), &jet_matchSV_matchGV_eta_);
-    addBranch(tree, (prefix_ + "jet_matchSV_matchGV_phi").c_str(), &jet_matchSV_matchGV_phi_);
-    addBranch(tree, (prefix_ + "jet_matchSV_matchGV_radius").c_str(), &jet_matchSV_matchGV_radius_);
-    addBranch(tree, (prefix_ + "jet_matchSV_matchGV_SVdRtoGV").c_str(), &jet_matchSV_matchGV_SVdRtoGV_);
-    addBranch(tree, (prefix_ + "jet_matchSV_matchGV_nGV").c_str(), &jet_matchSV_matchGV_nGV_);
-    addBranch(tree, (prefix_ + "jet_matchSV_matchGV_hadFlav").c_str(), &jet_matchSV_matchGV_hadFlav_);
-    addBranch(tree, (prefix_ + "jet_matchSV_matchGV_partFlav").c_str(), &jet_matchSV_matchGV_partFlav_);
-    addBranch(tree, (prefix_ + "jet_matchSV_matchGV_genHadFlav").c_str(), &jet_matchSV_matchGV_genHadFlav_);
-    addBranch(tree, (prefix_ + "jet_matchSV_matchGV_genPartFlav").c_str(), &jet_matchSV_matchGV_genPartFlav_);
+    // addBranch(tree, (prefix_ + "sv_time").c_str(), &sv_time_);
 }
 
 
@@ -468,6 +339,7 @@ void ntuple_SV::readEvent(const edm::Event& iEvent) {
     // iEvent.getByToken(pf_cand_token_, pf_cand_);
     // iEvent.getByToken(pf_mcmatch_token_, pf_mcmatch_);
     iEvent.getByToken(recoTracks_token_, recoTracks_);
+    iEvent.getByToken(trackMCMatch_token_, trackMCMatch_);
     iEvent.getByToken(timeValueMap_token_, timeValueMap_);
     iEvent.getByToken(timeErrorMap_token_, timeErrorMap_);
     iEvent.getByToken(timeQualityMap_token_, timeQualityMap_);
@@ -480,6 +352,8 @@ void ntuple_SV::readEvent(const edm::Event& iEvent) {
 
 void ntuple_SV::initContainers() {
 
+    for (TString name : n_) b_[name] = new std::vector<float>;
+
     sv_etarel_ = new std::vector<float>;
     sv_phirel_ = new std::vector<float>;
     sv_deltaR_ = new std::vector<float>;
@@ -488,168 +362,13 @@ void ntuple_SV::initContainers() {
     sv_pfd2dsig_ = new std::vector<float>;
     sv_pfd3dval_ = new std::vector<float>;
     sv_pfd3dsig_ = new std::vector<float>;
-
-    sv_time_ = new std::vector<float>;
-
-    gp_strange_status_ = new std::vector<int>;
-    gp_strange_pdgId_ = new std::vector<int>;
-    gp_strange_nDaughters_ = new std::vector<int>;
-    gp_strange_daughterPdgIds_ = new std::vector<int>;
-    gp_strange_pt_ = new std::vector<float>;
-    gp_strange_eta_ = new std::vector<float>;
-
-    st_pt_ = new std::vector<float>;
-    st_eta_ = new std::vector<float>;
-    st_phi_ = new std::vector<float>;
-    st_charge_ = new std::vector<int>;
-
-    rt_pt_ = new std::vector<float>;
-    rt_eta_ = new std::vector<float>;
-    rt_phi_ = new std::vector<float>;
-    rt_charge_ = new std::vector<int>;
-    rt_chi2_ = new std::vector<float>;
-    rt_ndof_ = new std::vector<float>;
-    rt_chi2dof_ = new std::vector<float>;
-    rt_dxy_ = new std::vector<float>;
-    rt_dxyerr_ = new std::vector<float>;
-    rt_d0_ = new std::vector<float>;
-    rt_d0err_ = new std::vector<float>;
-    rt_dz_ = new std::vector<float>;
-    rt_dzerr_ = new std::vector<float>;
-
-    gv_pt_ = new std::vector<float>;
-    gv_x_ = new std::vector<float>;
-    gv_y_ = new std::vector<float>;
-    gv_z_ = new std::vector<float>;
-    gv_motherEta_ = new std::vector<float>;
-    gv_motherPdgId_ = new std::vector<int>;
-    gv_nDaughters_ = new std::vector<int>;
-    gv_daughterPt_ = new std::vector<float>;
-    gv_daughterEta_ = new std::vector<float>;
-    gv_daughterPdgId_ = new std::vector<int>;
-    gv_dRtoClosestSV_ = new std::vector<float>;
-    gv_dRtoAllSV_ = new std::vector<float>;
-    gv_nTimesMatchedToSV_ = new std::vector<int>;
-    gv_nTimesMatchedToSVinJet_ = new std::vector<int>;
-
-    gv_matchSV_pt_ = new std::vector<float>;
-    gv_matchSV_x_ = new std::vector<float>;
-    gv_matchSV_y_ = new std::vector<float>;
-    gv_matchSV_z_ = new std::vector<float>;
-    gv_matchSV_motherEta_ = new std::vector<float>;
-    gv_matchSV_motherPdgId_ = new std::vector<int>;
-    gv_matchSV_nDaughters_ = new std::vector<int>;
-    gv_matchSV_daughterPt_ = new std::vector<float>;
-    gv_matchSV_daughterEta_ = new std::vector<float>;
-    gv_matchSV_daughterPdgId_ = new std::vector<int>;
-    gv_matchSV_dRtoClosestSV_ = new std::vector<float>;
-
-    sv_x_ = new std::vector<float>;
-    sv_y_ = new std::vector<float>;
-    sv_z_ = new std::vector<float>;
-    sv_pt_ = new std::vector<float>;
-    sv_eta_ = new std::vector<float>;
-    sv_phi_ = new std::vector<float>;
-    sv_mass_ = new std::vector<float>;
-    sv_energy_ = new std::vector<float>;
-    sv_chi2_ = new std::vector<float>;
-    sv_ndof_ = new std::vector<float>;
-    sv_chi2dof_ = new std::vector<float>;
-    sv_dxy_ = new std::vector<float>;
-    sv_dxyerr_ = new std::vector<float>;
-    sv_dxysig_ = new std::vector<float>;
-    sv_dz_ = new std::vector<float>;
-    sv_d3D_ = new std::vector<float>;
-    sv_d3Derr_ = new std::vector<float>;
-    sv_d3Dsig_ = new std::vector<float>;
-    sv_nDaughters_ = new std::vector<int>;
-
-    sv_matchGV_x_ = new std::vector<float>;
-    sv_matchGV_y_ = new std::vector<float>;
-    sv_matchGV_z_ = new std::vector<float>;
-    sv_matchGV_pt_ = new std::vector<float>;
-    sv_matchGV_eta_ = new std::vector<float>;
-    sv_matchGV_phi_ = new std::vector<float>;
-    sv_matchGV_mass_ = new std::vector<float>;
-    sv_matchGV_energy_ = new std::vector<float>;
-    sv_matchGV_chi2_ = new std::vector<float>;
-    sv_matchGV_ndof_ = new std::vector<float>;
-    sv_matchGV_chi2dof_ = new std::vector<float>;
-    sv_matchGV_dxy_ = new std::vector<float>;
-    sv_matchGV_dxyerr_ = new std::vector<float>;
-    sv_matchGV_dxysig_ = new std::vector<float>;
-    sv_matchGV_dz_ = new std::vector<float>;
-    sv_matchGV_d3D_ = new std::vector<float>;
-    sv_matchGV_d3Derr_ = new std::vector<float>;
-    sv_matchGV_d3Dsig_ = new std::vector<float>;
-    sv_matchGV_SVdRtoGV_ = new std::vector<float>;
-    sv_matchGV_nDaughters_ = new std::vector<int>;
-    sv_matchGV_GVmotherPdgId_ = new std::vector<int>;
-
-    sv_matchGV_matchJet_x_ = new std::vector<float>;
-    sv_matchGV_matchJet_y_ = new std::vector<float>;
-    sv_matchGV_matchJet_z_ = new std::vector<float>;
-    sv_matchGV_matchJet_pt_ = new std::vector<float>;
-    sv_matchGV_matchJet_eta_ = new std::vector<float>;
-    sv_matchGV_matchJet_phi_ = new std::vector<float>;
-    sv_matchGV_matchJet_mass_ = new std::vector<float>;
-    sv_matchGV_matchJet_energy_ = new std::vector<float>;
-    sv_matchGV_matchJet_chi2_ = new std::vector<float>;
-    sv_matchGV_matchJet_ndof_ = new std::vector<float>;
-    sv_matchGV_matchJet_chi2dof_ = new std::vector<float>;
-    sv_matchGV_matchJet_dxy_ = new std::vector<float>;
-    sv_matchGV_matchJet_dxyerr_ = new std::vector<float>;
-    sv_matchGV_matchJet_dxysig_ = new std::vector<float>;
-    sv_matchGV_matchJet_dz_ = new std::vector<float>;
-    sv_matchGV_matchJet_d3D_ = new std::vector<float>;
-    sv_matchGV_matchJet_d3Derr_ = new std::vector<float>;
-    sv_matchGV_matchJet_d3Dsig_ = new std::vector<float>;
-    sv_matchGV_matchJet_SVdRtoGV_ = new std::vector<float>;
-    sv_matchGV_matchJet_nJets_ = new std::vector<int>;
-    sv_matchGV_matchJet_genJetHadFlav_ = new std::vector<int>;
-    sv_matchGV_matchJet_nDaughters_ = new std::vector<int>;
-    sv_matchGV_matchJet_GVmotherPdgId_ = new std::vector<int>;
-
-    pv_trk_timeVal_ = new std::vector<float>;
-    pv_trk_timeErr_ = new std::vector<float>;
-    pv_trk_timeQual_ = new std::vector<float>;
-    sv_trk_timeVal_ = new std::vector<float>;
-    sv_trk_timeErr_ = new std::vector<float>;
-    sv_trk_timeQual_ = new std::vector<float>;
-
-    jet_pt_ = new std::vector<float>;
-    jet_eta_ = new std::vector<float>;
-    jet_phi_ = new std::vector<float>;
-    jet_radius_ = new std::vector<float>;
-    jet_hadFlav_ = new std::vector<int>;
-    jet_partFlav_ = new std::vector<int>;
-    jet_genHadFlav_ = new std::vector<int>;
-    jet_genPartFlav_ = new std::vector<int>;
-
-    jet_matchSV_pt_ = new std::vector<float>;
-    jet_matchSV_eta_ = new std::vector<float>;
-    jet_matchSV_phi_ = new std::vector<float>;
-    jet_matchSV_radius_ = new std::vector<float>;
-    jet_matchSV_nSV_ = new std::vector<int>;
-    jet_matchSV_hadFlav_ = new std::vector<int>;
-    jet_matchSV_partFlav_ = new std::vector<int>;
-    jet_matchSV_genHadFlav_ = new std::vector<int>;
-    jet_matchSV_genPartFlav_ = new std::vector<int>;
-
-    jet_matchSV_matchGV_pt_ = new std::vector<float>;
-    jet_matchSV_matchGV_eta_ = new std::vector<float>;
-    jet_matchSV_matchGV_phi_ = new std::vector<float>;
-    jet_matchSV_matchGV_radius_ = new std::vector<float>;
-    jet_matchSV_matchGV_SVdRtoGV_ = new std::vector<float>;
-    jet_matchSV_matchGV_nGV_ = new std::vector<int>;
-    jet_matchSV_matchGV_hadFlav_ = new std::vector<int>;
-    jet_matchSV_matchGV_partFlav_ = new std::vector<int>;
-    jet_matchSV_matchGV_genHadFlav_ = new std::vector<int>;
-    jet_matchSV_matchGV_genPartFlav_ = new std::vector<int>;
+    // sv_time_ = new std::vector<float>;
 }
 
 
 void ntuple_SV::clearContainers() {
+
+    for (TString name : n_) b_[name]->clear();
 
     sv_etarel_->clear();
     sv_phirel_->clear();
@@ -659,168 +378,13 @@ void ntuple_SV::clearContainers() {
     sv_pfd2dsig_->clear();
     sv_pfd3dval_->clear();
     sv_pfd3dsig_->clear();
-
-    sv_time_->clear();
-
-    gp_strange_status_->clear();
-    gp_strange_pdgId_->clear();
-    gp_strange_nDaughters_->clear();
-    gp_strange_daughterPdgIds_->clear();
-    gp_strange_pt_->clear();
-    gp_strange_eta_->clear();
-
-    st_pt_->clear();
-    st_eta_->clear();
-    st_phi_->clear();
-    st_charge_->clear();
-
-    rt_pt_->clear();
-    rt_eta_->clear();
-    rt_phi_->clear();
-    rt_charge_->clear();
-    rt_chi2_->clear();
-    rt_ndof_->clear();
-    rt_chi2dof_->clear();
-    rt_dxy_->clear();
-    rt_dxyerr_->clear();
-    rt_d0_->clear();
-    rt_d0err_->clear();
-    rt_dz_->clear();
-    rt_dzerr_->clear();
-
-    gv_pt_->clear();
-    gv_x_->clear();
-    gv_y_->clear();
-    gv_z_->clear();
-    gv_motherEta_->clear();
-    gv_motherPdgId_->clear();
-    gv_nDaughters_->clear();
-    gv_daughterPt_->clear();
-    gv_daughterEta_->clear();
-    gv_daughterPdgId_->clear();
-    gv_dRtoClosestSV_->clear();
-    gv_dRtoAllSV_->clear();
-    gv_nTimesMatchedToSV_->clear();
-    gv_nTimesMatchedToSVinJet_->clear();
-
-    gv_matchSV_pt_->clear();
-    gv_matchSV_x_->clear();
-    gv_matchSV_y_->clear();
-    gv_matchSV_z_->clear();
-    gv_matchSV_motherEta_->clear();
-    gv_matchSV_motherPdgId_->clear();
-    gv_matchSV_nDaughters_->clear();
-    gv_matchSV_daughterPt_->clear();
-    gv_matchSV_daughterEta_->clear();
-    gv_matchSV_daughterPdgId_->clear();
-    gv_matchSV_dRtoClosestSV_->clear();
-
-    sv_x_->clear();
-    sv_y_->clear();
-    sv_z_->clear();
-    sv_pt_->clear();
-    sv_eta_->clear();
-    sv_phi_->clear();
-    sv_mass_->clear();
-    sv_energy_->clear();
-    sv_chi2_->clear();
-    sv_ndof_->clear();
-    sv_chi2dof_->clear();
-    sv_dxy_->clear();
-    sv_dxyerr_->clear();
-    sv_dxysig_->clear();
-    sv_dz_->clear();
-    sv_d3D_->clear();
-    sv_d3Derr_->clear();
-    sv_d3Dsig_->clear();
-    sv_nDaughters_->clear();
-
-    sv_matchGV_x_->clear();
-    sv_matchGV_y_->clear();
-    sv_matchGV_z_->clear();
-    sv_matchGV_pt_->clear();
-    sv_matchGV_eta_->clear();
-    sv_matchGV_phi_->clear();
-    sv_matchGV_mass_->clear();
-    sv_matchGV_energy_->clear();
-    sv_matchGV_chi2_->clear();
-    sv_matchGV_ndof_->clear();
-    sv_matchGV_chi2dof_->clear();
-    sv_matchGV_dxy_->clear();
-    sv_matchGV_dxyerr_->clear();
-    sv_matchGV_dxysig_->clear();
-    sv_matchGV_dz_->clear();
-    sv_matchGV_d3D_->clear();
-    sv_matchGV_d3Derr_->clear();
-    sv_matchGV_d3Dsig_->clear();
-    sv_matchGV_SVdRtoGV_->clear();
-    sv_matchGV_nDaughters_->clear();
-    sv_matchGV_GVmotherPdgId_->clear();
-
-    sv_matchGV_matchJet_x_->clear();
-    sv_matchGV_matchJet_y_->clear();
-    sv_matchGV_matchJet_z_->clear();
-    sv_matchGV_matchJet_pt_->clear();
-    sv_matchGV_matchJet_eta_->clear();
-    sv_matchGV_matchJet_phi_->clear();
-    sv_matchGV_matchJet_mass_->clear();
-    sv_matchGV_matchJet_energy_->clear();
-    sv_matchGV_matchJet_chi2_->clear();
-    sv_matchGV_matchJet_ndof_->clear();
-    sv_matchGV_matchJet_chi2dof_->clear();
-    sv_matchGV_matchJet_dxy_->clear();
-    sv_matchGV_matchJet_dxyerr_->clear();
-    sv_matchGV_matchJet_dxysig_->clear();
-    sv_matchGV_matchJet_dz_->clear();
-    sv_matchGV_matchJet_d3D_->clear();
-    sv_matchGV_matchJet_d3Derr_->clear();
-    sv_matchGV_matchJet_d3Dsig_->clear();
-    sv_matchGV_matchJet_SVdRtoGV_->clear();
-    sv_matchGV_matchJet_nJets_->clear();
-    sv_matchGV_matchJet_genJetHadFlav_->clear();
-    sv_matchGV_matchJet_nDaughters_->clear();
-    sv_matchGV_matchJet_GVmotherPdgId_->clear();
-
-    pv_trk_timeVal_->clear();
-    pv_trk_timeErr_->clear();
-    pv_trk_timeQual_->clear();
-    sv_trk_timeVal_->clear();
-    sv_trk_timeErr_->clear();
-    sv_trk_timeQual_->clear();
-
-    jet_pt_->clear();
-    jet_eta_->clear();
-    jet_phi_->clear();
-    jet_radius_->clear();
-    jet_hadFlav_->clear();
-    jet_partFlav_->clear();
-    jet_genHadFlav_->clear();
-    jet_genPartFlav_->clear();
-
-    jet_matchSV_pt_->clear();
-    jet_matchSV_eta_->clear();
-    jet_matchSV_phi_->clear();
-    jet_matchSV_radius_->clear();
-    jet_matchSV_nSV_->clear();
-    jet_matchSV_hadFlav_->clear();
-    jet_matchSV_partFlav_->clear();
-    jet_matchSV_genHadFlav_->clear();
-    jet_matchSV_genPartFlav_->clear();
-
-    jet_matchSV_matchGV_pt_->clear();
-    jet_matchSV_matchGV_eta_->clear();
-    jet_matchSV_matchGV_phi_->clear();
-    jet_matchSV_matchGV_radius_->clear();
-    jet_matchSV_matchGV_SVdRtoGV_->clear();
-    jet_matchSV_matchGV_nGV_->clear();
-    jet_matchSV_matchGV_hadFlav_->clear();
-    jet_matchSV_matchGV_partFlav_->clear();
-    jet_matchSV_matchGV_genHadFlav_->clear();
-    jet_matchSV_matchGV_genPartFlav_->clear();
+    // sv_time_->clear();
 }
 
 
 void ntuple_SV::deleteContainers() {
+
+    for (TString name : n_) delete b_[name];
 
     delete sv_etarel_;
     delete sv_phirel_;
@@ -830,164 +394,7 @@ void ntuple_SV::deleteContainers() {
     delete sv_pfd2dsig_;
     delete sv_pfd3dval_;
     delete sv_pfd3dsig_;
-
-    delete sv_time_;
-
-    delete gp_strange_status_;
-    delete gp_strange_pdgId_;
-    delete gp_strange_nDaughters_;
-    delete gp_strange_daughterPdgIds_;
-    delete gp_strange_pt_;
-    delete gp_strange_eta_;
-
-    delete st_pt_;
-    delete st_eta_;
-    delete st_phi_;
-    delete st_charge_;
-
-    delete rt_pt_;
-    delete rt_eta_;
-    delete rt_phi_;
-    delete rt_charge_;
-    delete rt_chi2_;
-    delete rt_ndof_;
-    delete rt_chi2dof_;
-    delete rt_dxy_;
-    delete rt_dxyerr_;
-    delete rt_d0_;
-    delete rt_d0err_;
-    delete rt_dz_;
-    delete rt_dzerr_;
-
-    delete gv_pt_;
-    delete gv_x_;
-    delete gv_y_;
-    delete gv_z_;
-    delete gv_motherEta_;
-    delete gv_motherPdgId_;
-    delete gv_nDaughters_;
-    delete gv_daughterPt_;
-    delete gv_daughterEta_;
-    delete gv_daughterPdgId_;
-    delete gv_dRtoClosestSV_;
-    delete gv_dRtoAllSV_;
-    delete gv_nTimesMatchedToSV_;
-    delete gv_nTimesMatchedToSVinJet_;
-
-    delete gv_matchSV_pt_;
-    delete gv_matchSV_x_;
-    delete gv_matchSV_y_;
-    delete gv_matchSV_z_;
-    delete gv_matchSV_motherEta_;
-    delete gv_matchSV_motherPdgId_;
-    delete gv_matchSV_nDaughters_;
-    delete gv_matchSV_daughterPt_;
-    delete gv_matchSV_daughterEta_;
-    delete gv_matchSV_daughterPdgId_;
-    delete gv_matchSV_dRtoClosestSV_;
-
-    delete sv_x_;
-    delete sv_y_;
-    delete sv_z_;
-    delete sv_pt_;
-    delete sv_eta_;
-    delete sv_phi_;
-    delete sv_mass_;
-    delete sv_energy_;
-    delete sv_chi2_;
-    delete sv_ndof_;
-    delete sv_chi2dof_;
-    delete sv_dxy_;
-    delete sv_dxyerr_;
-    delete sv_dxysig_;
-    delete sv_dz_;
-    delete sv_d3D_;
-    delete sv_d3Derr_;
-    delete sv_d3Dsig_;
-    delete sv_nDaughters_;
-
-    delete sv_matchGV_x_;
-    delete sv_matchGV_y_;
-    delete sv_matchGV_z_;
-    delete sv_matchGV_pt_;
-    delete sv_matchGV_eta_;
-    delete sv_matchGV_phi_;
-    delete sv_matchGV_mass_;
-    delete sv_matchGV_energy_;
-    delete sv_matchGV_chi2_;
-    delete sv_matchGV_ndof_;
-    delete sv_matchGV_chi2dof_;
-    delete sv_matchGV_dxy_;
-    delete sv_matchGV_dxyerr_;
-    delete sv_matchGV_dxysig_;
-    delete sv_matchGV_dz_;
-    delete sv_matchGV_d3D_;
-    delete sv_matchGV_d3Derr_;
-    delete sv_matchGV_d3Dsig_;
-    delete sv_matchGV_SVdRtoGV_;
-    delete sv_matchGV_nDaughters_;
-    delete sv_matchGV_GVmotherPdgId_;
-
-    delete sv_matchGV_matchJet_x_;
-    delete sv_matchGV_matchJet_y_;
-    delete sv_matchGV_matchJet_z_;
-    delete sv_matchGV_matchJet_pt_;
-    delete sv_matchGV_matchJet_eta_;
-    delete sv_matchGV_matchJet_phi_;
-    delete sv_matchGV_matchJet_mass_;
-    delete sv_matchGV_matchJet_energy_;
-    delete sv_matchGV_matchJet_chi2_;
-    delete sv_matchGV_matchJet_ndof_;
-    delete sv_matchGV_matchJet_chi2dof_;
-    delete sv_matchGV_matchJet_dxy_;
-    delete sv_matchGV_matchJet_dxyerr_;
-    delete sv_matchGV_matchJet_dxysig_;
-    delete sv_matchGV_matchJet_dz_;
-    delete sv_matchGV_matchJet_d3D_;
-    delete sv_matchGV_matchJet_d3Derr_;
-    delete sv_matchGV_matchJet_d3Dsig_;
-    delete sv_matchGV_matchJet_SVdRtoGV_;
-    delete sv_matchGV_matchJet_nJets_;
-    delete sv_matchGV_matchJet_genJetHadFlav_;
-    delete sv_matchGV_matchJet_nDaughters_;
-    delete sv_matchGV_matchJet_GVmotherPdgId_;
-
-    delete pv_trk_timeVal_;
-    delete pv_trk_timeErr_;
-    delete pv_trk_timeQual_;
-    delete sv_trk_timeVal_;
-    delete sv_trk_timeErr_;
-    delete sv_trk_timeQual_;
-
-    delete jet_pt_;
-    delete jet_eta_;
-    delete jet_phi_;
-    delete jet_radius_;
-    delete jet_hadFlav_;
-    delete jet_partFlav_;
-    delete jet_genHadFlav_;
-    delete jet_genPartFlav_;
-
-    delete jet_matchSV_pt_;
-    delete jet_matchSV_eta_;
-    delete jet_matchSV_phi_;
-    delete jet_matchSV_radius_;
-    delete jet_matchSV_nSV_;
-    delete jet_matchSV_hadFlav_;
-    delete jet_matchSV_partFlav_;
-    delete jet_matchSV_genHadFlav_;
-    delete jet_matchSV_genPartFlav_;
-
-    delete jet_matchSV_matchGV_pt_;
-    delete jet_matchSV_matchGV_eta_;
-    delete jet_matchSV_matchGV_phi_;
-    delete jet_matchSV_matchGV_radius_;
-    delete jet_matchSV_matchGV_SVdRtoGV_;
-    delete jet_matchSV_matchGV_nGV_;
-    delete jet_matchSV_matchGV_hadFlav_;
-    delete jet_matchSV_matchGV_partFlav_;
-    delete jet_matchSV_matchGV_genHadFlav_;
-    delete jet_matchSV_matchGV_genPartFlav_;
+    // delete sv_time_;
 }
 
 
@@ -1000,296 +407,496 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
     spvp_ = &vertices()->at(0);
 
     reco::VertexCompositePtrCandidateCollection cpvtx = *secVertices();
-    std::sort(cpvtx.begin(), cpvtx.end(), ntuple_SV::compareDxyDxyErr);
-
     const edm::View<pat::Jet> jetCollection = *jets();
-
     edm::SimTrackContainer simTracks = *(simTracks_.product());
     reco::TrackCollection recoTracks = *(recoTracks_.product());
+    const edm::Association<reco::GenParticleCollection> trackMCMatch = *(trackMCMatch_.product());
     const edm::ValueMap<float>& timeValueMap = *(timeValueMap_.product());
     const edm::ValueMap<float>& timeErrorMap = *(timeErrorMap_.product());
     const edm::ValueMap<float>& timeQualityMap = *(timeQualityMap_.product());
-    reco::VertexCollection PVs = *(PVs_.product());
+    reco::VertexCollection PVs = *(PVs_.product()); // Not the slimmed collection
     reco::VertexCollection inclusiveSVs = *(inclusiveSVs_.product());
-    reco::VertexCollection inclusiveSVsMTDTimings = *(inclusiveSVsMTDTiming_.product());
+    reco::VertexCollection inclusiveSVsMTDTiming = *(inclusiveSVsMTDTiming_.product());
 
-    nPV_ = PVs.size();
-    nSV_ = inclusiveSVs.size();
-    nSVMTDTiming_ = inclusiveSVsMTDTimings.size();
+    // Sort SVs by dxy significance to PV
+    std::sort(cpvtx.begin(), cpvtx.end(), ntuple_SV::candCompareDxyDxyErr);
+    std::sort(inclusiveSVs.begin(), inclusiveSVs.end(), ntuple_SV::vertexCompareDxyDxyErr);
+    std::sort(inclusiveSVsMTDTiming.begin(), inclusiveSVsMTDTiming.end(), ntuple_SV::vertexCompareDxyDxyErr);
 
-    // Save SimTrack and Track information
-    for (unsigned int iST = 0; iST < simTracks.size(); iST++) {
-        SimTrack st = simTracks.at(iST);
-        st_pt_->push_back(st.momentum().Pt());
-        st_eta_->push_back(st.momentum().Eta());
-        st_phi_->push_back(st.momentum().Phi());
-        st_charge_->push_back(st.charge());
-    }
-    for (unsigned int iRT = 0; iRT < recoTracks.size(); iRT++) {
-        reco::Track rt = recoTracks.at(iRT);
-        rt_pt_->push_back(rt.pt());
-        rt_eta_->push_back(rt.eta());
-        rt_phi_->push_back(rt.phi());
-        rt_charge_->push_back(rt.charge());
-        rt_chi2_->push_back(rt.chi2());
-        rt_ndof_->push_back(rt.ndof());
-        rt_chi2dof_->push_back(rt.normalizedChi2());
-        rt_dxy_->push_back(rt.dxy());
-        rt_dxyerr_->push_back(rt.dxyError());
-        rt_d0_->push_back(rt.d0());
-        rt_d0err_->push_back(rt.d0Error());
-        rt_dz_->push_back(rt.dz());
-        rt_dzerr_->push_back(rt.dzError());
-    }
-
-    // Construct gen vertices by looping through list of gen particles
+    // Construct GenVertex collection
     std::vector<GenVertex*> genVertices(0);
-    for (unsigned int iGenPart = 0; iGenPart < genParticles_->size(); iGenPart++) {
-        const pat::PackedGenParticle gp = genParticles_->at(iGenPart);
+    for (unsigned int iGP = 0; iGP < genParticles_->size(); iGP++) {
+        const reco::GenParticle gp = genParticles_->at(iGP);
         int motherPartID = genPartID(gp.pdgId());
-
-        // APPLY THESE CUTS IN PYTHON SCRIPT
-        // if (gp.pt() < 10.0) continue;
-        // if (abs(gp.eta()) > 2.5) continue;
         if (motherPartID < 0) continue; // Mother is not interesting hadron
-
-        if (motherPartID == 4) {
-            GenVertex* newGenVtx = new GenVertex();
-            newGenVtx->setMother(gp.clone());
-            // std::cout << "NUMBER OF S BARYON DAUGHTERS = " << gp.numberOfDaughters() << std::endl;
-            gp_strange_status_->push_back((int) (gp.statusFlags().flags_).to_ulong());
-            gp_strange_pdgId_->push_back(gp.pdgId());
-            gp_strange_nDaughters_->push_back(gp.numberOfDaughters());
-            gp_strange_pt_->push_back(gp.pt());
-            gp_strange_eta_->push_back(gp.eta());
-            for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
-                const reco::Candidate* dau = gp.daughter(iDau)->clone();
-                gp_strange_daughterPdgIds_->push_back(dau->pdgId());
-                newGenVtx->addDaughter(dau);
-            }
-            newGenVtx->setGenVertexAttributes();
-            // if (gp.numberOfDaughters() > 0)
-            //     newGenVtx->print();
-        }
-
+        if (gp.numberOfDaughters() < 2) continue; // Not a vertex
         // Check for last instance of interesting hadron
         bool lastInstance = true;
-        unsigned int nGoodDaughters = 0;
         for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
             const reco::Candidate* dau = gp.daughter(iDau);
             int daughterPartID = genPartID(dau->pdgId());
-
-            // if (dau->pt() < 10.0) continue;
-            // if (abs(dau->eta()) > 2.5) continue;
-
-            nGoodDaughters++;
             if (daughterPartID == motherPartID) {
                 lastInstance = false; // Not last instance of interesting hadron
                 break;
             }
         }
-
         if (lastInstance) {
-
-            if (nGoodDaughters < 2) continue; // Make sure a vertex exists
-
-            // Make new GenVertex
-            GenVertex* newGenVtx = new GenVertex();
-            newGenVtx->setMother(gp.clone());
+            GenVertex* newGV = new GenVertex();
+            newGV->setMother(gp.clone());
             for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
                 const reco::Candidate* dau = gp.daughter(iDau)->clone();
-
-                // Only add "good" daughters
-                // if (dau->pt() < 10.0) continue;
-                // if (abs(dau->eta()) > 2.5) continue;
-
-                newGenVtx->addDaughter(dau);
+                newGV->addDaughter(dau);
             }
-            newGenVtx->setGenVertexAttributes();
-            genVertices.push_back(newGenVtx);
+            if (newGV->isValid()) genVertices.push_back(newGV);
         }
+
+        // if (motherPartID == 4) {
+        //     GenVertex* newGenVtx = new GenVertex();
+        //     newGenVtx->setMother(gp.clone());
+        //     // std::cout << "NUMBER OF S BARYON DAUGHTERS = " << gp.numberOfDaughters() << std::endl;
+        //     // gp_strange_status_->push_back((int) (gp.statusFlags().flags_).to_ulong());
+        //     // gp_strange_pdgId_->push_back(gp.pdgId());
+        //     // gp_strange_nDaughters_->push_back(gp.numberOfDaughters());
+        //     // gp_strange_pt_->push_back(gp.pt());
+        //     // gp_strange_eta_->push_back(gp.eta());
+        //     for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
+        //         const reco::Candidate* dau = gp.daughter(iDau)->clone();
+        //         // gp_strange_daughterPdgIds_->push_back(dau->pdgId());
+        //         newGenVtx->addDaughter(dau);
+        //     }
+        //     newGenVtx->setGenVertexAttributes();
+        //     // if (gp.numberOfDaughters() > 0)
+        //     //     newGenVtx->print();
+        // }
     }
 
-    // GenVertex stuff
+    // All the matching stuff
+    std::vector<int> GV_matchtoSV;
+    std::vector<int> GV_matchtoSVt;
     for (unsigned int iGV = 0; iGV < genVertices.size(); iGV++) {
-        const GenVertex* genVtx = genVertices.at(iGV);
-        gv_pt_->push_back(genVtx->pt());
-        gv_x_->push_back(genVtx->x());
-        gv_y_->push_back(genVtx->y());
-        gv_z_->push_back(genVtx->z());
-        gv_motherEta_->push_back(genVtx->motherEta());
-        gv_motherPdgId_->push_back(genVtx->motherPdgId());
-        gv_nDaughters_->push_back(genVtx->nDaughters());
-        for (const reco::Candidate* dau : genVtx->daughters()) {
-            gv_daughterPt_->push_back(dau->pt());
-            gv_daughterEta_->push_back(dau->eta());
-            gv_daughterPdgId_->push_back(dau->pdgId());
-        }
+        GenVertex& gv = *(genVertices.at(iGV));
 
-        // Match GV to SV
-        int nMatch = 0;
         int closestSVIdx = -1;
-        float mindR = matchGVdR_; // some maximum value
-        for (unsigned int iSV = 0; iSV < cpvtx.size(); iSV++) {
-            if (iSV >= max_sv_) break;
-            const reco::VertexCompositePtrCandidate& sv = cpvtx.at(iSV);
-            float dR3D = deltaR3D(genVtx->x(), sv.vertex().x(), genVtx->y(), sv.vertex().y(), genVtx->z(), sv.vertex().z());
-            if (dR3D < matchGVdR_) {
-                gv_dRtoAllSV_->push_back(mindR);
-                nMatch++;
-                if (dR3D < mindR) {
-                    closestSVIdx = iSV;
-                    mindR = dR3D;
-                }
-            }
-        }
-        gv_dRtoClosestSV_->push_back(mindR);
-        gv_nTimesMatchedToSV_->push_back(nMatch);
-        if (closestSVIdx >= 0) {
-            gv_matchSV_pt_->push_back(genVtx->pt());
-            gv_matchSV_x_->push_back(genVtx->x());
-            gv_matchSV_y_->push_back(genVtx->y());
-            gv_matchSV_z_->push_back(genVtx->z());
-            gv_matchSV_motherEta_->push_back(genVtx->motherEta());
-            gv_matchSV_motherPdgId_->push_back(genVtx->motherPdgId());
-            gv_matchSV_nDaughters_->push_back(genVtx->nDaughters());
-            for (const reco::Candidate* dau : genVtx->daughters()) {
-                gv_matchSV_daughterPt_->push_back(dau->pt());
-                gv_matchSV_daughterEta_->push_back(dau->eta());
-                gv_matchSV_daughterPdgId_->push_back(dau->pdgId());
-            }
-            gv_matchSV_dRtoClosestSV_->push_back(mindR);
-        }
-    }
-
-    // Secondary Vertex stuff
-    for (unsigned int iGV = 0; iGV < genVertices.size(); iGV++) {
-        gv_nTimesMatchedToSVinJet_->push_back(0);
-    }
-    for (unsigned int iSV = 0; iSV < cpvtx.size(); iSV++) {
-        if (iSV >= max_sv_) break;
-        const reco::VertexCompositePtrCandidate& sv = cpvtx.at(iSV);
-        sv_x_->push_back(sv.vertex().x());
-        sv_y_->push_back(sv.vertex().y());
-        sv_z_->push_back(sv.vertex().z());
-        sv_pt_->push_back(sv.pt());
-        sv_eta_->push_back(sv.eta());
-        sv_phi_->push_back(sv.phi());
-        sv_mass_->push_back(sv.mass());
-        sv_energy_->push_back(sv.energy());
-        sv_chi2_->push_back(sv.vertexChi2());
-        sv_ndof_->push_back(sv.vertexNdof());
-        sv_chi2dof_->push_back(catchInfsAndBound(sv.vertexChi2() / sv.vertexNdof(), 1000, -1000, 1000));
-        sv_dxy_->push_back(vertexDxy(sv, pv).value());
-        sv_dxyerr_->push_back(catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0));
-        sv_dxysig_->push_back(catchInfsAndBound(vertexDxy(sv, pv).value() / vertexDxy(sv, pv).error(), 0, -1, 800));
-        sv_dz_->push_back(TMath::Abs(sv.vertex().z() - pv.z()));
-        sv_d3D_->push_back(vertexD3d(sv, pv).value());
-        sv_d3Derr_->push_back(catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0));
-        sv_d3Dsig_->push_back(catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800));
-        sv_nDaughters_->push_back(sv.numberOfDaughters());
-
-        // Match SV to GV
-        int closestGVIdx = -1;
-        float mindR = 99999999.99; // some maximum value
-        for (unsigned int iGV = 0; iGV < genVertices.size(); iGV++) {
-            const GenVertex* genVtx = genVertices.at(iGV);
-            float dR3D = deltaR3D(genVtx->x(), sv.vertex().x(), genVtx->y(), sv.vertex().y(), genVtx->z(), sv.vertex().z());
-            if ((dR3D < matchGVdR_) && (dR3D < mindR)) {
-                closestGVIdx = iGV;
+        float mindR = matchGVdR_;
+        for (unsigned int iSV = 0; iSV < inclusiveSVs.size(); iSV++) {
+            const reco::Vertex& sv = inclusiveSVs.at(iSV);
+            float dR3D = deltaR3D(gv.x(), sv.x(), gv.y(), sv.y(), gv.z(), sv.z());
+            if (dR3D < mindR) {
+                closestSVIdx = iSV;
                 mindR = dR3D;
             }
         }
-        if (closestGVIdx >= 0) {
-            sv_matchGV_x_->push_back(sv.vertex().x());
-            sv_matchGV_y_->push_back(sv.vertex().y());
-            sv_matchGV_z_->push_back(sv.vertex().z());
-            sv_matchGV_pt_->push_back(sv.pt());
-            sv_matchGV_eta_->push_back(sv.eta());
-            sv_matchGV_phi_->push_back(sv.phi());
-            sv_matchGV_mass_->push_back(sv.mass());
-            sv_matchGV_energy_->push_back(sv.energy());
-            sv_matchGV_chi2_->push_back(sv.vertexChi2());
-            sv_matchGV_ndof_->push_back(sv.vertexNdof());
-            sv_matchGV_chi2dof_->push_back(catchInfsAndBound(sv.vertexChi2() / sv.vertexNdof(), 1000, -1000, 1000));
-            sv_matchGV_dxy_->push_back(vertexDxy(sv, pv).value());
-            sv_matchGV_dxyerr_->push_back(catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0));
-            sv_matchGV_dxysig_->push_back(catchInfsAndBound(vertexDxy(sv, pv).value() / vertexDxy(sv, pv).error(), 0, -1, 800));
-            sv_matchGV_dz_->push_back(TMath::Abs(sv.vertex().z() - pv.z()));
-            sv_matchGV_d3D_->push_back(vertexD3d(sv, pv).value());
-            sv_matchGV_d3Derr_->push_back(catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0));
-            sv_matchGV_d3Dsig_->push_back(catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800));
-            sv_matchGV_SVdRtoGV_->push_back(mindR);
-            sv_matchGV_nDaughters_->push_back(sv.numberOfDaughters());
-            sv_matchGV_GVmotherPdgId_->push_back(genVertices.at(closestGVIdx)->motherPdgId());
+        GV_matchtoSV.push_back(closestSVIdx);
 
-            // Match SV to Jet
-            unsigned int nJets = 0;
-            for (unsigned int iJet = 0; iJet < jetCollection.size(); iJet++) {
-                const pat::Jet& jet = jetCollection.at(iJet);
-
-                // Some cuts
-                // if (jet.pt() < jetPtMin_) continue;
-                // if (jet.pt() > jetPtMax_) continue;
-                // if (TMath::Abs(jet.eta()) < jetAbsEtaMin_) continue;
-                // if (TMath::Abs(jet.eta()) > jetAbsEtaMax_) continue;
-
-                // Calculate Jet radius
-                double jet_radius = jetR();
-                if (jet_radius < 0) {
-                    for (unsigned idau = 0; idau < jet.numberOfDaughters(); ++idau) {
-                        double dR = reco::deltaR(*jet.daughter(idau), jet);
-                        if (dR > jet_radius)
-                            jet_radius = dR;
-                    }
-                }
-
-                // Get GenJet flavours (might be the same as reco?)
-                int genJetHadFlav = -1000;
-                // int genJetPartFlav = -1000;
-                const reco::GenJet* genJet = jet.genJet();
-                if (genJet) {
-                    for (const reco::JetFlavourInfoMatching& genJetFlavInfo : *(genJetFlavourInfo_.product())) {
-                        if (reco::deltaR(genJet->p4(), genJetFlavInfo.first->p4()) < genJetMatchdR_) {
-                            genJetHadFlav = genJetFlavInfo.second.getHadronFlavour();
-                            // genJetPartFlav = genJetFlavInfo.second.getPartonFlavour();
-                            break;
-                        }
-                    }
-                }
-
-                if (reco::deltaR(sv, jet) < jet_radius) {
-                    nJets++;
-                    sv_matchGV_matchJet_genJetHadFlav_->push_back(genJetHadFlav);
-                }
-            }
-
-            if (nJets > 0) {
-                (gv_nTimesMatchedToSVinJet_->at(closestGVIdx))++;
-                sv_matchGV_matchJet_x_->push_back(sv.vertex().x());
-                sv_matchGV_matchJet_y_->push_back(sv.vertex().y());
-                sv_matchGV_matchJet_z_->push_back(sv.vertex().z());
-                sv_matchGV_matchJet_pt_->push_back(sv.pt());
-                sv_matchGV_matchJet_eta_->push_back(sv.eta());
-                sv_matchGV_matchJet_phi_->push_back(sv.phi());
-                sv_matchGV_matchJet_mass_->push_back(sv.mass());
-                sv_matchGV_matchJet_energy_->push_back(sv.energy());
-                sv_matchGV_matchJet_chi2_->push_back(sv.vertexChi2());
-                sv_matchGV_matchJet_ndof_->push_back(sv.vertexNdof());
-                sv_matchGV_matchJet_chi2dof_->push_back(catchInfsAndBound(sv.vertexChi2() / sv.vertexNdof(), 1000, -1000, 1000));
-                sv_matchGV_matchJet_dxy_->push_back(vertexDxy(sv, pv).value());
-                sv_matchGV_matchJet_dxyerr_->push_back(catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0));
-                sv_matchGV_matchJet_dxysig_->push_back(catchInfsAndBound(vertexDxy(sv, pv).value() / vertexDxy(sv, pv).error(), 0, -1, 800));
-                sv_matchGV_matchJet_dz_->push_back(TMath::Abs(sv.vertex().z() - pv.z()));
-                sv_matchGV_matchJet_d3D_->push_back(vertexD3d(sv, pv).value());
-                sv_matchGV_matchJet_d3Derr_->push_back(catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0));
-                sv_matchGV_matchJet_d3Dsig_->push_back(catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800));
-                sv_matchGV_matchJet_SVdRtoGV_->push_back(mindR);
-                sv_matchGV_matchJet_nJets_->push_back(nJets);
-                sv_matchGV_matchJet_nDaughters_->push_back(sv.numberOfDaughters());
-                sv_matchGV_matchJet_GVmotherPdgId_->push_back(genVertices.at(closestGVIdx)->motherPdgId());
+        int closestSVtIdx = -1;
+        mindR = matchGVdR_;
+        for (unsigned int iSV = 0; iSV < inclusiveSVsMTDTiming.size(); iSV++) {
+            const reco::Vertex& sv = inclusiveSVsMTDTiming.at(iSV);
+            float dR3D = deltaR3D(gv.x(), sv.x(), gv.y(), sv.y(), gv.z(), sv.z());
+            if (dR3D < mindR) {
+                closestSVtIdx = iSV;
+                mindR = dR3D;
             }
         }
+        GV_matchtoSVt.push_back(closestSVtIdx);
+    }
+
+    for (unsigned int iST = 0; iST < simTracks.size(); iST++) {
+        SimTrack st = simTracks.at(iST);
+        b_["trk_st_pt"]->push_back(st.momentum().Pt());
+        b_["trk_st_eta"]->push_back(st.momentum().Eta());
+        b_["trk_st_phi"]->push_back(st.momentum().Phi());
+        b_["trk_st_charge"]->push_back(st.charge());
+    }
+
+    for (unsigned int iRT = 0; iRT < recoTracks.size(); iRT++) {
+        reco::TrackRef trkRef(recoTracks_, iRT);
+
+        if (!goodTrack(trkRef, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, timeQualityCut_)) continue;
+
+        float tval = timeValueMap[trkRef];
+        float terr = timeErrorMap[trkRef];
+        float tsig = tval / terr;
+        float tqual = timeQualityMap[trkRef];
+        float d3d = TMath::Sqrt(trkRef->dxy()*trkRef->dxy() + trkRef->dz()*trkRef->dz());
+        float dxy2err = 2*trkRef->dxyError()*trkRef->dxy();
+        float dz2err = 2*trkRef->dzError()*trkRef->dz();
+        float sum = d3d*d3d;
+        float sumerr = TMath::Sqrt(dxy2err*dxy2err + dz2err*dz2err);
+        float d3derr = 0.5*sumerr/TMath::Sqrt(sum);
+        float d3dsig = d3d / d3derr;
+
+        b_["trk_all_tval"]->push_back(tval);
+        b_["trk_all_terr"]->push_back(terr);
+        b_["trk_all_tsig"]->push_back(tsig);
+        b_["trk_all_tqual"]->push_back(tqual);
+        b_["trk_all_x"]->push_back(trkRef->vx());
+        b_["trk_all_y"]->push_back(trkRef->vy());
+        b_["trk_all_z"]->push_back(trkRef->vz());
+        b_["trk_all_pt"]->push_back(trkRef->pt());
+        b_["trk_all_pterr"]->push_back(trkRef->ptError());
+        b_["trk_all_eta"]->push_back(trkRef->eta());
+        b_["trk_all_etaerr"]->push_back(trkRef->etaError());
+        b_["trk_all_phi"]->push_back(trkRef->phi());
+        b_["trk_all_phierr"]->push_back(trkRef->phiError());
+        b_["trk_all_dxy"]->push_back(trkRef->dxy());
+        b_["trk_all_dxyerr"]->push_back(trkRef->dxyError());
+        b_["trk_all_dxysig"]->push_back(trkRef->dxy() / trkRef->dxyError());
+        b_["trk_all_dz"]->push_back(trkRef->dz());
+        b_["trk_all_dzerr"]->push_back(trkRef->dzError());
+        b_["trk_all_dzsig"]->push_back(trkRef->dz() / trkRef->dzError());
+        b_["trk_all_d3d"]->push_back(d3d);
+        b_["trk_all_d3derr"]->push_back(d3derr);
+        b_["trk_all_d3dsig"]->push_back(d3dsig);
+        b_["trk_all_d0"]->push_back(trkRef->d0());
+        b_["trk_all_d0err"]->push_back(trkRef->d0Error());
+        b_["trk_all_d0sig"]->push_back(trkRef->d0() / trkRef->d0Error());
+        b_["trk_all_charge"]->push_back(trkRef->charge());
+        b_["trk_all_chi2"]->push_back(trkRef->chi2());
+        b_["trk_all_ndof"]->push_back(trkRef->ndof());
+        b_["trk_all_chi2dof"]->push_back(trkRef->normalizedChi2());
+
+        reco::GenParticleRef trkMCRef = trackMCMatch[trkRef];
+        if (trkMCRef.id().isValid()) {
+            // Tracked matched to GenParticle
+            b_["trk_match_gp_tval"]->push_back(tval);
+            b_["trk_match_gp_terr"]->push_back(terr);
+            b_["trk_match_gp_tsig"]->push_back(tsig);
+            b_["trk_match_gp_tqual"]->push_back(tqual);
+            b_["trk_match_gp_x"]->push_back(trkRef->vx());
+            b_["trk_match_gp_y"]->push_back(trkRef->vy());
+            b_["trk_match_gp_z"]->push_back(trkRef->vz());
+            b_["trk_match_gp_pt"]->push_back(trkRef->pt());
+            b_["trk_match_gp_pterr"]->push_back(trkRef->ptError());
+            b_["trk_match_gp_eta"]->push_back(trkRef->eta());
+            b_["trk_match_gp_etaerr"]->push_back(trkRef->etaError());
+            b_["trk_match_gp_phi"]->push_back(trkRef->phi());
+            b_["trk_match_gp_phierr"]->push_back(trkRef->phiError());
+            b_["trk_match_gp_dxy"]->push_back(trkRef->dxy());
+            b_["trk_match_gp_dxyerr"]->push_back(trkRef->dxyError());
+            b_["trk_match_gp_dxysig"]->push_back(trkRef->dxy() / trkRef->dxyError());
+            b_["trk_match_gp_dz"]->push_back(trkRef->dz());
+            b_["trk_match_gp_dzerr"]->push_back(trkRef->dzError());
+            b_["trk_match_gp_dzsig"]->push_back(trkRef->dz() / trkRef->dzError());
+            b_["trk_match_gp_d3d"]->push_back(d3d);
+            b_["trk_match_gp_d3derr"]->push_back(d3derr);
+            b_["trk_match_gp_d3dsig"]->push_back(d3dsig);
+            b_["trk_match_gp_d0"]->push_back(trkRef->d0());
+            b_["trk_match_gp_d0err"]->push_back(trkRef->d0Error());
+            b_["trk_match_gp_d0sig"]->push_back(trkRef->d0() / trkRef->d0Error());
+            b_["trk_match_gp_charge"]->push_back(trkRef->charge());
+            b_["trk_match_gp_chi2"]->push_back(trkRef->chi2());
+            b_["trk_match_gp_ndof"]->push_back(trkRef->ndof());
+            b_["trk_match_gp_chi2dof"]->push_back(trkRef->normalizedChi2());
+
+            // Check for track from pileup using GEN information
+            if (!trkMCRef->isHardProcess() &&
+                !trkMCRef->fromHardProcessDecayed() &&
+                !trkMCRef->fromHardProcessFinalState() &&
+                !trkMCRef->isDirectHardProcessTauDecayProductFinalState()) {
+
+                b_["trk_pu_tval"]->push_back(tval);
+                b_["trk_pu_terr"]->push_back(terr);
+                b_["trk_pu_tsig"]->push_back(tsig);
+                b_["trk_pu_tqual"]->push_back(tqual);
+                b_["trk_pu_x"]->push_back(trkRef->vx());
+                b_["trk_pu_y"]->push_back(trkRef->vy());
+                b_["trk_pu_z"]->push_back(trkRef->vz());
+                b_["trk_pu_pt"]->push_back(trkRef->pt());
+                b_["trk_pu_pterr"]->push_back(trkRef->ptError());
+                b_["trk_pu_eta"]->push_back(trkRef->eta());
+                b_["trk_pu_etaerr"]->push_back(trkRef->etaError());
+                b_["trk_pu_phi"]->push_back(trkRef->phi());
+                b_["trk_pu_phierr"]->push_back(trkRef->phiError());
+                b_["trk_pu_dxy"]->push_back(trkRef->dxy());
+                b_["trk_pu_dxyerr"]->push_back(trkRef->dxyError());
+                b_["trk_pu_dxysig"]->push_back(trkRef->dxy() / trkRef->dxyError());
+                b_["trk_pu_dz"]->push_back(trkRef->dz());
+                b_["trk_pu_dzerr"]->push_back(trkRef->dzError());
+                b_["trk_pu_dzsig"]->push_back(trkRef->dz() / trkRef->dzError());
+                b_["trk_pu_d3d"]->push_back(d3d);
+                b_["trk_pu_d3derr"]->push_back(d3derr);
+                b_["trk_pu_d3dsig"]->push_back(d3dsig);
+                b_["trk_pu_d0"]->push_back(trkRef->d0());
+                b_["trk_pu_d0err"]->push_back(trkRef->d0Error());
+                b_["trk_pu_d0sig"]->push_back(trkRef->d0() / trkRef->d0Error());
+                b_["trk_pu_charge"]->push_back(trkRef->charge());
+                b_["trk_pu_chi2"]->push_back(trkRef->chi2());
+                b_["trk_pu_ndof"]->push_back(trkRef->ndof());
+                b_["trk_pu_chi2dof"]->push_back(trkRef->normalizedChi2());
+            } // End pileup
+        } // End gen matched
+    } // End all reco tracks
+
+    unsigned int evt_nGV = 0;
+    for (unsigned int iGV = 0; iGV < genVertices.size(); iGV++) {
+        const GenVertex* gv = genVertices.at(iGV);
+
+        // Skip vertices not passing cuts
+        if (!goodGenVertex(*gv, genPartPtCut_, genDauPtCut_, absEtaMax_)) continue;
+
+        evt_nGV++;
+        for (const reco::Candidate* dau : gv->daughters()) {
+            if (!goodGenParticle(*dau, genDauPtCut_, absEtaMax_)) continue;
+
+            b_["trk_gv_x"]->push_back(dau->vx());
+            b_["trk_gv_y"]->push_back(dau->vy());
+            b_["trk_gv_z"]->push_back(dau->vz());
+            b_["trk_gv_pt"]->push_back(dau->pt());
+            b_["trk_gv_eta"]->push_back(dau->eta());
+            b_["trk_gv_phi"]->push_back(dau->phi());
+            b_["trk_gv_charge"]->push_back(dau->charge());
+            b_["trk_gv_pdgId"]->push_back(dau->pdgId());
+        }
+
+        b_["vtx_gv_x"]->push_back(gv->x());
+        b_["vtx_gv_y"]->push_back(gv->y());
+        b_["vtx_gv_z"]->push_back(gv->z());
+        b_["vtx_gv_pt"]->push_back(gv->pt());
+        b_["vtx_gv_eta"]->push_back(gv->eta());
+        b_["vtx_gv_phi"]->push_back(gv->phi());
+        b_["vtx_gv_ntracks"]->push_back(gv->nDaughters());
+        b_["vtx_gv_motherPdgId"]->push_back(gv->motherPdgId());
+    }
+
+    // Fill PrimaryVertex information
+    unsigned int evt_nPV = 0;
+    for (unsigned int iPV = 0; iPV < PVs.size(); iPV++) {
+        const reco::Vertex& prv = PVs.at(iPV);
+
+        if (prv.isFake()) continue;
+        // Skip vertices with less than 2 tracks passing cuts
+        if (!goodRecoVertex(prv, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, timeQualityCut_)) continue;
+
+        evt_nPV++;
+        unsigned int pv_ntrks = 0;
+        for (reco::Vertex::trackRef_iterator trk_it = prv.tracks_begin(); trk_it != prv.tracks_end(); trk_it++) {
+            reco::TrackBaseRef trkRef = *trk_it;
+
+            if (!goodTrack(trkRef, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, timeQualityCut_)) continue;
+
+            pv_ntrks++;
+            float tval = timeValueMap[trkRef];
+            float terr = timeErrorMap[trkRef];
+            float tsig = tval / terr;
+            float tqual = timeQualityMap[trkRef];
+            float d3d = TMath::Sqrt(trkRef->dxy()*trkRef->dxy() + trkRef->dz()*trkRef->dz());
+            float dxy2err = 2*trkRef->dxyError()*trkRef->dxy();
+            float dz2err = 2*trkRef->dzError()*trkRef->dz();
+            float sum = d3d*d3d;
+            float sumerr = TMath::Sqrt(dxy2err*dxy2err + dz2err*dz2err);
+            float d3derr = 0.5*sumerr/TMath::Sqrt(sum);
+            float d3dsig = d3d / d3derr;
+
+            b_["trk_pv_tval"]->push_back(tval);
+            b_["trk_pv_terr"]->push_back(terr);
+            b_["trk_pv_tsig"]->push_back(tsig);
+            b_["trk_pv_tqual"]->push_back(tqual);
+            b_["trk_pv_x"]->push_back(trkRef->vx());
+            b_["trk_pv_y"]->push_back(trkRef->vy());
+            b_["trk_pv_z"]->push_back(trkRef->vz());
+            b_["trk_pv_pt"]->push_back(trkRef->pt());
+            b_["trk_pv_pterr"]->push_back(trkRef->ptError());
+            b_["trk_pv_eta"]->push_back(trkRef->eta());
+            b_["trk_pv_etaerr"]->push_back(trkRef->etaError());
+            b_["trk_pv_phi"]->push_back(trkRef->phi());
+            b_["trk_pv_phierr"]->push_back(trkRef->phiError());
+            b_["trk_pv_dxy"]->push_back(trkRef->dxy());
+            b_["trk_pv_dxyerr"]->push_back(trkRef->dxyError());
+            b_["trk_pv_dxysig"]->push_back(trkRef->dxy() / trkRef->dxyError());
+            b_["trk_pv_dz"]->push_back(trkRef->dz());
+            b_["trk_pv_dzerr"]->push_back(trkRef->dzError());
+            b_["trk_pv_dzsig"]->push_back(trkRef->dz() / trkRef->dzError());
+            b_["trk_pv_d3d"]->push_back(d3d);
+            b_["trk_pv_d3derr"]->push_back(d3derr);
+            b_["trk_pv_d3dsig"]->push_back(d3dsig);
+            b_["trk_pv_d0"]->push_back(trkRef->d0());
+            b_["trk_pv_d0err"]->push_back(trkRef->d0Error());
+            b_["trk_pv_d0sig"]->push_back(trkRef->d0() / trkRef->d0Error());
+            b_["trk_pv_charge"]->push_back(trkRef->charge());
+            b_["trk_pv_chi2"]->push_back(trkRef->chi2());
+            b_["trk_pv_ndof"]->push_back(trkRef->ndof());
+            b_["trk_pv_chi2dof"]->push_back(trkRef->normalizedChi2());
+        } // End PV tracks
+
+        b_["vtx_pv_ntracks"]->push_back(pv_ntrks);
+    }
+
+    unsigned int evt_nSV = 0;
+    for (unsigned int iSV = 0; iSV < inclusiveSVs.size(); iSV++) {
+        const reco::Vertex& sv = inclusiveSVs.at(iSV);
+
+        if (!goodRecoVertex(sv, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, timeQualityCut_)) continue;
+
+        evt_nSV++;
+        float timeMin = 99999.9;
+        float timeMax = -99999.9;
+        float timeAvg = 0.0;
+        unsigned int sv_ntrks = 0;
+        for (reco::Vertex::trackRef_iterator trk_it = sv.tracks_begin(); trk_it != sv.tracks_end(); trk_it++) {
+            reco::TrackBaseRef trkRef = *trk_it;
+
+            if (!goodTrack(trkRef, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, timeQualityCut_)) continue;
+
+            sv_ntrks++;
+            float tval = timeValueMap[trkRef];
+            float terr = timeErrorMap[trkRef];
+            float tsig = tval / terr;
+            float tqual = timeQualityMap[trkRef];
+            float d3d = TMath::Sqrt(trkRef->dxy()*trkRef->dxy() + trkRef->dz()*trkRef->dz());
+            float dxy2err = 2*trkRef->dxyError()*trkRef->dxy();
+            float dz2err = 2*trkRef->dzError()*trkRef->dz();
+            float sum = d3d*d3d;
+            float sumerr = TMath::Sqrt(dxy2err*dxy2err + dz2err*dz2err);
+            float d3derr = 0.5*sumerr/TMath::Sqrt(sum);
+            float d3dsig = d3d / d3derr;
+
+            timeMin = std::min(timeMin, tval);
+            timeMax = std::max(timeMax, tval);
+            timeAvg += tval;
+
+            b_["trk_sv_tval"]->push_back(tval);
+            b_["trk_sv_terr"]->push_back(terr);
+            b_["trk_sv_tsig"]->push_back(tsig);
+            b_["trk_sv_tqual"]->push_back(tqual);
+            b_["trk_sv_x"]->push_back(trkRef->vx());
+            b_["trk_sv_y"]->push_back(trkRef->vy());
+            b_["trk_sv_z"]->push_back(trkRef->vz());
+            b_["trk_sv_pt"]->push_back(trkRef->pt());
+            b_["trk_sv_pterr"]->push_back(trkRef->ptError());
+            b_["trk_sv_eta"]->push_back(trkRef->eta());
+            b_["trk_sv_etaerr"]->push_back(trkRef->etaError());
+            b_["trk_sv_phi"]->push_back(trkRef->phi());
+            b_["trk_sv_phierr"]->push_back(trkRef->phiError());
+            b_["trk_sv_dxy"]->push_back(trkRef->dxy());
+            b_["trk_sv_dxyerr"]->push_back(trkRef->dxyError());
+            b_["trk_sv_dxysig"]->push_back(trkRef->dxy() / trkRef->dxyError());
+            b_["trk_sv_dz"]->push_back(trkRef->dz());
+            b_["trk_sv_dzerr"]->push_back(trkRef->dzError());
+            b_["trk_sv_dzsig"]->push_back(trkRef->dz() / trkRef->dzError());
+            b_["trk_sv_d3d"]->push_back(d3d);
+            b_["trk_sv_d3derr"]->push_back(d3derr);
+            b_["trk_sv_d3dsig"]->push_back(d3dsig);
+            b_["trk_sv_d0"]->push_back(trkRef->d0());
+            b_["trk_sv_d0err"]->push_back(trkRef->d0Error());
+            b_["trk_sv_d0sig"]->push_back(trkRef->d0() / trkRef->d0Error());
+            b_["trk_sv_charge"]->push_back(trkRef->charge());
+            b_["trk_sv_chi2"]->push_back(trkRef->chi2());
+            b_["trk_sv_ndof"]->push_back(trkRef->ndof());
+            b_["trk_sv_chi2dof"]->push_back(trkRef->normalizedChi2());
+        }
+
+        timeAvg /= sv_ntrks;
+        float timeRange = timeMax - timeMin;
+
+        b_["vtx_sv_timeavg"]->push_back(timeAvg);
+        b_["vtx_sv_timerange"]->push_back(timeRange);
+        b_["vtx_sv_x"]->push_back(sv.x());
+        b_["vtx_sv_y"]->push_back(sv.y());
+        b_["vtx_sv_z"]->push_back(sv.z());
+        b_["vtx_sv_pt"]->push_back(vertexPt(inclusiveSVs.at(iSV)));
+        b_["vtx_sv_eta"]->push_back(vertexEta(inclusiveSVs.at(iSV)));
+        b_["vtx_sv_phi"]->push_back(vertexPhi(inclusiveSVs.at(iSV)));
+        b_["vtx_sv_dxy"]->push_back(vertexDxy(sv, pv).value());
+        b_["vtx_sv_dxyerr"]->push_back(catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0));
+        b_["vtx_sv_dxysig"]->push_back(catchInfsAndBound(vertexDxy(sv, pv).value() / vertexDxy(sv, pv).error(), 0, -1, 800));
+        b_["vtx_sv_dz"]->push_back(TMath::Abs(sv.z() - pv.z()));
+        b_["vtx_sv_d3d"]->push_back(vertexD3d(sv, pv).value());
+        b_["vtx_sv_d3derr"]->push_back(catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0));
+        b_["vtx_sv_d3dsig"]->push_back(catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800));
+        b_["vtx_sv_chi2"]->push_back(sv.chi2());
+        b_["vtx_sv_ndof"]->push_back(sv.ndof());
+        b_["vtx_sv_chi2dof"]->push_back(catchInfsAndBound(sv.chi2() / sv.ndof(), 1000, -1000, 1000));
+        b_["vtx_sv_ntracks"]->push_back(sv_ntrks);
+    }
+
+    unsigned int evt_nSVt = 0;
+    for (unsigned int iSVt = 0; iSVt < inclusiveSVsMTDTiming.size(); iSVt++) {
+        const reco::Vertex& sv = inclusiveSVsMTDTiming.at(iSVt);
+
+        // Skip vertices with less than 2 tracks passing cuts
+        if (!goodRecoVertex(sv, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, timeQualityCut_)) continue;
+
+        evt_nSVt++;
+        float timeMin = 99999.9;
+        float timeMax = -99999.9;
+        float timeAvg = 0.0;
+        unsigned int svt_ntrks = 0;
+        for (reco::Vertex::trackRef_iterator trk_it = sv.tracks_begin(); trk_it != sv.tracks_end(); trk_it++) {
+            reco::TrackBaseRef trkRef = *trk_it;
+
+            if (!goodTrack(trkRef, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, timeQualityCut_)) continue;
+
+            svt_ntrks++;
+            float tval = timeValueMap[trkRef];
+            float terr = timeErrorMap[trkRef];
+            float tsig = tval / terr;
+            float tqual = timeQualityMap[trkRef];
+            float d3d = TMath::Sqrt(trkRef->dxy()*trkRef->dxy() + trkRef->dz()*trkRef->dz());
+            float dxy2err = 2*trkRef->dxyError()*trkRef->dxy();
+            float dz2err = 2*trkRef->dzError()*trkRef->dz();
+            float sum = d3d*d3d;
+            float sumerr = TMath::Sqrt(dxy2err*dxy2err + dz2err*dz2err);
+            float d3derr = 0.5*sumerr/TMath::Sqrt(sum);
+            float d3dsig = d3d / d3derr;
+
+            timeMin = std::min(timeMin, tval);
+            timeMax = std::max(timeMax, tval);
+            timeAvg += tval;
+
+            b_["trk_svt_tval"]->push_back(tval);
+            b_["trk_svt_terr"]->push_back(terr);
+            b_["trk_svt_tsig"]->push_back(tsig);
+            b_["trk_svt_tqual"]->push_back(tqual);
+            b_["trk_svt_x"]->push_back(trkRef->vx());
+            b_["trk_svt_y"]->push_back(trkRef->vy());
+            b_["trk_svt_z"]->push_back(trkRef->vz());
+            b_["trk_svt_pt"]->push_back(trkRef->pt());
+            b_["trk_svt_pterr"]->push_back(trkRef->ptError());
+            b_["trk_svt_eta"]->push_back(trkRef->eta());
+            b_["trk_svt_etaerr"]->push_back(trkRef->etaError());
+            b_["trk_svt_phi"]->push_back(trkRef->phi());
+            b_["trk_svt_phierr"]->push_back(trkRef->phiError());
+            b_["trk_svt_dxy"]->push_back(trkRef->dxy());
+            b_["trk_svt_dxyerr"]->push_back(trkRef->dxyError());
+            b_["trk_svt_dxysig"]->push_back(trkRef->dxy() / trkRef->dxyError());
+            b_["trk_svt_dz"]->push_back(trkRef->dz());
+            b_["trk_svt_dzerr"]->push_back(trkRef->dzError());
+            b_["trk_svt_dzsig"]->push_back(trkRef->dz() / trkRef->dzError());
+            b_["trk_svt_d3d"]->push_back(d3d);
+            b_["trk_svt_d3derr"]->push_back(d3derr);
+            b_["trk_svt_d3dsig"]->push_back(d3dsig);
+            b_["trk_svt_d0"]->push_back(trkRef->d0());
+            b_["trk_svt_d0err"]->push_back(trkRef->d0Error());
+            b_["trk_svt_d0sig"]->push_back(trkRef->d0() / trkRef->d0Error());
+            b_["trk_svt_charge"]->push_back(trkRef->charge());
+            b_["trk_svt_chi2"]->push_back(trkRef->chi2());
+            b_["trk_svt_ndof"]->push_back(trkRef->ndof());
+            b_["trk_svt_chi2dof"]->push_back(trkRef->normalizedChi2());
+        }
+
+        timeAvg /= svt_ntrks;
+        float timeRange = timeMax - timeMin;
+
+        b_["vtx_svt_timeavg"]->push_back(timeAvg);
+        b_["vtx_svt_timerange"]->push_back(timeRange);
+        b_["vtx_svt_x"]->push_back(sv.x());
+        b_["vtx_svt_y"]->push_back(sv.y());
+        b_["vtx_svt_z"]->push_back(sv.z());
+        b_["vtx_svt_pt"]->push_back(vertexPt(inclusiveSVs.at(iSVt)));
+        b_["vtx_svt_eta"]->push_back(vertexEta(inclusiveSVs.at(iSVt)));
+        b_["vtx_svt_phi"]->push_back(vertexPhi(inclusiveSVs.at(iSVt)));
+        b_["vtx_svt_dxy"]->push_back(vertexDxy(sv, pv).value());
+        b_["vtx_svt_dxyerr"]->push_back(catchInfsAndBound(vertexDxy(sv, pv).error() - 2, 0, -2, 0));
+        b_["vtx_svt_dxysig"]->push_back(catchInfsAndBound(vertexDxy(sv, pv).value() / vertexDxy(sv, pv).error(), 0, -1, 800));
+        b_["vtx_svt_dz"]->push_back(TMath::Abs(sv.z() - pv.z()));
+        b_["vtx_svt_d3d"]->push_back(vertexD3d(sv, pv).value());
+        b_["vtx_svt_d3derr"]->push_back(catchInfsAndBound(vertexD3d(sv, pv).error() - 2, 0, -2, 0));
+        b_["vtx_svt_d3dsig"]->push_back(catchInfsAndBound(vertexD3d(sv, pv).value() / vertexD3d(sv, pv).error(), 0, -1, 800));
+        b_["vtx_svt_chi2"]->push_back(sv.chi2());
+        b_["vtx_svt_ndof"]->push_back(sv.ndof());
+        b_["vtx_svt_chi2dof"]->push_back(catchInfsAndBound(sv.chi2() / sv.ndof(), 1000, -1000, 1000));
+        b_["vtx_svt_ntracks"]->push_back(svt_ntrks);
     }
 
     // Jet stuff
@@ -1299,8 +906,8 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         // Some cuts
         // if (jet.pt() < jetPtMin_) continue;
         // if (jet.pt() > jetPtMax_) continue;
-        // if (TMath::Abs(jet.eta()) < jetAbsEtaMin_) continue;
-        // if (TMath::Abs(jet.eta()) > jetAbsEtaMax_) continue;
+        // if (TMath::Abs(jet.eta()) < absEtaMin_) continue;
+        // if (TMath::Abs(jet.eta()) > absEtaMax_) continue;
 
         // Calculate Jet radius
         double jet_radius = jetR();
@@ -1313,37 +920,37 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         }
 
         // Get Gen Jet flavours (might be the same as reco?)
-        int genJetHadFlav = -1000;
-        int genJetPartFlav = -1000;
-        const reco::GenJet* genJet = jet.genJet();
-        if (genJet) {
-            for (const reco::JetFlavourInfoMatching& genJetFlavInfo : *(genJetFlavourInfo_.product())) {
-                if (reco::deltaR(genJet->p4(), genJetFlavInfo.first->p4()) < genJetMatchdR_) {
-                    genJetHadFlav = genJetFlavInfo.second.getHadronFlavour();
-                    genJetPartFlav = genJetFlavInfo.second.getPartonFlavour();
-                    break;
-                }
-            }
-        }
+        // int genJetHadFlav = -1000;
+        // int genJetPartFlav = -1000;
+        // const reco::GenJet* genJet = jet.genJet();
+        // if (genJet) {
+        //     for (const reco::JetFlavourInfoMatching& genJetFlavInfo : *(genJetFlavourInfo_.product())) {
+        //         if (reco::deltaR(genJet->p4(), genJetFlavInfo.first->p4()) < genJetMatchdR_) {
+        //             genJetHadFlav = genJetFlavInfo.second.getHadronFlavour();
+        //             genJetPartFlav = genJetFlavInfo.second.getPartonFlavour();
+        //             break;
+        //         }
+        //     }
+        // }
 
-        jet_pt_->push_back(jet.pt());
-        jet_eta_->push_back(jet.eta());
-        jet_phi_->push_back(jet.phi());
-        jet_radius_->push_back(jet_radius);
-        jet_hadFlav_->push_back(jet.hadronFlavour());
-        jet_partFlav_->push_back(jet.partonFlavour());
-        jet_genHadFlav_->push_back(genJetHadFlav);
-        jet_genPartFlav_->push_back(genJetPartFlav);
+        // jet_pt_->push_back(jet.pt());
+        // jet_eta_->push_back(jet.eta());
+        // jet_phi_->push_back(jet.phi());
+        // jet_radius_->push_back(jet_radius);
+        // jet_hadFlav_->push_back(jet.hadronFlavour());
+        // jet_partFlav_->push_back(jet.partonFlavour());
+        // jet_genHadFlav_->push_back(genJetHadFlav);
+        // jet_genPartFlav_->push_back(genJetPartFlav);
 
         // Match Jet to SV
         bool matchedToSV = false;
         bool matchedToGV = true;
         unsigned int nSV = 0;
         unsigned int nGV = 0;
-        for (unsigned int iSV = 0; iSV < cpvtx.size(); iSV++) {
+        for (unsigned int iSV = 0; iSV < inclusiveSVs.size(); iSV++) {
             if (iSV >= max_sv_) break;
-            const reco::VertexCompositePtrCandidate& sv = cpvtx.at(iSV);
-            if (reco::deltaR(sv, jet) < jet_radius) {
+            const reco::Vertex& sv = inclusiveSVs.at(iSV);
+            if (reco::deltaR(vertexEta(inclusiveSVs.at(iSV)), vertexPhi(inclusiveSVs.at(iSV)), jet.eta(), jet.phi()) < jet_radius) {
                 matchedToSV = true;
                 nSV++;
 
@@ -1352,7 +959,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 float mindR = 99999999.99; // some maximum value
                 for (unsigned int iGV = 0; iGV < genVertices.size(); iGV++) {
                     const GenVertex* genVtx = genVertices.at(iGV);
-                    float dR3D = deltaR3D(genVtx->x(), sv.vertex().x(), genVtx->y(), sv.vertex().y(), genVtx->z(), sv.vertex().z());
+                    float dR3D = deltaR3D(genVtx->x(), sv.x(), genVtx->y(), sv.y(), genVtx->z(), sv.z());
                     if ((dR3D < matchGVdR_) && (dR3D < mindR)) {
                         closestGVIdx = iGV;
                         mindR = dR3D;
@@ -1361,63 +968,38 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 if (closestGVIdx >= 0) {
                     matchedToGV = true;
                     nGV++;
-                    jet_matchSV_matchGV_SVdRtoGV_->push_back(mindR);
+                    // jet_matchSV_matchGV_SVdRtoGV_->push_back(mindR);
                 }
             }
         }
 
         if (matchedToSV) {
-            jet_matchSV_pt_->push_back(jet.pt());
-            jet_matchSV_eta_->push_back(jet.eta());
-            jet_matchSV_phi_->push_back(jet.phi());
-            jet_matchSV_radius_->push_back(jet_radius);
-            jet_matchSV_nSV_->push_back(nSV);
-            jet_matchSV_hadFlav_->push_back(jet.hadronFlavour());
-            jet_matchSV_partFlav_->push_back(jet.partonFlavour());
-            jet_matchSV_genHadFlav_->push_back(genJetHadFlav);
-            jet_matchSV_genPartFlav_->push_back(genJetPartFlav);
+            // jet_matchSV_pt_->push_back(jet.pt());
+            // jet_matchSV_eta_->push_back(jet.eta());
+            // jet_matchSV_phi_->push_back(jet.phi());
+            // jet_matchSV_radius_->push_back(jet_radius);
+            // jet_matchSV_nSV_->push_back(nSV);
+            // jet_matchSV_hadFlav_->push_back(jet.hadronFlavour());
+            // jet_matchSV_partFlav_->push_back(jet.partonFlavour());
+            // jet_matchSV_genHadFlav_->push_back(genJetHadFlav);
+            // jet_matchSV_genPartFlav_->push_back(genJetPartFlav);
         }
         if (matchedToSV && matchedToGV) {
-            jet_matchSV_matchGV_pt_->push_back(jet.pt());
-            jet_matchSV_matchGV_eta_->push_back(jet.eta());
-            jet_matchSV_matchGV_phi_->push_back(jet.phi());
-            jet_matchSV_matchGV_radius_->push_back(jet_radius);
-            jet_matchSV_matchGV_nGV_->push_back(nGV);
-            jet_matchSV_matchGV_hadFlav_->push_back(jet.hadronFlavour());
-            jet_matchSV_matchGV_partFlav_->push_back(jet.partonFlavour());
-            jet_matchSV_matchGV_genHadFlav_->push_back(genJetHadFlav);
-            jet_matchSV_matchGV_genPartFlav_->push_back(genJetPartFlav);
+            // jet_matchSV_matchGV_pt_->push_back(jet.pt());
+            // jet_matchSV_matchGV_eta_->push_back(jet.eta());
+            // jet_matchSV_matchGV_phi_->push_back(jet.phi());
+            // jet_matchSV_matchGV_radius_->push_back(jet_radius);
+            // jet_matchSV_matchGV_nGV_->push_back(nGV);
+            // jet_matchSV_matchGV_hadFlav_->push_back(jet.hadronFlavour());
+            // jet_matchSV_matchGV_partFlav_->push_back(jet.partonFlavour());
+            // jet_matchSV_matchGV_genHadFlav_->push_back(genJetHadFlav);
+            // jet_matchSV_matchGV_genPartFlav_->push_back(genJetPartFlav);
         }
     }
 
-    // Fill track timing information
-    for (unsigned int iPV = 0; iPV < PVs.size(); iPV++) {
-        const reco::Vertex& prv = PVs.at(iPV);
-        if (prv.isFake()) std::cout << "ntuple_SV::filBranches: This is a fake PV." << std::endl;
-        for (reco::Vertex::trackRef_iterator trk_it = prv.tracks_begin(); trk_it != prv.tracks_end(); trk_it++) {
-            reco::TrackBaseRef trkRef = *trk_it;
-            if (timeValueMap.contains(trkRef.id())) {
-                // if (timeQualityMap[trkRef] < timeQualityCut_) continue;
-                pv_trk_timeVal_->push_back(timeValueMap[trkRef]);
-                pv_trk_timeErr_->push_back(timeErrorMap[trkRef]);
-                pv_trk_timeQual_->push_back(timeQualityMap[trkRef]);
-            }
-            else std::cout << "ntuple_SV::filBranches: PV track is not in the track maps." << std::endl;
-        }
-    }
-    for (unsigned int iSV = 0; iSV < inclusiveSVs.size(); iSV++) {
-        const reco::Vertex& sv = inclusiveSVs.at(iSV);
-        for (reco::Vertex::trackRef_iterator trk_it = sv.tracks_begin(); trk_it != sv.tracks_end(); trk_it++) {
-            reco::TrackBaseRef trkRef = *trk_it;
-            if (timeValueMap.contains(trkRef.id())) {
-                // if (timeQualityMap[trkRef] < timeQualityCut_) continue;
-                sv_trk_timeVal_->push_back(timeValueMap[trkRef]);
-                sv_trk_timeErr_->push_back(timeErrorMap[trkRef]);
-                sv_trk_timeQual_->push_back(timeQualityMap[trkRef]);
-            }
-            else std::cout << "ntuple_SV::filBranches: SV track is not in the track maps." << std::endl;
-        }
-    }
+    b_["evt_nPV"]->push_back(evt_nPV);
+    b_["evt_nSV"]->push_back(evt_nSV);
+    b_["evt_nSVt"]->push_back(evt_nSVt);
 
     sv_num_ = 0;
     for (const reco::VertexCompositePtrCandidate& sv : cpvtx) {
@@ -1426,9 +1008,9 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             // sv_pt_[sv_num_] = sv.pt();
             // sv_eta_[sv_num_] = sv.eta();
             // sv_phi_[sv_num_] = sv.phi();
-            // sv_mass_[sv_num_] = sv.mass();
-            // sv_e_[sv_num_] = sv.energy();
-            sv_ntracks_[sv_num_] = sv.numberOfDaughters();
+            sv_mass_[sv_num_] = sv.mass();
+            sv_e_[sv_num_] = sv.energy();
+            // sv_ntracks_[sv_num_] = sv.numberOfDaughters();
             // sv_chi2_[sv_num_] = sv.vertexChi2();
             // sv_ndf_[sv_num_] = sv.vertexNdof();
             // sv_normchi2_[sv_num_] = catchInfsAndBound(sv_chi2_[sv_num_] / sv_ndf_[sv_num_], 1000, -1000, 1000);
@@ -1562,7 +1144,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 } // End if nSV > 0 && sv.pt() > 0.0
                 else vertex_time = -1.0;
                 // std::cout << " NTuple sv " << sv_num_ << " pt eta phi " << sv.pt() << " " << sv.eta() << " " << sv.phi() << " time " << vertex_time << std::endl;
-                sv_time_->push_back(vertex_time);
+                // sv_time_->push_back(vertex_time);
             } // End loop through jets
         } // End if sv_num_ < max_sv_
         sv_num_++;
@@ -1576,12 +1158,108 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
 // Helper functions
 
 
+template <class P>
+bool ntuple_SV::goodGenParticle(const P& gp, float ptCut, float etaCut) {
+
+    bool pass = true;
+    if (gp.pt() < ptCut) pass = false;
+    if (abs(gp.eta()) > etaCut) pass = false;
+    return pass;
+}
+
+
+bool ntuple_SV::goodGenVertex(const GenVertex& gv,
+        float motherPtCut, float dauPtCut, float etaCut) {
+
+    bool pass = true;
+    if (!goodGenParticle(*(gv.mother()), motherPtCut, etaCut)) pass = false;
+    int nDaughters = gv.nDaughters();
+    for (const reco::Candidate* dau : gv.daughters()) {
+        if (!goodGenParticle(*dau, dauPtCut, etaCut)) nDaughters--;
+    }
+    if (nDaughters < 2) pass = false;
+    return pass;
+}
+
+
+template <class T>
+bool ntuple_SV::goodTrack(const T& trkRef, const edm::ValueMap<float>& timeValueMap,
+        const edm::ValueMap<float>& timeErrorMap, const edm::ValueMap<float>& timeQualityMap,
+        float trackPtCut, float timeQualityCut) {
+
+    bool trkPass = true;
+    if (trkRef->pt() < trackPtCut) trkPass = false;
+    if (!timeValueMap.contains(trkRef.id())) trkPass = false;
+    if (timeValueMap.contains(trkRef.id()) && timeErrorMap[trkRef] == -1.0) trkPass = false;
+    // if (timeValueMap.contains(trkRef.id()) && timeQualityMap[trkRef] < timeQualityCut) trkPass = false;
+    return trkPass;
+}
+
+
+bool ntuple_SV::goodRecoVertex(const reco::Vertex& rv, const edm::ValueMap<float>& timeValueMap,
+        const edm::ValueMap<float>& timeErrorMap, const edm::ValueMap<float>& timeQualityMap,
+        float trackPtCut, float timeQualityCut) {
+
+    bool pass = true;
+    int ntracks = rv.tracksSize();
+    for (reco::Vertex::trackRef_iterator trk_it = rv.tracks_begin(); trk_it != rv.tracks_end(); trk_it++) {
+        reco::TrackBaseRef trkRef = *trk_it;
+        if (!goodTrack(trkRef, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut, timeQualityCut)) ntracks--;
+    }
+    if (ntracks < 2) pass = false;
+    return pass;
+}
+
+
+float ntuple_SV::vertexPt(const reco::Vertex& sv) {
+
+    float pt = 0.0;
+    for (reco::Vertex::trackRef_iterator trk_it = sv.tracks_begin(); trk_it != sv.tracks_end(); trk_it++) {
+        reco::TrackBaseRef trkRef = *trk_it;
+        pt += trkRef->pt();
+    }
+    return pt;
+}
+
+
+float ntuple_SV::vertexEta(const reco::Vertex& sv) {
+
+    float eta = 0.0;
+    for (reco::Vertex::trackRef_iterator trk_it = sv.tracks_begin(); trk_it != sv.tracks_end(); trk_it++) {
+        reco::TrackBaseRef trkRef = *trk_it;
+        eta += trkRef->eta();
+    }
+    return eta;
+}
+
+
+float ntuple_SV::vertexPhi(const reco::Vertex& sv) {
+
+    float phi = 0.0;
+    for (reco::Vertex::trackRef_iterator trk_it = sv.tracks_begin(); trk_it != sv.tracks_end(); trk_it++) {
+        reco::TrackBaseRef trkRef = *trk_it;
+        phi += trkRef->phi();
+    }
+    return phi;
+}
+
+
 Measurement1D ntuple_SV::vertexDxy(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv) {
 
     VertexDistanceXY dist;
     reco::Vertex::CovarianceMatrix csv;
     svcand.fillVertexCovariance(csv);
     reco::Vertex svtx(svcand.vertex(), csv);
+    return dist.distance(svtx, pv);
+}
+
+
+Measurement1D ntuple_SV::vertexDxy(const reco::Vertex& sv, const reco::Vertex& pv) {
+
+    VertexDistanceXY dist;
+    reco::Vertex::CovarianceMatrix csv;
+    sv.fill(csv);
+    reco::Vertex svtx(sv.position(), csv);
     return dist.distance(svtx, pv);
 }
 
@@ -1596,7 +1274,32 @@ Measurement1D ntuple_SV::vertexD3d(const reco::VertexCompositePtrCandidate& svca
 }
 
 
-bool ntuple_SV::compareDxyDxyErr(const reco::VertexCompositePtrCandidate& sva, const reco::VertexCompositePtrCandidate& svb) {
+Measurement1D ntuple_SV::vertexD3d(const reco::Vertex& sv, const reco::Vertex& pv) {
+
+    VertexDistance3D dist;
+    reco::Vertex::CovarianceMatrix csv;
+    sv.fill(csv);
+    reco::Vertex svtx(sv.position(), csv);
+    return dist.distance(svtx, pv);
+}
+
+
+bool ntuple_SV::candCompareDxyDxyErr(const reco::VertexCompositePtrCandidate& sva, const reco::VertexCompositePtrCandidate& svb) {
+
+    reco::Vertex pv = *spvp_;
+    float adxy = ntuple_SV::vertexDxy(sva, pv).value();
+    float bdxy = ntuple_SV::vertexDxy(svb, pv).value();
+    float aerr = ntuple_SV::vertexDxy(sva, pv).error();
+    float berr = ntuple_SV::vertexDxy(svb, pv).error();
+
+    float asig = ntuple_SV::catchInfs(adxy / aerr, 0.0);
+    float bsig = ntuple_SV::catchInfs(bdxy / berr, 0.0);
+
+    return bsig < asig;
+}
+
+
+bool ntuple_SV::vertexCompareDxyDxyErr(const reco::Vertex& sva, const reco::Vertex& svb) {
 
     reco::Vertex pv = *spvp_;
     float adxy = ntuple_SV::vertexDxy(sva, pv).value();

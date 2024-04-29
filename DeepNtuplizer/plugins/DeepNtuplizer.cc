@@ -112,7 +112,7 @@ class DeepNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
 
 DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
     vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
-    svToken_(consumes<reco::VertexCompositePtrCandidateCollection>(iConfig.getParameter<edm::InputTag>("secVertices"))),
+    svToken_(consumes<reco::VertexCompositePtrCandidateCollection>(iConfig.getParameter<edm::InputTag>("SVs"))),
     jetToken_(consumes<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jets"))),
     puToken_(consumes<std::vector<PileupSummaryInfo >>(iConfig.getParameter<edm::InputTag>("pupInfo"))),
     pixHitsToken_(consumes< edm::View<reco::BaseTagInfo> > (iConfig.getParameter<edm::InputTag>("pixelhit"))),
@@ -137,19 +137,20 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
 
     ntuple_SV* svmodule = new ntuple_SV("", jetR);
     svmodule->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
-    svmodule->setGenParticlesToken(consumes<pat::PackedGenParticleCollection>(edm::InputTag("packedGenParticles::BTV")));
+    svmodule->setGenParticlesToken(consumes<reco::GenParticleCollection>(edm::InputTag("prunedGenParticles::BTV")));
     svmodule->setGenJetFlavourInfoToken(consumes<reco::JetFlavourInfoMatchingCollection>(edm::InputTag("slimmedGenJetsFlavourInfos")));
     svmodule->setSimTracksToken(consumes<edm::SimTrackContainer>(edm::InputTag("g4SimHits::SIM")));
     // svmodule->setPFCandToken(consumes<pat::PackedCandidateCollection>(edm::InputTag("packedPFCandidates")));
     // svmodule->setPFMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("packedPFCandidateToGenAssociation")));
-    svmodule->setRecoTracksToken(consumes<reco::TrackCollection>(edm::InputTag("generalTracks::HLT")));
+    svmodule->setRecoTracksToken(consumes<reco::TrackCollection>(edm::InputTag("generalTracks::BTV")));
+    svmodule->setTrackMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("trackMCMatch::BTV")));
     // svmodule->setGenVertexToken(consumes<TrackingVertexCollection>(edm::InputTag("mix", "MergedTrackTruth")));
     svmodule->setPVsToken(consumes<reco::VertexCollection>(edm::InputTag("offlinePrimaryVertices::BTV")));
-    svmodule->setInclusiveSVsToken(consumes<reco::VertexCollection>(edm::InputTag("inclusiveVertexFinder")));
-    svmodule->setInclusiveSVsMTDTimingToken(consumes<reco::VertexCollection>(edm::InputTag("inclusiveVertexFinderMTDTiming")));
-    svmodule->setTimeValueMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("tofPID:t0")));
-    svmodule->setTimeErrorMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("tofPID:sigmat0")));
-    svmodule->setTimeQualityMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("mtdTrackQualityMVA:mtdQualMVA")));
+    svmodule->setInclusiveSVsToken(consumes<reco::VertexCollection>(edm::InputTag("inclusiveVertexFinder::BTV")));
+    svmodule->setInclusiveSVsMTDTimingToken(consumes<reco::VertexCollection>(edm::InputTag("inclusiveVertexFinderMTDTiming::BTV")));
+    svmodule->setTimeValueMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("tofPID:t0:BTV")));
+    svmodule->setTimeErrorMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("tofPID:sigmat0:BTV")));
+    svmodule->setTimeQualityMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("mtdTrackQualityMVA:mtdQualMVA:BTV")));
     addModule(svmodule, "SVNtuple");
 
     // ntuple_DeepVertex* dvmodule = new ntuple_DeepVertex(jetR);
@@ -186,8 +187,6 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
     pfcands->setJetRadius(jetR);
 	pfcands->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
     addModule(pfcands, "pfcands");
-
-    // std::cout << "PFcands Check" << std::endl;
 
     addModule(new ntuple_bTagVars(), "bTagVars");
 
@@ -246,11 +245,6 @@ void DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         m->readEvent(iEvent);
         m->initContainers();
     }
-
-    // reco::VertexCompositePtrCandidateCollection cpvtx = *(secvertices.product());
-    // for (const reco::VertexCompositePtrCandidate &sv : cpvtx) {
-    //     cout << "SV_PT: " << sv.pt() << endl;
-    // }
 
     std::vector<size_t> indices(jets->size());
     for (size_t i = 0; i < jets->size(); i++)
@@ -392,12 +386,11 @@ void DeepNtuplizer::endJob() {
     // std::cout << "fraction of selected jets:          " << (float) njetsselected_ / (float) njetstotal_ << std::endl;
     // std::cout << "fraction of selected jets with gen: " << (float) njetsselected_ / (float) njetswithgenjet_ << std::endl;
 
-    std::cout << "and now checking with new code" << std::endl;
-    std::cout << "total number of processed jets (check):     " << njetstotal_crossCheck_ << std::endl;
-    std::cout << "total number of jets with gen (check):      " << njetswithgenjet_crossCheck_ << std::endl;
-    std::cout << "total number of selected jets (check):      " << njetsselected_crossCheck_ << std::endl;
-    std::cout << "fraction of selected jets (check):          " << (float) njetsselected_crossCheck_ / (float) njetstotal_crossCheck_ << std::endl;
-    std::cout << "fraction of selected jets with gen (check): " << (float) njetsselected_crossCheck_ / (float) njetswithgenjet_crossCheck_ << std::endl;
+    std::cout << "total number of processed jets:     " << njetstotal_crossCheck_ << std::endl;
+    std::cout << "total number of jets with gen:      " << njetswithgenjet_crossCheck_ << std::endl;
+    std::cout << "total number of selected jets:      " << njetsselected_crossCheck_ << std::endl;
+    std::cout << "fraction of selected jets:          " << (float) njetsselected_crossCheck_ / (float) njetstotal_crossCheck_ << std::endl;
+    std::cout << "fraction of selected jets with gen: " << (float) njetsselected_crossCheck_ / (float) njetswithgenjet_crossCheck_ << std::endl;
 }
 
 // Method fills 'descriptions' with the allowed parameters for the module

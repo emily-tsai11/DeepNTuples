@@ -15,10 +15,13 @@
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 #include "DataFormats/JetMatching/interface/JetFlavourInfoMatching.h"
-#include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 // #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
+#include <map>
 
+
+class GenVertex;
 
 class ntuple_SV : public ntuple_content {
 
@@ -44,7 +47,7 @@ class ntuple_SV : public ntuple_content {
             track_builder_token_ = track_builder_token;
         }
 
-        void setGenParticlesToken(const edm::EDGetTokenT<pat::PackedGenParticleCollection>& genParticles_token) {
+        void setGenParticlesToken(const edm::EDGetTokenT<reco::GenParticleCollection>& genParticles_token) {
             genParticles_token_ = genParticles_token;
         }
 
@@ -66,6 +69,10 @@ class ntuple_SV : public ntuple_content {
 
         void setRecoTracksToken(const edm::EDGetTokenT<reco::TrackCollection>& recoTracks_token) {
             recoTracks_token_ = recoTracks_token;
+        }
+
+        void setTrackMCMatchToken(const edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>>& trackMCMatch_token) {
+            trackMCMatch_token_ = trackMCMatch_token;
         }
 
         void setTimeValueMapToken(const edm::EDGetTokenT<edm::ValueMap<float>> timeValueMap_token) {
@@ -98,12 +105,15 @@ class ntuple_SV : public ntuple_content {
 
     private:
 
+        double absEtaMin_;
+        double absEtaMax_;
+        double genPartPtCut_;
+        double genDauPtCut_;
+        double trackPtCut_;
         double timeQualityCut_;
         double matchGVdR_;
         double jetPtMin_;
         double jetPtMax_;
-        double jetAbsEtaMin_;
-        double jetAbsEtaMax_;
         double genJetMatchdR_;
 
         // SV candidates
@@ -112,12 +122,13 @@ class ntuple_SV : public ntuple_content {
         std::string prefix_;
 
         edm::ESHandle<TransientTrackBuilder> builder_;
-        edm::Handle<pat::PackedGenParticleCollection> genParticles_;
+        edm::Handle<reco::GenParticleCollection> genParticles_;
         edm::Handle<reco::JetFlavourInfoMatchingCollection> genJetFlavourInfo_;
         edm::Handle<edm::SimTrackContainer> simTracks_;
         // edm::Handle<pat::PackedCandidateCollection> pf_cand_;
         // edm::Handle<edm::Association<reco::GenParticleCollection>> pf_mcmatch_;
         edm::Handle<reco::TrackCollection> recoTracks_;
+        edm::Handle<edm::Association<reco::GenParticleCollection>> trackMCMatch_;
         edm::Handle<edm::ValueMap<float>> timeValueMap_;
         edm::Handle<edm::ValueMap<float>> timeErrorMap_;
         edm::Handle<edm::ValueMap<float>> timeQualityMap_;
@@ -127,11 +138,12 @@ class ntuple_SV : public ntuple_content {
         edm::Handle<reco::VertexCollection> inclusiveSVsMTDTiming_;
 
         edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> track_builder_token_;
-        edm::EDGetTokenT<pat::PackedGenParticleCollection> genParticles_token_;
+        edm::EDGetTokenT<reco::GenParticleCollection> genParticles_token_;
         edm::EDGetTokenT<reco::JetFlavourInfoMatchingCollection> genJetFlavourInfo_token_;
         edm::EDGetTokenT<edm::SimTrackContainer> simTracks_token_;
         // edm::EDGetTokenT<pat::PackedCandidateCollection> pf_cand_token_;
         // edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>> pf_mcmatch_token_;
+        edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>> trackMCMatch_token_;
         edm::EDGetTokenT<reco::TrackCollection> recoTracks_token_;
         edm::EDGetTokenT<edm::ValueMap<float>> timeValueMap_token_;
         edm::EDGetTokenT<edm::ValueMap<float>> timeErrorMap_token_;
@@ -141,180 +153,147 @@ class ntuple_SV : public ntuple_content {
         edm::EDGetTokenT<reco::VertexCollection> inclusiveSVs_token_;
         edm::EDGetTokenT<reco::VertexCollection> inclusiveSVsMTDTiming_token_;
 
-        static constexpr size_t max_sv_ = 1000;
+        std::vector<TString> n_;
+        std::map<TString, std::vector<float>*> b_;
 
-        std::vector<int>* gp_strange_status_;
-        std::vector<int>* gp_strange_pdgId_;
-        std::vector<int>* gp_strange_nDaughters_;
-        std::vector<int>* gp_strange_daughterPdgIds_;
-        std::vector<float>* gp_strange_pt_;
-        std::vector<float>* gp_strange_eta_;
+        // std::vector<TString> gp_collections_ = {
+        //     "strange",
+        // };
 
-        std::vector<float>* st_pt_;
-        std::vector<float>* st_eta_;
-        std::vector<float>* st_phi_;
-        std::vector<int>* st_charge_;
+        // std::vector<TString> gp_branches_ = {
+        //     "pt",
+        //     "eta",
+        //     "phi"
+        //     "pdgId",
+        //     "status",
+        //     "nDaughters",
+        //     "daughterPdgIds", // Special case
+        // };
 
-        std::vector<float>* rt_pt_;
-        std::vector<float>* rt_eta_;
-        std::vector<float>* rt_phi_;
-        std::vector<int>* rt_charge_;
-        std::vector<float>* rt_chi2_;
-        std::vector<float>* rt_ndof_;
-        std::vector<float>* rt_chi2dof_;
-        std::vector<float>* rt_dxy_;
-        std::vector<float>* rt_dxyerr_;
-        std::vector<float>* rt_d0_;
-        std::vector<float>* rt_d0err_;
-        std::vector<float>* rt_dz_;
-        std::vector<float>* rt_dzerr_;
+        std::vector<TString> trk_collections_ = {
+            "st",           // SimTrack
+            "all",          // All reco tracks
+            "match_gp",     // Via trackMCMatch association map
+            "pu",           // Pileup
+            "gv",           // GenVertex (the daughters)
+            "pv",           // PrimaryVertex
+            "sv",           // SecondaryVertex
+            "svt",          // SecondaryVertex w/MTD timing
+            "matchsv_gv",   // SV matched to GV
+            "matchsvt_gv",  // SV w/MTD timing matched to GV
+        };
 
-        std::vector<float>* gv_pt_;
-        std::vector<float>* gv_x_;
-        std::vector<float>* gv_y_;
-        std::vector<float>* gv_z_;
-        std::vector<float>* gv_motherEta_;
-        std::vector<int>* gv_motherPdgId_;
-        std::vector<int>* gv_nDaughters_;
-        std::vector<float>* gv_daughterPt_;
-        std::vector<float>* gv_daughterEta_;
-        std::vector<int>* gv_daughterPdgId_;
-        std::vector<float>* gv_dRtoClosestSV_;
-        std::vector<float>* gv_dRtoAllSV_;
-        std::vector<int>* gv_nTimesMatchedToSV_;
-        std::vector<int>* gv_nTimesMatchedToSVinJet_;
+        std::vector<TString> trk_branches_ = {
+            "tval",
+            "terr",
+            "tsig",
+            "tqual",
+            "x",
+            "y",
+            "z",
+            "pt",
+            "pterr",
+            "eta",
+            "etaerr",
+            "phi",
+            "phierr",
+            "dxy",
+            "dxyerr",
+            "dxysig",
+            "dz",
+            "dzerr",
+            "dzsig",
+            "d3d",
+            "d3derr",
+            "d3dsig",
+            "d0",
+            "d0err",
+            "d0sig",
+            "charge",
+            "pdgId",
+            "chi2",
+            "ndof",
+            "chi2dof",
+        };
 
-        std::vector<float>* gv_matchSV_pt_;
-        std::vector<float>* gv_matchSV_x_;
-        std::vector<float>* gv_matchSV_y_;
-        std::vector<float>* gv_matchSV_z_;
-        std::vector<float>* gv_matchSV_motherEta_;
-        std::vector<int>* gv_matchSV_motherPdgId_;
-        std::vector<int>* gv_matchSV_nDaughters_;
-        std::vector<float>* gv_matchSV_daughterPt_;
-        std::vector<float>* gv_matchSV_daughterEta_;
-        std::vector<int>* gv_matchSV_daughterPdgId_;
-        std::vector<float>* gv_matchSV_dRtoClosestSV_;
+        std::vector<TString> vtx_collections_ {
+            "gv",          // GenVertex
+            "matchgv_sv",  // GV matched to SV
+            "matchgv_svt", // GV matched to SV w/MTD timing
+            "pv",          // PrimaryVertex
+            "sv",          // SecondaryVertex
+            "svt",         // SecondaryVertex w/MTD timing
+        };
 
-        std::vector<float>* sv_x_;
-        std::vector<float>* sv_y_;
-        std::vector<float>* sv_z_;
-        std::vector<float>* sv_pt_;
-        std::vector<float>* sv_eta_;
-        std::vector<float>* sv_phi_;
-        std::vector<float>* sv_mass_;
-        std::vector<float>* sv_energy_;
-        std::vector<float>* sv_chi2_;
-        std::vector<float>* sv_ndof_;
-        std::vector<float>* sv_chi2dof_;
-        std::vector<float>* sv_dxy_; // from PV
-        std::vector<float>* sv_dxyerr_;
-        std::vector<float>* sv_dxysig_;
-        std::vector<float>* sv_dz_; // from PV
-        std::vector<float>* sv_d3D_; // from GV
-        std::vector<float>* sv_d3Derr_;
-        std::vector<float>* sv_d3Dsig_;
-        std::vector<int>* sv_nDaughters_;
+        std::vector<TString> vtx_branches_ {
+            // "time",
+            "timeavg",
+            "timerange",
+            "x",
+            "y",
+            "z",
+            "pt",
+            "eta",
+            "phi",
+            "dxy",
+            "dxyerr",
+            "dxysig",
+            "dz",
+            "dzerr",
+            "dzsig",
+            "d3d",
+            "d3derr",
+            "d3dsig",
+            "chi2",
+            "ndof",
+            "chi2dof",
+            "ntracks", // (daughters for GV)
+            "motherPdgId",
+            "matchdR",
+            "nmatch",
+        };
 
-        std::vector<float>* sv_matchGV_x_;
-        std::vector<float>* sv_matchGV_y_;
-        std::vector<float>* sv_matchGV_z_;
-        std::vector<float>* sv_matchGV_pt_;
-        std::vector<float>* sv_matchGV_eta_;
-        std::vector<float>* sv_matchGV_phi_;
-        std::vector<float>* sv_matchGV_mass_;
-        std::vector<float>* sv_matchGV_energy_;
-        std::vector<float>* sv_matchGV_chi2_;
-        std::vector<float>* sv_matchGV_ndof_;
-        std::vector<float>* sv_matchGV_chi2dof_;
-        std::vector<float>* sv_matchGV_dxy_;
-        std::vector<float>* sv_matchGV_dxyerr_;
-        std::vector<float>* sv_matchGV_dxysig_;
-        std::vector<float>* sv_matchGV_dz_;
-        std::vector<float>* sv_matchGV_d3D_;
-        std::vector<float>* sv_matchGV_d3Derr_;
-        std::vector<float>* sv_matchGV_d3Dsig_;
-        std::vector<float>* sv_matchGV_SVdRtoGV_;
-        std::vector<int>* sv_matchGV_nDaughters_;
-        std::vector<int>* sv_matchGV_GVmotherPdgId_;
+        std::vector<TString> jet_collections_ = {
+            "all",
+            // "match_gv",
+            "match_sv",
+            "match_svt",
+            "match_gvsv",
+            "match_gvsvt",
+        };
 
-        std::vector<float>* sv_matchGV_matchJet_x_;
-        std::vector<float>* sv_matchGV_matchJet_y_;
-        std::vector<float>* sv_matchGV_matchJet_z_;
-        std::vector<float>* sv_matchGV_matchJet_pt_;
-        std::vector<float>* sv_matchGV_matchJet_eta_;
-        std::vector<float>* sv_matchGV_matchJet_phi_;
-        std::vector<float>* sv_matchGV_matchJet_mass_;
-        std::vector<float>* sv_matchGV_matchJet_energy_;
-        std::vector<float>* sv_matchGV_matchJet_chi2_;
-        std::vector<float>* sv_matchGV_matchJet_ndof_;
-        std::vector<float>* sv_matchGV_matchJet_chi2dof_;
-        std::vector<float>* sv_matchGV_matchJet_dxy_;
-        std::vector<float>* sv_matchGV_matchJet_dxyerr_;
-        std::vector<float>* sv_matchGV_matchJet_dxysig_;
-        std::vector<float>* sv_matchGV_matchJet_dz_;
-        std::vector<float>* sv_matchGV_matchJet_d3D_;
-        std::vector<float>* sv_matchGV_matchJet_d3Derr_;
-        std::vector<float>* sv_matchGV_matchJet_d3Dsig_;
-        std::vector<float>* sv_matchGV_matchJet_SVdRtoGV_;
-        std::vector<int>* sv_matchGV_matchJet_nJets_;
-        std::vector<int>* sv_matchGV_matchJet_genJetHadFlav_;
-        std::vector<int>* sv_matchGV_matchJet_nDaughters_;
-        std::vector<int>* sv_matchGV_matchJet_GVmotherPdgId_;
+        std::vector<TString> jet_branches_ = {
+            "pt",
+            "eta",
+            "phi",
+            "hadflav",
+            "partflav",
+            "genhadflav",
+            "genpartflav",
+            "nmatch",
+        };
 
-        int nPV_;
-        int nSV_;
-        int nSVMTDTiming_;
+        std::vector<TString> evt_branches_ = {
+            "nPV",
+            "nSV",
+            "nSVt",
+            "nClusters",
+            "nClusterst",
+            "nGV",
+        };
 
-        // Track timing information
-        std::vector<float>* pv_trk_timeVal_;
-        std::vector<float>* pv_trk_timeErr_;
-        std::vector<float>* pv_trk_timeQual_;
-        std::vector<float>* sv_trk_timeVal_;
-        std::vector<float>* sv_trk_timeErr_;
-        std::vector<float>* sv_trk_timeQual_;
-
-        // Jets
-        std::vector<float>* jet_pt_;
-        std::vector<float>* jet_eta_;
-        std::vector<float>* jet_phi_;
-        std::vector<float>* jet_radius_;
-        std::vector<int>* jet_hadFlav_;
-        std::vector<int>* jet_partFlav_;
-        std::vector<int>* jet_genHadFlav_;
-        std::vector<int>* jet_genPartFlav_;
-
-        std::vector<float>* jet_matchSV_pt_;
-        std::vector<float>* jet_matchSV_eta_;
-        std::vector<float>* jet_matchSV_phi_;
-        std::vector<float>* jet_matchSV_radius_;
-        std::vector<int>* jet_matchSV_nSV_;
-        std::vector<int>* jet_matchSV_hadFlav_;
-        std::vector<int>* jet_matchSV_partFlav_;
-        std::vector<int>* jet_matchSV_genHadFlav_;
-        std::vector<int>* jet_matchSV_genPartFlav_;
-
-        std::vector<float>* jet_matchSV_matchGV_pt_;
-        std::vector<float>* jet_matchSV_matchGV_eta_;
-        std::vector<float>* jet_matchSV_matchGV_phi_;
-        std::vector<float>* jet_matchSV_matchGV_radius_;
-        std::vector<float>* jet_matchSV_matchGV_SVdRtoGV_;
-        std::vector<int>* jet_matchSV_matchGV_nGV_;
-        std::vector<int>* jet_matchSV_matchGV_hadFlav_;
-        std::vector<int>* jet_matchSV_matchGV_partFlav_;
-        std::vector<int>* jet_matchSV_matchGV_genHadFlav_;
-        std::vector<int>* jet_matchSV_matchGV_genPartFlav_;
+        static constexpr size_t max_sv_ = 10;
 
         // float sv_pt_[max_sv_];
         // float sv_eta_[max_sv_];
         // float sv_phi_[max_sv_];
-        // float sv_e_[max_sv_];
+        float sv_e_[max_sv_];
 
         std::vector<float>* sv_etarel_;
         std::vector<float>* sv_phirel_;
         std::vector<float>* sv_deltaR_;
 
-        // float sv_mass_[max_sv_];
+        float sv_mass_[max_sv_];
         // float sv_phirel_[max_sv_];
         // float sv_etarel_[max_sv_];
         float sv_ntracks_[max_sv_];
@@ -349,10 +328,25 @@ class ntuple_SV : public ntuple_content {
         static const reco::Vertex* spvp_;
 
         // Helper functions
+        template <class P> static bool goodGenParticle(const P& gp, float ptCut, float etaCut);
+        static bool goodGenVertex(const GenVertex& gv, float motherPtCut, float dauPtCut, float etaCut);
+        template <class T> static bool goodTrack(const T& trkRef, const edm::ValueMap<float>& timeValueMap, 
+                const edm::ValueMap<float>& timeErrorMap, const edm::ValueMap<float>& timeQualityMap,
+                float trackPtCut, float timeQualityCut);
+        static bool goodRecoVertex(const reco::Vertex& rv, const edm::ValueMap<float>& timeValueMap,
+                const edm::ValueMap<float>& timeErrorMap, const edm::ValueMap<float>& timeQualityMap,
+                float trackPtCut, float timeQualityCut);
+        static float vertexPt(const reco::Vertex& sv);
+        static float vertexEta(const reco::Vertex& sv);
+        static float vertexPhi(const reco::Vertex& sv);
         static Measurement1D vertexDxy(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv);
+        static Measurement1D vertexDxy(const reco::Vertex& sv, const reco::Vertex& pv);
         static Measurement1D vertexD3d(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv);
+        static Measurement1D vertexD3d(const reco::Vertex& sv, const reco::Vertex& pv);
         static float vertexDdotP(const reco::VertexCompositePtrCandidate& sv, const reco::Vertex& pv);
-        static bool compareDxyDxyErr(const reco::VertexCompositePtrCandidate& sva, const reco::VertexCompositePtrCandidate& svb);
+        static bool candCompareDxyDxyErr(
+                const reco::VertexCompositePtrCandidate& sva, const reco::VertexCompositePtrCandidate& svb);
+        static bool vertexCompareDxyDxyErr(const reco::Vertex& sva, const reco::Vertex& svb);
         // int findPFCandIdx(const pat::PackedCandidate& trk, const pat::PackedCandidateCollection& pcands);
         static float deltaR3D(float x1, float x2, float y1, float y2, float z1, float z2);
         static int genPartID(int pdgId);

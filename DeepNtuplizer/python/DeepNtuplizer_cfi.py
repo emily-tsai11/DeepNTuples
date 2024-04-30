@@ -37,5 +37,6 @@ deepntuplizer = cms.EDAnalyzer("DeepNtuplizer",
     useHerwigCompatible  = cms.bool(False),
     isHerwig             = cms.bool(False),
     useOffsets           = cms.bool(True),
+    debug                = cms.bool(False),
     applySelection       = cms.bool(True)
 )

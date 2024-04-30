@@ -143,14 +143,16 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
     // svmodule->setPFCandToken(consumes<pat::PackedCandidateCollection>(edm::InputTag("packedPFCandidates")));
     // svmodule->setPFMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("packedPFCandidateToGenAssociation")));
     svmodule->setRecoTracksToken(consumes<reco::TrackCollection>(edm::InputTag("generalTracks::BTV")));
+    svmodule->setTimeValueMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("tofPID:t0:BTV")));
+    svmodule->setTimeErrorMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("tofPID:sigmat0:BTV")));
+    svmodule->setTimeQualityMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("mtdTrackQualityMVA:mtdQualMVA:BTV")));
     svmodule->setTrackMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("trackMCMatch::BTV")));
     // svmodule->setGenVertexToken(consumes<TrackingVertexCollection>(edm::InputTag("mix", "MergedTrackTruth")));
     svmodule->setPVsToken(consumes<reco::VertexCollection>(edm::InputTag("offlinePrimaryVertices::BTV")));
     svmodule->setInclusiveSVsToken(consumes<reco::VertexCollection>(edm::InputTag("inclusiveVertexFinder::BTV")));
+    svmodule->setIVFClustersToken(consumes<unsigned int>(edm::InputTag("inclusiveVertexFinder:nClusters:BTV")));
     svmodule->setInclusiveSVsMTDTimingToken(consumes<reco::VertexCollection>(edm::InputTag("inclusiveVertexFinderMTDTiming::BTV")));
-    svmodule->setTimeValueMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("tofPID:t0:BTV")));
-    svmodule->setTimeErrorMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("tofPID:sigmat0:BTV")));
-    svmodule->setTimeQualityMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("mtdTrackQualityMVA:mtdQualMVA:BTV")));
+    svmodule->setIVFClustersMTDTimingToken(consumes<unsigned int>(edm::InputTag("inclusiveVertexFinderMTDTiming:nClusters:BTV")));
     addModule(svmodule, "SVNtuple");
 
     // ntuple_DeepVertex* dvmodule = new ntuple_DeepVertex(jetR);

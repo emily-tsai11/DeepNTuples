@@ -71,10 +71,6 @@ class ntuple_SV : public ntuple_content {
             recoTracks_token_ = recoTracks_token;
         }
 
-        void setTrackMCMatchToken(const edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>>& trackMCMatch_token) {
-            trackMCMatch_token_ = trackMCMatch_token;
-        }
-
         void setTimeValueMapToken(const edm::EDGetTokenT<edm::ValueMap<float>> timeValueMap_token) {
             timeValueMap_token_ = timeValueMap_token;
         }
@@ -85,6 +81,10 @@ class ntuple_SV : public ntuple_content {
 
         void setTimeQualityMapToken(const edm::EDGetTokenT<edm::ValueMap<float>> timeQualityMap_token) {
             timeQualityMap_token_ = timeQualityMap_token;
+        }
+
+        void setTrackMCMatchToken(const edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>>& trackMCMatch_token) {
+            trackMCMatch_token_ = trackMCMatch_token;
         }
 
         // void setGenVertexToken(const edm::EDGetTokenT<TrackingVertexCollection>& genVertices_token) {
@@ -99,8 +99,16 @@ class ntuple_SV : public ntuple_content {
             inclusiveSVs_token_ = inclusiveSVs_token;
         }
 
+        void setIVFClustersToken(const edm::EDGetTokenT<unsigned int> IVFclusters_token) {
+            IVFclusters_token_ = IVFclusters_token;
+        }
+
         void setInclusiveSVsMTDTimingToken(const edm::EDGetTokenT<reco::VertexCollection>& inclusiveSVsMTDTiming_token) {
             inclusiveSVsMTDTiming_token_ = inclusiveSVsMTDTiming_token;
+        }
+
+        void setIVFClustersMTDTimingToken(const edm::EDGetTokenT<unsigned int> IVFclustersMTDTiming_token) {
+            IVFclustersMTDTiming_token_ = IVFclustersMTDTiming_token;
         }
 
     private:
@@ -116,6 +124,8 @@ class ntuple_SV : public ntuple_content {
         double jetPtMax_;
         double genJetMatchdR_;
 
+        bool debug_;
+
         // SV candidates
         int sv_num_;
         // float nsv_;
@@ -128,14 +138,16 @@ class ntuple_SV : public ntuple_content {
         // edm::Handle<pat::PackedCandidateCollection> pf_cand_;
         // edm::Handle<edm::Association<reco::GenParticleCollection>> pf_mcmatch_;
         edm::Handle<reco::TrackCollection> recoTracks_;
-        edm::Handle<edm::Association<reco::GenParticleCollection>> trackMCMatch_;
         edm::Handle<edm::ValueMap<float>> timeValueMap_;
         edm::Handle<edm::ValueMap<float>> timeErrorMap_;
         edm::Handle<edm::ValueMap<float>> timeQualityMap_;
+        edm::Handle<edm::Association<reco::GenParticleCollection>> trackMCMatch_;
         // edm::Handle<TrackingVertexCollection> genVertices_;
         edm::Handle<reco::VertexCollection> PVs_;
         edm::Handle<reco::VertexCollection> inclusiveSVs_;
+        edm::Handle<unsigned int> IVFclusters_;
         edm::Handle<reco::VertexCollection> inclusiveSVsMTDTiming_;
+        edm::Handle<unsigned int> IVFclustersMTDTiming_;
 
         edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> track_builder_token_;
         edm::EDGetTokenT<reco::GenParticleCollection> genParticles_token_;
@@ -143,15 +155,17 @@ class ntuple_SV : public ntuple_content {
         edm::EDGetTokenT<edm::SimTrackContainer> simTracks_token_;
         // edm::EDGetTokenT<pat::PackedCandidateCollection> pf_cand_token_;
         // edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>> pf_mcmatch_token_;
-        edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>> trackMCMatch_token_;
         edm::EDGetTokenT<reco::TrackCollection> recoTracks_token_;
         edm::EDGetTokenT<edm::ValueMap<float>> timeValueMap_token_;
         edm::EDGetTokenT<edm::ValueMap<float>> timeErrorMap_token_;
         edm::EDGetTokenT<edm::ValueMap<float>> timeQualityMap_token_;
+        edm::EDGetTokenT<edm::Association<reco::GenParticleCollection>> trackMCMatch_token_;
         // edm::EDGetTokenT<TrackingVertexCollection> genVertices_token_;
         edm::EDGetTokenT<reco::VertexCollection> PVs_token_;
         edm::EDGetTokenT<reco::VertexCollection> inclusiveSVs_token_;
+        edm::EDGetTokenT<unsigned int> IVFclusters_token_;
         edm::EDGetTokenT<reco::VertexCollection> inclusiveSVsMTDTiming_token_;
+        edm::EDGetTokenT<unsigned int> IVFclustersMTDTiming_token_;
 
         std::vector<TString> n_;
         std::map<TString, std::vector<float>*> b_;
@@ -178,8 +192,8 @@ class ntuple_SV : public ntuple_content {
             "gv",           // GenVertex (the daughters)
             "pv",           // PrimaryVertex
             "sv",           // SecondaryVertex
-            "svt",          // SecondaryVertex w/MTD timing
             "matchsv_gv",   // SV matched to GV
+            "svt",          // SecondaryVertex w/MTD timing
             "matchsvt_gv",  // SV w/MTD timing matched to GV
         };
 
@@ -226,7 +240,6 @@ class ntuple_SV : public ntuple_content {
         };
 
         std::vector<TString> vtx_branches_ {
-            // "time",
             "timeavg",
             "timerange",
             "x",
@@ -255,11 +268,12 @@ class ntuple_SV : public ntuple_content {
 
         std::vector<TString> jet_collections_ = {
             "all",
+            "match_gen",
             // "match_gv",
-            "match_sv",
-            "match_svt",
-            "match_gvsv",
-            "match_gvsvt",
+            "match_gensv",
+            "match_gensvgv",
+            "match_gensvt",
+            "match_gensvtgv",
         };
 
         std::vector<TString> jet_branches_ = {
@@ -267,19 +281,17 @@ class ntuple_SV : public ntuple_content {
             "eta",
             "phi",
             "hadflav",
-            "partflav",
-            "genhadflav",
-            "genpartflav",
+            // "partflav",
             "nmatch",
         };
 
         std::vector<TString> evt_branches_ = {
+            "nGV",
             "nPV",
             "nSV",
             "nSVt",
             "nClusters",
             "nClusterst",
-            "nGV",
         };
 
         static constexpr size_t max_sv_ = 10;
@@ -323,7 +335,7 @@ class ntuple_SV : public ntuple_content {
         std::vector<float>* sv_pfd3dval_;
         std::vector<float>* sv_pfd3dsig_;
 
-        std::vector<float>* sv_time_;
+        // std::vector<float>* sv_time_;
 
         static const reco::Vertex* spvp_;
 
@@ -332,24 +344,32 @@ class ntuple_SV : public ntuple_content {
         static bool goodGenVertex(const GenVertex& gv, float motherPtCut, float dauPtCut, float etaCut);
         template <class T> static bool goodTrack(const T& trkRef, const edm::ValueMap<float>& timeValueMap, 
                 const edm::ValueMap<float>& timeErrorMap, const edm::ValueMap<float>& timeQualityMap,
-                float trackPtCut, float timeQualityCut);
+                float trackPtCut, float trackEtaCut, float timeQualityCut);
         static bool goodRecoVertex(const reco::Vertex& rv, const edm::ValueMap<float>& timeValueMap,
                 const edm::ValueMap<float>& timeErrorMap, const edm::ValueMap<float>& timeQualityMap,
-                float trackPtCut, float timeQualityCut);
+                float trackPtCut, float trackEtaCut, float timeQualityCut);
+        static bool goodJet(const pat::Jet& jet, float ptMin, float ptMax, float etaCut);
+        static int genPartID(int pdgId);
+        // int findPFCandIdx(const pat::PackedCandidate& trk, const pat::PackedCandidateCollection& pcands);
+        template <class T> static float trackD3d(const T& trkRef);
+        template <class T> static float trackD3dErr(const T& trkRef);
         static float vertexPt(const reco::Vertex& sv);
         static float vertexEta(const reco::Vertex& sv);
         static float vertexPhi(const reco::Vertex& sv);
-        static Measurement1D vertexDxy(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv);
+        static float vertexDxy(const GenVertex& gv, const reco::Vertex& v);
+        static float vertexDxyErr(const GenVertex& gv, const reco::Vertex& v);
+        static float vertexD3d(const GenVertex& gv, const reco::Vertex& v);
+        static float vertexD3dErr(const GenVertex& gv, const reco::Vertex& v);
         static Measurement1D vertexDxy(const reco::Vertex& sv, const reco::Vertex& pv);
-        static Measurement1D vertexD3d(const reco::VertexCompositePtrCandidate& svcand, const reco::Vertex& pv);
         static Measurement1D vertexD3d(const reco::Vertex& sv, const reco::Vertex& pv);
-        static float vertexDdotP(const reco::VertexCompositePtrCandidate& sv, const reco::Vertex& pv);
-        static bool candCompareDxyDxyErr(
+        static Measurement1D vertexDxy(const reco::VertexCompositePtrCandidate& cand, const reco::Vertex& pv);
+        static Measurement1D vertexD3d(const reco::VertexCompositePtrCandidate& cand, const reco::Vertex& pv);
+        static bool gvCompareDxyDxySig(const GenVertex& gva, const GenVertex& gvb);
+        static bool svCompareDxyDxySig(const reco::Vertex& sva, const reco::Vertex& svb);
+        static bool candCompareDxyDxySig(
                 const reco::VertexCompositePtrCandidate& sva, const reco::VertexCompositePtrCandidate& svb);
-        static bool vertexCompareDxyDxyErr(const reco::Vertex& sva, const reco::Vertex& svb);
-        // int findPFCandIdx(const pat::PackedCandidate& trk, const pat::PackedCandidateCollection& pcands);
-        static float deltaR3D(float x1, float x2, float y1, float y2, float z1, float z2);
-        static int genPartID(int pdgId);
+        static float vertexDdotP(const reco::VertexCompositePtrCandidate& sv, const reco::Vertex& pv);
+        static float jetRadius(float jet_radius, const pat::Jet& jet);
 };
 
 

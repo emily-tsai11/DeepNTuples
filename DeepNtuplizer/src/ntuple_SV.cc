@@ -433,12 +433,12 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         int motherPartID = genPartID(gp->pdgId());
 
         if (motherPartID < 0) continue; // Mother is not interesting hadron
-        if (!goodGenParticle(gp, genPartPtCut_, absEtaMax_)) continue;
+        if (!goodGenParticle(gp, genPartPtCut_, absEtaMax_)) continue; // Cut on mother
         if (gp->numberOfDaughters() < 2) continue; // Not a vertex
 
         bool lastInstance = true; // Check for last instance of interesting hadron
         for (unsigned int iDau = 0; iDau < gp->numberOfDaughters(); iDau++) {
-            if (genPartID((gp->daughter(iDau))->pdgId()) == motherPartID) {
+            if (genPartID((gp->daughter(iDau))->pdgId()) == motherPartID) { // Cut on daughters
                 lastInstance = false; // Not last instance of interesting hadron
                 break;
             }
@@ -669,7 +669,8 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         b_["trk_all_chi2dof"]->push_back(trkRef->normalizedChi2());
 
         reco::GenParticleRef trkMCRef = trackMCMatch[trkRef];
-        if (trkMCRef.id().isValid()) {
+        const int iST = matchRecoToSimTrack(trkRef, simTracks, recoToSimTrackdR_, recoToSimTrackPt_);
+        if (trkMCRef.id().isValid() && iST >= 0) {
             // Tracked matched to GenParticle
             b_["trk_match_gp_tval"]->push_back(timeValueMap[trkRef]);
             b_["trk_match_gp_terr"]->push_back(timeErrorMap[trkRef]);
@@ -702,11 +703,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["trk_match_gp_chi2dof"]->push_back(trkRef->normalizedChi2());
 
             // Check for track from pileup using GEN information
-            if (!trkMCRef->isHardProcess() &&
-                !trkMCRef->fromHardProcessDecayed() &&
-                !trkMCRef->fromHardProcessFinalState() &&
-                !trkMCRef->isDirectHardProcessTauDecayProductFinalState()) {
-
+            if (isPileupTrack(simTracks.at(iST))) {
                 b_["trk_pu_tval"]->push_back(timeValueMap[trkRef]);
                 b_["trk_pu_terr"]->push_back(timeErrorMap[trkRef]);
                 b_["trk_pu_tsig"]->push_back(timeValueMap[trkRef] / timeErrorMap[trkRef]);
@@ -744,18 +741,9 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
     unsigned int evt_nGV = 0;
     for (unsigned int iGV = 0; iGV < GVs.size(); iGV++) {
         const GenVertex& gv = GVs.at(iGV);
-
         // By construction, all GVs are "good"
 
-        // Skip vertices not passing cuts
-        // if (!goodGenVertex(gv, genPartPtCut_, genDauPtCut_, absEtaMax_)) continue;
-
-        evt_nGV++;
-        unsigned int gv_ndaus = 0;
         for (const reco::Candidate* dau : *(gv.daughters())) {
-            if (!goodGenParticle(dau, genDauPtCut_, absEtaMax_)) continue;
-
-            gv_ndaus++;
             b_["trk_gv_x"]->push_back(dau->vx());
             b_["trk_gv_y"]->push_back(dau->vy());
             b_["trk_gv_z"]->push_back(dau->vz());
@@ -766,6 +754,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["trk_gv_pdgId"]->push_back(dau->pdgId());
         }
 
+        evt_nGV++;
         b_["vtx_gv_x"]->push_back(gv.x());
         b_["vtx_gv_y"]->push_back(gv.y());
         b_["vtx_gv_z"]->push_back(gv.z());
@@ -779,7 +768,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         b_["vtx_gv_d3d"]->push_back(vertexD3d(gv, spv));
         b_["vtx_gv_d3derr"]->push_back(vertexD3dErr(gv, spv));
         b_["vtx_gv_d3dsig"]->push_back(vertexD3d(gv, spv) / vertexD3dErr(gv, spv));
-        b_["vtx_gv_ntracks"]->push_back(gv_ndaus);
+        b_["vtx_gv_ntracks"]->push_back(gv.nDaughters());
         b_["vtx_gv_motherPdgId"]->push_back(gv.motherPdgId());
 
         // Match to SV
@@ -800,7 +789,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["vtx_matchgv_sv_d3d"]->push_back(vertexD3d(gv, spv));
             b_["vtx_matchgv_sv_d3derr"]->push_back(vertexD3dErr(gv, spv));
             b_["vtx_matchgv_sv_d3dsig"]->push_back(vertexD3d(gv, spv) / vertexD3dErr(gv, spv));
-            b_["vtx_matchgv_sv_ntracks"]->push_back(gv_ndaus);
+            b_["vtx_matchgv_sv_ntracks"]->push_back(gv.nDaughters());
             b_["vtx_matchgv_sv_motherPdgId"]->push_back(gv.motherPdgId());
             b_["vtx_matchgv_sv_matchdR"]->push_back(vertexD3d(gv, sv));
         }
@@ -823,7 +812,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["vtx_matchgv_svt_d3d"]->push_back(vertexD3d(gv, spv));
             b_["vtx_matchgv_svt_d3derr"]->push_back(vertexD3dErr(gv, spv));
             b_["vtx_matchgv_svt_d3dsig"]->push_back(vertexD3d(gv, spv) / vertexD3dErr(gv, spv));
-            b_["vtx_matchgv_svt_ntracks"]->push_back(gv_ndaus);
+            b_["vtx_matchgv_svt_ntracks"]->push_back(gv.nDaughters());
             b_["vtx_matchgv_svt_motherPdgId"]->push_back(gv.motherPdgId());
             b_["vtx_matchgv_svt_matchdR"]->push_back(vertexD3d(gv, svt));
         }
@@ -1400,6 +1389,12 @@ bool ntuple_SV::goodJet(const pat::Jet& jet, float ptMin, float ptMax, float eta
 // Matching
 
 
+bool ntuple_SV::isPileupTrack(const SimTrack& st) {
+
+    return st.eventId().event() > 0;
+}
+
+
 template <class P>
 bool ntuple_SV::matchGenToSimTrack(const P* gt, const SimTrack& st, float drCut, float ptCut) {
 
@@ -1419,6 +1414,22 @@ bool ntuple_SV::matchRecoToGenTrack(const T& trkRef, const P* gt, float drCut, f
     float dpt = abs(gt->pt() - trkRef->pt()) / (gt->pt() + trkRef->pt());
     if (dpt > ptCut) match = false;
     return match;
+}
+
+
+template <class T>
+int ntuple_SV::matchRecoToSimTrack(const T& trkRef, const edm::SimTrackContainer& simTracks,
+        float drCut, float ptCut) {
+
+    int stIdx = -1;
+    for (const SimTrack& st : simTracks) {
+        stIdx++;
+        if (reco::deltaR(trkRef->eta(), trkRef->phi(), st.momentum().Eta(), st.momentum().Phi()) > drCut) continue;
+        float dpt = abs(trkRef->pt() - st.momentum().Pt()) / (trkRef->pt() + st.momentum().Pt());
+        if (dpt > ptCut) continue;
+        return stIdx;
+    }
+    return -1;
 }
 
 

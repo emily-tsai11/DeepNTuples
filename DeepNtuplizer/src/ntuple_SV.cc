@@ -481,15 +481,20 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
 
     // Sort vertices by dxy significance to PV
     std::sort(GVs.begin(), GVs.end(), ntuple_SV::gvCompareDxyDxySig);
+    std::sort(simGVs.begin(), simGVs.end(), ntuple_SV::gvCompareDxyDxySig);
     std::sort(inclusiveSVs.begin(), inclusiveSVs.end(), ntuple_SV::svCompareDxyDxySig);
     std::sort(inclusiveSVsMTDTiming.begin(), inclusiveSVsMTDTiming.end(), ntuple_SV::svCompareDxyDxySig);
     std::sort(cpvtx.begin(), cpvtx.end(), ntuple_SV::candCompareDxyDxySig);
 
     // All matching
     std::vector<int> GV_matchtoSV(GVs.size(), -1); // Save matched indices to other collection
-    std::vector<int> GV_matchtoSVt(GVs.size(), -1);
     std::vector<int> SV_matchtoGV(inclusiveSVs.size(), -1);
+    std::vector<int> GV_matchtoSVt(GVs.size(), -1);
     std::vector<int> SVt_matchtoGV(inclusiveSVsMTDTiming.size(), -1);
+    std::vector<int> simGV_matchtoSV(simGVs.size(), -1);
+    std::vector<int> SV_matchtoSimGV(inclusiveSVs.size(), -1);
+    std::vector<int> simGV_matchtoSVt(simGVs.size(), -1);
+    std::vector<int> SVt_matchtoSimGV(inclusiveSVsMTDTiming.size(), -1);
     std::vector<int> jet_matchGen(jetCollection.size(), -1000); // Save gen jet flavours
     std::vector<int> jet_matchtoSV(jetCollection.size(), 0); // Save number of matches
     std::vector<int> jet_matchtoSVGV(jetCollection.size(), 0);
@@ -504,8 +509,11 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         float mindR = SVtoGVdR_;
         for (unsigned int iSV = 0; iSV < inclusiveSVs.size(); iSV++) {
             const reco::Vertex& sv = inclusiveSVs.at(iSV);
+            if (!goodRecoVertex(sv, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, absEtaMax_, timeQualityCut_)) continue;
             float dR3D = vertexD3d(gv, sv);
             if (dR3D < mindR) {
+                if (!matchRecoToGenVertex(sv, gv, SVGenPartMatchFrac_, recoToGenTrackdR_, recoToGenTrackPt_,
+                        timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, absEtaMax_, timeQualityCut_)) continue;
                 matchSVIdx = iSV;
                 mindR = dR3D;
             }
@@ -519,8 +527,11 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         mindR = SVtoGVdR_;
         for (unsigned int iSVt = 0; iSVt < inclusiveSVsMTDTiming.size(); iSVt++) {
             const reco::Vertex& svt = inclusiveSVsMTDTiming.at(iSVt);
+            if (!goodRecoVertex(svt, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, absEtaMax_, timeQualityCut_)) continue;
             float dR3D = vertexD3d(gv, svt);
             if (dR3D < mindR) {
+                if (!matchRecoToGenVertex(svt, gv, SVGenPartMatchFrac_, recoToGenTrackdR_, recoToGenTrackPt_,
+                        timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, absEtaMax_, timeQualityCut_)) continue;
                 matchSVtIdx = iSVt;
                 mindR = dR3D;
             }
@@ -1359,23 +1370,61 @@ bool ntuple_SV::matchGenToSimTrack(const P* gt, const SimTrack& st, float drCut,
 }
 
 
+template <class T, class P>
+bool ntuple_SV::matchRecoToGenTrack(const T& trkRef, const P* gt, float drCut, float ptCut) {
+
+    bool match = true;
+    if (reco::deltaR(trkRef->eta(), trkRef->phi(), gt->eta(), gt->phi()) > drCut) match = false;
+    float dpt = abs(gt->pt() - trkRef->pt()) / (gt->pt() + trkRef->pt());
+    if (dpt > ptCut) match = false;
+    return match;
+}
+
+
 bool ntuple_SV::matchGenToSimVertex(const GenVertex& gv, const edm::SimTrackContainer& simTracks,
         float matchFrac, float trkDrCut, float trkPtCut) {
 
     // First check if mother has SimTrack
-    bool match = false;
-    for (const SimTrack& st : simTracks) {
-        if (matchGenToSimTrack(gv.mother(), st, trkDrCut, trkPtCut)) {
-            match = true;
-            break;
-        }
-    }
-    if (!match) return false;
+    // bool match = false;
+    // for (const SimTrack& st : simTracks) {
+    //     if (matchGenToSimTrack(gv.mother(), st, trkDrCut, trkPtCut)) {
+    //         match = true;
+    //         break;
+    //     }
+    // }
+    // if (!match) return false;
     // Check if daughters have SimTracks
     float nmatch = 0;
     for (const reco::Candidate* dau : *(gv.daughters())) {
         for (const SimTrack& st : simTracks) {
             if (matchGenToSimTrack(dau, st, trkDrCut, trkPtCut)) {
+                nmatch++;
+                break;
+            }
+        }
+    }
+    return (nmatch/(float)gv.nDaughters()) >= matchFrac;
+}
+
+
+bool ntuple_SV::matchRecoToGenVertex(const reco::Vertex& v, const GenVertex& gv,
+        float matchFrac, float trkDrCut, float trkPtCut,
+        const edm::ValueMap<float>& timeValueMap,
+        const edm::ValueMap<float>& timeErrorMap,
+        const edm::ValueMap<float>& timeQualityMap,
+        float trackPtCut, float trackEtaCut, float timeQualityCut) {
+
+    // bool matched[v.tracksSize()] = {false};
+    float nmatch = 0;
+    // int iTrk = -1;
+    for (const reco::Candidate* dau : *(gv.daughters())) {
+        for (reco::Vertex::trackRef_iterator trk_it = v.tracks_begin(); trk_it != v.tracks_end(); trk_it++) {
+            reco::TrackBaseRef trkRef = *trk_it;
+            // iTrk++;
+            if (!goodTrack(trkRef, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut, trackEtaCut, timeQualityCut)) continue;
+            // if (matched[iTrk]) continue;
+            if (matchRecoToGenTrack(trkRef, dau, trkDrCut, trkPtCut)) {
+                // matched[iTrk] = true;
                 nmatch++;
                 break;
             }

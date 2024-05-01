@@ -376,7 +376,7 @@ class ntuple_SV : public ntuple_content {
         static bool isPileupTrack(const SimTrack& st);
         template <class P> static bool matchGenToSimTrack(const P* gt, const SimTrack& st,
                 float drCut, float ptCut);
-        template <class T, class P> static bool matchRecoToGenTrack(const T& trkRef, const P& gt,
+        template <class T, class P> static bool matchRecoToGenTrack(const T& trkRef, const P* gt,
                 float drCut, float ptCut);
         template <class T> static int matchRecoToSimTrack(const T& trkRef,
                 const edm::SimTrackContainer& simTracks, float drCut, float ptCut);

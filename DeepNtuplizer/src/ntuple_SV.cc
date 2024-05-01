@@ -818,6 +818,87 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         }
     }
 
+    if (debug_) std::cout << "Gen vertices w/Sim" << std::endl;
+    unsigned int evt_nGVs = 0;
+    for (unsigned int iGVs = 0; iGVs < simGVs.size(); iGVs++) {
+        const GenVertex& gvs = simGVs.at(iGVs);
+        // By construction, all GVs are "good"
+
+        for (const reco::Candidate* dau : *(gvs.daughters())) {
+            b_["trk_gvs_x"]->push_back(dau->vx());
+            b_["trk_gvs_y"]->push_back(dau->vy());
+            b_["trk_gvs_z"]->push_back(dau->vz());
+            b_["trk_gv_pt"]->push_back(dau->pt());
+            b_["trk_gvs_eta"]->push_back(dau->eta());
+            b_["trk_gvs_phi"]->push_back(dau->phi());
+            b_["trk_gvs_charge"]->push_back(dau->charge());
+            b_["trk_gvs_pdgId"]->push_back(dau->pdgId());
+        }
+
+        evt_nGVs++;
+        b_["vtx_gvs_x"]->push_back(gvs.x());
+        b_["vtx_gvs_y"]->push_back(gvs.y());
+        b_["vtx_gvs_z"]->push_back(gvs.z());
+        b_["vtx_gvs_pt"]->push_back(gvs.pt());
+        b_["vtx_gvs_eta"]->push_back(gvs.eta());
+        b_["vtx_gvs_phi"]->push_back(gvs.phi());
+        b_["vtx_gvs_dxy"]->push_back(vertexDxy(gvs, spv));
+        b_["vtx_gvs_dxyerr"]->push_back(vertexDxyErr(gvs, spv));
+        b_["vtx_gvs_dxysig"]->push_back(vertexDxy(gvs, spv) / vertexDxyErr(gvs, spv));
+        b_["vtx_gvs_dz"]->push_back(TMath::Abs(spv.z() - gvs.z()));
+        b_["vtx_gvs_d3d"]->push_back(vertexD3d(gvs, spv));
+        b_["vtx_gvs_d3derr"]->push_back(vertexD3dErr(gvs, spv));
+        b_["vtx_gvs_d3dsig"]->push_back(vertexD3d(gvs, spv) / vertexD3dErr(gvs, spv));
+        b_["vtx_gvs_ntracks"]->push_back(gvs.nDaughters());
+        b_["vtx_gvs_motherPdgId"]->push_back(gvs.motherPdgId());
+
+        // Match to SV
+        if (debug_) std::cout << "Gen vertices w/sim matched to secondary vertices" << std::endl;
+        int iSV = simGV_matchtoSV.at(iGVs);
+        if (iSV >= 0) {
+            const reco::Vertex& sv = inclusiveSVs.at(iSV);
+            b_["vtx_matchgvs_sv_x"]->push_back(gvs.x());
+            b_["vtx_matchgvs_sv_y"]->push_back(gvs.y());
+            b_["vtx_matchgvs_sv_z"]->push_back(gvs.z());
+            b_["vtx_matchgvs_sv_pt"]->push_back(gvs.pt());
+            b_["vtx_matchgvs_sv_eta"]->push_back(gvs.eta());
+            b_["vtx_matchgvs_sv_phi"]->push_back(gvs.phi());
+            b_["vtx_matchgvs_sv_dxy"]->push_back(vertexDxy(gvs, spv));
+            b_["vtx_matchgvs_sv_dxyerr"]->push_back(vertexDxyErr(gvs, spv));
+            b_["vtx_matchgvs_sv_dxysig"]->push_back(vertexDxy(gvs, spv) / vertexDxyErr(gvs, spv));
+            b_["vtx_matchgvs_sv_dz"]->push_back(TMath::Abs(spv.z() - gvs.z()));
+            b_["vtx_matchgvs_sv_d3d"]->push_back(vertexD3d(gvs, spv));
+            b_["vtx_matchgvs_sv_d3derr"]->push_back(vertexD3dErr(gvs, spv));
+            b_["vtx_matchgvs_sv_d3dsig"]->push_back(vertexD3d(gvs, spv) / vertexD3dErr(gvs, spv));
+            b_["vtx_matchgvs_sv_ntracks"]->push_back(gvs.nDaughters());
+            b_["vtx_matchgvs_sv_motherPdgId"]->push_back(gvs.motherPdgId());
+            b_["vtx_matchgvs_sv_matchdR"]->push_back(vertexD3d(gvs, sv));
+        }
+
+        // Match to SV with MTD timing
+        if (debug_) std::cout << "Gen vertices w/sim matched to secondary vertices w/timing" << std::endl;
+        int iSVt = simGV_matchtoSVt.at(iGVs);
+        if (iSVt >= 0) {
+            const reco::Vertex& svt = inclusiveSVsMTDTiming.at(iSVt);
+            b_["vtx_matchgvs_svt_x"]->push_back(gvs.x());
+            b_["vtx_matchgvs_svt_y"]->push_back(gvs.y());
+            b_["vtx_matchgvs_svt_z"]->push_back(gvs.z());
+            b_["vtx_matchgvs_svt_pt"]->push_back(gvs.pt());
+            b_["vtx_matchgvs_svt_eta"]->push_back(gvs.eta());
+            b_["vtx_matchgvs_svt_phi"]->push_back(gvs.phi());
+            b_["vtx_matchgvs_svt_dxy"]->push_back(vertexDxy(gvs, spv));
+            b_["vtx_matchgvs_svt_dxyerr"]->push_back(vertexDxyErr(gvs, spv));
+            b_["vtx_matchgvs_svt_dxysig"]->push_back(vertexDxy(gvs, spv) / vertexDxyErr(gvs, spv));
+            b_["vtx_matchgvs_svt_dz"]->push_back(TMath::Abs(spv.z() - gvs.z()));
+            b_["vtx_matchgvs_svt_d3d"]->push_back(vertexD3d(gvs, spv));
+            b_["vtx_matchgvs_svt_d3derr"]->push_back(vertexD3dErr(gvs, spv));
+            b_["vtx_matchgvs_svt_d3dsig"]->push_back(vertexD3d(gvs, spv) / vertexD3dErr(gvs, spv));
+            b_["vtx_matchgvs_svt_ntracks"]->push_back(gvs.nDaughters());
+            b_["vtx_matchgvs_svt_motherPdgId"]->push_back(gvs.motherPdgId());
+            b_["vtx_matchgvs_svt_matchdR"]->push_back(vertexD3d(gvs, svt));
+        }
+    }
+
     // Fill PrimaryVertex information
     if (debug_) std::cout << "Primary vertices" << std::endl;
     unsigned int evt_nPV = 0;

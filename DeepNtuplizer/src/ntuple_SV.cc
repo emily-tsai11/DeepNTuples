@@ -542,6 +542,47 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         }
     }
 
+    if (debug_) std::cout << "Matching vertices w/sim" << std::endl;
+    for (unsigned int iGVs = 0; iGVs < simGVs.size(); iGVs++) {
+        const GenVertex& gvs = simGVs.at(iGVs);
+
+        int matchSVIdx = -1;
+        float mindR = SVtoGVdR_;
+        for (unsigned int iSV = 0; iSV < inclusiveSVs.size(); iSV++) {
+            const reco::Vertex& sv = inclusiveSVs.at(iSV);
+            if (!goodRecoVertex(sv, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, absEtaMax_, timeQualityCut_)) continue;
+            float dR3D = vertexD3d(gvs, sv);
+            if (dR3D < mindR) {
+                if (!matchRecoToGenVertex(sv, gvs, SVGenPartMatchFrac_, recoToGenTrackdR_, recoToGenTrackPt_,
+                        timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, absEtaMax_, timeQualityCut_)) continue;
+                matchSVIdx = iSV;
+                mindR = dR3D;
+            }
+        }
+        if (matchSVIdx >= 0) {
+            simGV_matchtoSV.at(iGVs) = matchSVIdx;
+            SV_matchtoSimGV.at(matchSVIdx) = iGVs;
+        }
+
+        int matchSVtIdx = -1;
+        mindR = SVtoGVdR_;
+        for (unsigned int iSVt = 0; iSVt < inclusiveSVsMTDTiming.size(); iSVt++) {
+            const reco::Vertex& svt = inclusiveSVsMTDTiming.at(iSVt);
+            if (!goodRecoVertex(svt, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, absEtaMax_, timeQualityCut_)) continue;
+            float dR3D = vertexD3d(gvs, svt);
+            if (dR3D < mindR) {
+                if (!matchRecoToGenVertex(svt, gvs, SVGenPartMatchFrac_, recoToGenTrackdR_, recoToGenTrackPt_,
+                        timeValueMap, timeErrorMap, timeQualityMap, trackPtCut_, absEtaMax_, timeQualityCut_)) continue;
+                matchSVtIdx = iSVt;
+                mindR = dR3D;
+            }
+        }
+        if (matchSVtIdx >= 0) {
+            simGV_matchtoSVt.at(iGVs) = matchSVtIdx;
+            SVt_matchtoSimGV.at(matchSVtIdx) = iGVs;
+        }
+    }
+
     if (debug_) std::cout << "Matching jets" << std::endl;
     for (unsigned int iJet = 0; iJet < jetCollection.size(); iJet++) {
         const pat::Jet& jet = jetCollection.at(iJet);

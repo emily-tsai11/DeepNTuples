@@ -11,8 +11,9 @@ config.General.instance          = "prod"
 
 config.JobType.pluginName        = "Analysis"
 config.JobType.psetName          = "DeepNtuplizer.py"
+config.JobType.inputFiles        = ["QGL_cmssw8020_v2.db"]
+config.JobType.maxMemoryMB       = 3000
 config.JobType.maxJobRuntimeMin  = 60
-
 
 config.Data.splitting            = "FileBased"
 config.Data.unitsPerJob          = 1

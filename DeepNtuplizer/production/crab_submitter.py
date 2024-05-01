@@ -21,7 +21,7 @@ config.Data.outLFNDirBase        = "/store/user/etsai"
 config.Data.publication          = False
 config.Data.outputDatasetTag     = sample
 config.Data.userInputFiles       = open(sample + ".list").readlines()
-config.Data.outputPrimaryDataset = sample
+config.Data.outputPrimaryDataset = "DeepNTuples"
 
 config.Site.storageSite          = "T2_CH_CERN"
 config.Site.whitelist            = ["T2_CH_CERN"]

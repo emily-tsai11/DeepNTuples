@@ -17,7 +17,7 @@
 #include "DataFormats/JetMatching/interface/JetFlavourInfoMatching.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
-#include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
+// #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
 #include <map>
 
 
@@ -393,9 +393,6 @@ class ntuple_SV : public ntuple_content {
         // int findPFCandIdx(const pat::PackedCandidate& trk, const pat::PackedCandidateCollection& pcands);
         template <class T> static float trackD3d(const T& trkRef);
         template <class T> static float trackD3dErr(const T& trkRef);
-        static float vertexPt(const reco::Vertex& sv);
-        static float vertexEta(const reco::Vertex& sv);
-        static float vertexPhi(const reco::Vertex& sv);
         static float vertexDxy(const GenVertex& gv, const reco::Vertex& v);
         static float vertexDxyErr(const GenVertex& gv, const reco::Vertex& v);
         static float vertexD3d(const GenVertex& gv, const reco::Vertex& v);

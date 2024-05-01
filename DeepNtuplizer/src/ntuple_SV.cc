@@ -607,7 +607,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         // Match to SV and GV
         for (unsigned int iSV = 0; iSV < inclusiveSVs.size(); iSV++) {
             const reco::Vertex& sv = inclusiveSVs.at(iSV);
-            if (reco::deltaR(vertexEta(sv), vertexPhi(sv), jet.eta(), jet.phi()) < jet_radius) {
+            if (reco::deltaR(sv.p4().Eta(), sv.p4().Phi(), jet.eta(), jet.phi()) < jet_radius) {
                 jet_matchtoSV.at(iJet)++;
                 if (SV_matchtoGV.at(iSV) >= 0) jet_matchtoSVGV.at(iJet)++;
             }
@@ -616,7 +616,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         // Match to SV w/MTD timing and GV
         for (unsigned int iSV = 0; iSV < inclusiveSVsMTDTiming.size(); iSV++) {
             const reco::Vertex& sv = inclusiveSVsMTDTiming.at(iSV);
-            if (reco::deltaR(vertexEta(sv), vertexPhi(sv), jet.eta(), jet.phi()) < jet_radius) {
+            if (reco::deltaR(sv.p4().Eta(), sv.p4().Phi(), jet.eta(), jet.phi()) < jet_radius) {
                 jet_matchtoSVt.at(iJet)++;
                 if (SVt_matchtoGV.at(iSV) >= 0) jet_matchtoSVtGV.at(iJet)++;
             }
@@ -702,7 +702,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["trk_match_gp_ndof"]->push_back(trkRef->ndof());
             b_["trk_match_gp_chi2dof"]->push_back(trkRef->normalizedChi2());
 
-            // Check for track from pileup using GEN information
+            // Check for track from pileup using SIM information
             if (isPileupTrack(simTracks.at(iST))) {
                 b_["trk_pu_tval"]->push_back(timeValueMap[trkRef]);
                 b_["trk_pu_terr"]->push_back(timeErrorMap[trkRef]);
@@ -1036,6 +1036,41 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 b_["trk_matchsv_gv_ndof"]->push_back(trkRef->ndof());
                 b_["trk_matchsv_gv_chi2dof"]->push_back(trkRef->normalizedChi2());
             }
+
+            // Match to GV w/sim
+            if (debug_) std::cout << "Secondary vertex tracks matched to GV w/sim" << std::endl;
+            int iGVs = SV_matchtoSimGV.at(iSV);
+            if (iGVs >= 0) {
+                b_["trk_matchsv_gvs_tval"]->push_back(timeValueMap[trkRef]);
+                b_["trk_matchsv_gvs_terr"]->push_back(timeErrorMap[trkRef]);
+                b_["trk_matchsv_gvs_tsig"]->push_back(timeValueMap[trkRef] / timeErrorMap[trkRef]);
+                b_["trk_matchsv_gvs_tqual"]->push_back(timeQualityMap[trkRef]);
+                b_["trk_matchsv_gvs_x"]->push_back(trkRef->vx());
+                b_["trk_matchsv_gvs_y"]->push_back(trkRef->vy());
+                b_["trk_matchsv_gvs_z"]->push_back(trkRef->vz());
+                b_["trk_matchsv_gvs_pt"]->push_back(trkRef->pt());
+                b_["trk_matchsv_gvs_pterr"]->push_back(trkRef->ptError());
+                b_["trk_matchsv_gvs_eta"]->push_back(trkRef->eta());
+                b_["trk_matchsv_gvs_etaerr"]->push_back(trkRef->etaError());
+                b_["trk_matchsv_gvs_phi"]->push_back(trkRef->phi());
+                b_["trk_matchsv_gvs_phierr"]->push_back(trkRef->phiError());
+                b_["trk_matchsv_gvs_dxy"]->push_back(trkRef->dxy());
+                b_["trk_matchsv_gvs_dxyerr"]->push_back(trkRef->dxyError());
+                b_["trk_matchsv_gvs_dxysig"]->push_back(trkRef->dxy() / trkRef->dxyError());
+                b_["trk_matchsv_gvs_dz"]->push_back(trkRef->dz());
+                b_["trk_matchsv_gvs_dzerr"]->push_back(trkRef->dzError());
+                b_["trk_matchsv_gvs_dzsig"]->push_back(trkRef->dz() / trkRef->dzError());
+                b_["trk_matchsv_gvs_d3d"]->push_back(trackD3d(trkRef));
+                b_["trk_matchsv_gvs_d3derr"]->push_back(trackD3dErr(trkRef));
+                b_["trk_matchsv_gvs_d3dsig"]->push_back(trackD3d(trkRef) / trackD3dErr(trkRef));
+                b_["trk_matchsv_gvs_d0"]->push_back(trkRef->d0());
+                b_["trk_matchsv_gvs_d0err"]->push_back(trkRef->d0Error());
+                b_["trk_matchsv_gvs_d0sig"]->push_back(trkRef->d0() / trkRef->d0Error());
+                b_["trk_matchsv_gvs_charge"]->push_back(trkRef->charge());
+                b_["trk_matchsv_gvs_chi2"]->push_back(trkRef->chi2());
+                b_["trk_matchsv_gvs_ndof"]->push_back(trkRef->ndof());
+                b_["trk_matchsv_gvs_chi2dof"]->push_back(trkRef->normalizedChi2());
+            }
         }
 
         timeAvg /= sv_ntrks;
@@ -1046,9 +1081,9 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         b_["vtx_sv_x"]->push_back(sv.x());
         b_["vtx_sv_y"]->push_back(sv.y());
         b_["vtx_sv_z"]->push_back(sv.z());
-        b_["vtx_sv_pt"]->push_back(vertexPt(sv));
-        b_["vtx_sv_eta"]->push_back(vertexEta(sv));
-        b_["vtx_sv_phi"]->push_back(vertexPhi(sv));
+        b_["vtx_sv_pt"]->push_back(sv.p4().Pt());
+        b_["vtx_sv_eta"]->push_back(sv.p4().Eta());
+        b_["vtx_sv_phi"]->push_back(sv.p4().Phi());
         b_["vtx_sv_dxy"]->push_back(vertexDxy(sv, spv).value());
         b_["vtx_sv_dxyerr"]->push_back(vertexDxy(sv, spv).error());
         b_["vtx_sv_dxysig"]->push_back(vertexDxy(sv, spv).value() / vertexDxy(sv, spv).error());
@@ -1148,6 +1183,41 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 b_["trk_matchsvt_gv_ndof"]->push_back(trkRef->ndof());
                 b_["trk_matchsvt_gv_chi2dof"]->push_back(trkRef->normalizedChi2());
             }
+
+            // Match to GV w/sim
+            if (debug_) std::cout << "Secondary vertex tracks w/timing matched to GV w/sim" << std::endl;
+            int iGVs = SVt_matchtoSimGV.at(iSVt);
+            if (iGVs >= 0) {
+                b_["trk_matchsvt_gvs_tval"]->push_back(timeValueMap[trkRef]);
+                b_["trk_matchsvt_gvs_terr"]->push_back(timeErrorMap[trkRef]);
+                b_["trk_matchsvt_gvs_tsig"]->push_back(timeValueMap[trkRef] / timeErrorMap[trkRef]);
+                b_["trk_matchsvt_gvs_tqual"]->push_back(timeQualityMap[trkRef]);
+                b_["trk_matchsvt_gvs_x"]->push_back(trkRef->vx());
+                b_["trk_matchsvt_gvs_y"]->push_back(trkRef->vy());
+                b_["trk_matchsvt_gvs_z"]->push_back(trkRef->vz());
+                b_["trk_matchsvt_gvs_pt"]->push_back(trkRef->pt());
+                b_["trk_matchsvt_gvs_pterr"]->push_back(trkRef->ptError());
+                b_["trk_matchsvt_gvs_eta"]->push_back(trkRef->eta());
+                b_["trk_matchsvt_gvs_etaerr"]->push_back(trkRef->etaError());
+                b_["trk_matchsvt_gvs_phi"]->push_back(trkRef->phi());
+                b_["trk_matchsvt_gvs_phierr"]->push_back(trkRef->phiError());
+                b_["trk_matchsvt_gvs_dxy"]->push_back(trkRef->dxy());
+                b_["trk_matchsvt_gvs_dxyerr"]->push_back(trkRef->dxyError());
+                b_["trk_matchsvt_gvs_dxysig"]->push_back(trkRef->dxy() / trkRef->dxyError());
+                b_["trk_matchsvt_gvs_dz"]->push_back(trkRef->dz());
+                b_["trk_matchsvt_gvs_dzerr"]->push_back(trkRef->dzError());
+                b_["trk_matchsvt_gvs_dzsig"]->push_back(trkRef->dz() / trkRef->dzError());
+                b_["trk_matchsvt_gvs_d3d"]->push_back(trackD3d(trkRef));
+                b_["trk_matchsvt_gvs_d3derr"]->push_back(trackD3dErr(trkRef));
+                b_["trk_matchsvt_gvs_d3dsig"]->push_back(trackD3d(trkRef) / trackD3dErr(trkRef));
+                b_["trk_matchsvt_gvs_d0"]->push_back(trkRef->d0());
+                b_["trk_matchsvt_gvs_d0err"]->push_back(trkRef->d0Error());
+                b_["trk_matchsvt_gvs_d0sig"]->push_back(trkRef->d0() / trkRef->d0Error());
+                b_["trk_matchsvt_gvs_charge"]->push_back(trkRef->charge());
+                b_["trk_matchsvt_gvs_chi2"]->push_back(trkRef->chi2());
+                b_["trk_matchsvt_gvs_ndof"]->push_back(trkRef->ndof());
+                b_["trk_matchsvt_gvs_chi2dof"]->push_back(trkRef->normalizedChi2());
+            }
         }
 
         timeAvg /= svt_ntrks;
@@ -1158,9 +1228,9 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         b_["vtx_svt_x"]->push_back(sv.x());
         b_["vtx_svt_y"]->push_back(sv.y());
         b_["vtx_svt_z"]->push_back(sv.z());
-        b_["vtx_svt_pt"]->push_back(vertexPt(sv));
-        b_["vtx_svt_eta"]->push_back(vertexEta(sv));
-        b_["vtx_svt_phi"]->push_back(vertexPhi(sv));
+        b_["vtx_svt_pt"]->push_back(sv.p4().Pt());
+        b_["vtx_svt_eta"]->push_back(sv.p4().Eta());
+        b_["vtx_svt_phi"]->push_back(sv.p4().Phi());
         b_["vtx_svt_dxy"]->push_back(vertexDxy(sv, spv).value());
         b_["vtx_svt_dxyerr"]->push_back(vertexDxy(sv, spv).error());
         b_["vtx_svt_dxysig"]->push_back(vertexDxy(sv, spv).value() / vertexDxy(sv, spv).error());
@@ -1240,6 +1310,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
     }
 
     b_["evt_nGV"]->push_back(evt_nGV);
+    b_["evt_nGVs"]->push_back(evt_nGVs);
     b_["evt_nPV"]->push_back(evt_nPV);
     b_["evt_nSV"]->push_back(evt_nSV);
     b_["evt_nSVt"]->push_back(evt_nSVt);
@@ -1517,16 +1588,6 @@ int ntuple_SV::matchRecoToSimTrack(const T& trkRef, const edm::SimTrackContainer
 bool ntuple_SV::matchGenToSimVertex(const GenVertex& gv, const edm::SimTrackContainer& simTracks,
         float matchFrac, float trkDrCut, float trkPtCut) {
 
-    // First check if mother has SimTrack
-    // bool match = false;
-    // for (const SimTrack& st : simTracks) {
-    //     if (matchGenToSimTrack(gv.mother(), st, trkDrCut, trkPtCut)) {
-    //         match = true;
-    //         break;
-    //     }
-    // }
-    // if (!match) return false;
-    // Check if daughters have SimTracks
     float nmatch = 0;
     for (const reco::Candidate* dau : *(gv.daughters())) {
         for (const SimTrack& st : simTracks) {
@@ -1547,17 +1608,12 @@ bool ntuple_SV::matchRecoToGenVertex(const reco::Vertex& v, const GenVertex& gv,
         const edm::ValueMap<float>& timeQualityMap,
         float trackPtCut, float trackEtaCut, float timeQualityCut) {
 
-    // bool matched[v.tracksSize()] = {false};
     float nmatch = 0;
-    // int iTrk = -1;
     for (const reco::Candidate* dau : *(gv.daughters())) {
         for (reco::Vertex::trackRef_iterator trk_it = v.tracks_begin(); trk_it != v.tracks_end(); trk_it++) {
             reco::TrackBaseRef trkRef = *trk_it;
-            // iTrk++;
             if (!goodTrack(trkRef, timeValueMap, timeErrorMap, timeQualityMap, trackPtCut, trackEtaCut, timeQualityCut)) continue;
-            // if (matched[iTrk]) continue;
             if (matchRecoToGenTrack(trkRef, dau, trkDrCut, trkPtCut)) {
-                // matched[iTrk] = true;
                 nmatch++;
                 break;
             }
@@ -1660,39 +1716,6 @@ float ntuple_SV::trackD3dErr(const T& trkRef) {
     float d3d2 = dxy2 + dz2;
     float d3d2err = TMath::Sqrt(dxy2err*dxy2err + dz2err*dz2err);
     return 0.5*d3d2err/TMath::Sqrt(d3d2);
-}
-
-
-float ntuple_SV::vertexPt(const reco::Vertex& sv) {
-
-    float pt = 0.0;
-    for (reco::Vertex::trackRef_iterator trk_it = sv.tracks_begin(); trk_it != sv.tracks_end(); trk_it++) {
-        reco::TrackBaseRef trkRef = *trk_it;
-        pt += trkRef->pt();
-    }
-    return pt;
-}
-
-
-float ntuple_SV::vertexEta(const reco::Vertex& sv) {
-
-    float eta = 0.0;
-    for (reco::Vertex::trackRef_iterator trk_it = sv.tracks_begin(); trk_it != sv.tracks_end(); trk_it++) {
-        reco::TrackBaseRef trkRef = *trk_it;
-        eta += trkRef->eta();
-    }
-    return eta;
-}
-
-
-float ntuple_SV::vertexPhi(const reco::Vertex& sv) {
-
-    float phi = 0.0;
-    for (reco::Vertex::trackRef_iterator trk_it = sv.tracks_begin(); trk_it != sv.tracks_end(); trk_it++) {
-        reco::TrackBaseRef trkRef = *trk_it;
-        phi += trkRef->phi();
-    }
-    return phi;
 }
 
 

@@ -19,7 +19,7 @@
 #include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
 #include "DataFormats/JetMatching/interface/JetFlavourInfoMatching.h"
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
-#include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
+// #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
 
 #include "TrackingTools/IPTools/interface/IPTools.h"
 #if defined( __GXX_EXPERIMENTAL_CXX0X__)
@@ -138,8 +138,8 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
     ntuple_SV* svmodule = new ntuple_SV("", jetR);
     svmodule->setTrackBuilderToken(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder")));
     svmodule->setGenParticlesToken(consumes<reco::GenParticleCollection>(edm::InputTag("prunedGenParticles::BTV")));
-    svmodule->setGenJetFlavourInfoToken(consumes<reco::JetFlavourInfoMatchingCollection>(edm::InputTag("slimmedGenJetsFlavourInfos")));
     svmodule->setSimTracksToken(consumes<edm::SimTrackContainer>(edm::InputTag("g4SimHits::SIM")));
+    // svmodule->setTPsToken(consumes<TrackingParticleCollection>(edm::InputTag("mix", "MergedTrackTruth")));
     // svmodule->setPFCandToken(consumes<pat::PackedCandidateCollection>(edm::InputTag("packedPFCandidates")));
     // svmodule->setPFMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("packedPFCandidateToGenAssociation")));
     svmodule->setRecoTracksToken(consumes<reco::TrackCollection>(edm::InputTag("generalTracks::BTV")));
@@ -147,13 +147,13 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
     svmodule->setTimeErrorMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("tofPID:sigmat0:BTV")));
     svmodule->setTimeQualityMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("mtdTrackQualityMVA:mtdQualMVA:BTV")));
     svmodule->setTrackMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("trackMCMatch::BTV")));
-    // svmodule->setTPsToken(consumes<TrackingParticleCollection>(edm::InputTag("mix", "MergedTrackTruth")));
     // svmodule->setTVsToken(consumes<TrackingVertexCollection>(edm::InputTag("mix", "MergedTrackTruth")));
     svmodule->setPVsToken(consumes<reco::VertexCollection>(edm::InputTag("offlinePrimaryVertices::BTV")));
     svmodule->setInclusiveSVsToken(consumes<reco::VertexCollection>(edm::InputTag("inclusiveVertexFinder::BTV")));
     svmodule->setIVFClustersToken(consumes<unsigned int>(edm::InputTag("inclusiveVertexFinder:nClusters:BTV")));
     svmodule->setInclusiveSVsMTDTimingToken(consumes<reco::VertexCollection>(edm::InputTag("inclusiveVertexFinderMTDTiming::BTV")));
     svmodule->setIVFClustersMTDTimingToken(consumes<unsigned int>(edm::InputTag("inclusiveVertexFinderMTDTiming:nClusters:BTV")));
+    svmodule->setGenJetFlavourInfoToken(consumes<reco::JetFlavourInfoMatchingCollection>(edm::InputTag("slimmedGenJetsFlavourInfos")));
     addModule(svmodule, "SVNtuple");
 
     // ntuple_DeepVertex* dvmodule = new ntuple_DeepVertex(jetR);

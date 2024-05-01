@@ -157,28 +157,20 @@ class GenVertex {
 
     public:
 
-        GenVertex() {}
+        GenVertex(const reco::GenParticle* mother, std::vector<const reco::Candidate*>* daughters) : 
+                mother_(mother), daughters_(daughters) {}
 
-        const float x() const { return daughters_.at(0)->vx(); }
-        const float y() const { return daughters_.at(0)->vy(); }
-        const float z() const { return daughters_.at(0)->vz(); }
+        const float x() const { return daughters_->at(0)->vx(); }
+        const float y() const { return daughters_->at(0)->vy(); }
+        const float z() const { return daughters_->at(0)->vz(); }
         const float pt() const { return mother_->pt(); }
         const float eta() const { return mother_->eta(); }
         const float phi() const { return mother_->phi(); }
-        const unsigned int nDaughters() const { return daughters_.size(); }
+        const unsigned int nDaughters() const { return daughters_->size(); }
         const int motherPdgId() const { return mother_->pdgId(); }
 
         const reco::GenParticle* mother() const { return mother_; }
-        const std::vector<const reco::Candidate*> daughters() const { return daughters_; }
-
-        void setMother(const reco::GenParticle* mother) { mother_ = mother; }
-        void addDaughter(const reco::Candidate* daughter) { daughters_.push_back(daughter); }
-        bool isValid() {
-            bool valid = true;
-            if (!mother_) valid = false;
-            if (daughters_.size() < 2) valid = false;
-            return valid;
-        }
+        const std::vector<const reco::Candidate*>* daughters() const { return daughters_; }
 
         void print() {
             std::cout << "GenVertex:" << std::endl;
@@ -193,25 +185,25 @@ class GenVertex {
 
             std::cout << "    daughter pdgIds = ";
             for (unsigned int iDau = 0; iDau < nDaughters(); iDau++) {
-                std::cout << daughters().at(iDau)->pdgId();
+                std::cout << daughters_->at(iDau)->pdgId();
                 if (iDau < nDaughters() - 1) std::cout << ", ";
             }
             std::cout << std::endl;
             std::cout << "    daughter pts   = ";
             for (unsigned int iDau = 0; iDau < nDaughters(); iDau++) {
-                std::cout << daughters().at(iDau)->pt();
+                std::cout << daughters_->at(iDau)->pt();
                 if (iDau < nDaughters() - 1) std::cout << ", ";
             }
             std::cout << std::endl;
             std::cout << "    daughter etas   = ";
             for (unsigned int iDau = 0; iDau < nDaughters(); iDau++) {
-                std::cout << daughters().at(iDau)->eta();
+                std::cout << daughters_->at(iDau)->eta();
                 if (iDau < nDaughters() - 1) std::cout << ", ";
             }
             std::cout << std::endl;
             std::cout << "    daughter phis   = ";
             for (unsigned int iDau = 0; iDau < nDaughters(); iDau++) {
-                std::cout << daughters().at(iDau)->phi();
+                std::cout << daughters_->at(iDau)->phi();
                 if (iDau < nDaughters() - 1) std::cout << ", ";
             }
             std::cout << std::endl;
@@ -220,7 +212,7 @@ class GenVertex {
     private:
 
         const reco::GenParticle* mother_;
-        std::vector<const reco::Candidate*> daughters_;
+        std::vector<const reco::Candidate*>* daughters_;
 };
 
 
@@ -242,9 +234,17 @@ void ntuple_SV::getInput(const edm::ParameterSet& iConfig) {
     absEtaMax_ = iConfig.getParameter<double>("absEtaMax");
     genPartPtCut_ = iConfig.getParameter<double>("genPartPtCut");
     genDauPtCut_ = iConfig.getParameter<double>("genDauPtCut");
+    genToSimTrackdR_ = iConfig.getParameter<double>("genToSimTrackdR");
+    genToSimTrackPt_ = iConfig.getParameter<double>("genToSimTrackPt");
     trackPtCut_ = iConfig.getParameter<double>("trackPtCut");
     timeQualityCut_ = iConfig.getParameter<double>("timeQualityCut");
-    matchGVdR_ = iConfig.getParameter<double>("matchGVdR");
+    recoToGenTrackdR_ = iConfig.getParameter<double>("recoToGenTrackdR");
+    recoToGenTrackPt_ = iConfig.getParameter<double>("recoToGenTrackPt");
+    recoToSimTrackdR_ = iConfig.getParameter<double>("recoToSimTrackdR");
+    recoToSimTrackPt_ = iConfig.getParameter<double>("recoToSimTrackPt");
+    GVSimTrackMatchFrac_ = iConfig.getParameter<double>("GVSimTrackMatchFrac");
+    SVtoGVdR_ = iConfig.getParameter<double>("SVtoGVdR");
+    SVGenPartMatchFrac_ = iConfig.getParameter<double>("SVGenPartMatchFrac");
     jetPtMin_ = iConfig.getParameter<double>("jetPtMin");
     jetPtMax_ = iConfig.getParameter<double>("jetPtMax");
     genJetMatchdR_ = iConfig.getParameter<double>("genJetMatchdR");
@@ -336,8 +336,8 @@ void ntuple_SV::readSetup(const edm::EventSetup& iSetup) {
 void ntuple_SV::readEvent(const edm::Event& iEvent) {
 
     iEvent.getByToken(genParticles_token_, genParticles_);
-    iEvent.getByToken(genJetFlavourInfo_token_, genJetFlavourInfo_);
     iEvent.getByToken(simTracks_token_, simTracks_);
+    // iEvent.getByToken(TPs_token_, TPs_);
     // iEvent.getByToken(pf_cand_token_, pf_cand_);
     // iEvent.getByToken(pf_mcmatch_token_, pf_mcmatch_);
     iEvent.getByToken(recoTracks_token_, recoTracks_);
@@ -345,12 +345,13 @@ void ntuple_SV::readEvent(const edm::Event& iEvent) {
     iEvent.getByToken(timeErrorMap_token_, timeErrorMap_);
     iEvent.getByToken(timeQualityMap_token_, timeQualityMap_);
     iEvent.getByToken(trackMCMatch_token_, trackMCMatch_);
-    // iEvent.getByToken(genVertices_token_, genVertices_);
+    // iEvent.getByToken(TVs_token_, TVs_);
     iEvent.getByToken(PVs_token_, PVs_);
     iEvent.getByToken(inclusiveSVs_token_, inclusiveSVs_);
     iEvent.getByToken(IVFclusters_token_, IVFclusters_);
     iEvent.getByToken(inclusiveSVsMTDTiming_token_, inclusiveSVsMTDTiming_);
     iEvent.getByToken(IVFclustersMTDTiming_token_, IVFclustersMTDTiming_);
+    iEvent.getByToken(genJetFlavourInfo_token_, genJetFlavourInfo_);
 }
 
 
@@ -417,6 +418,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
     const edm::ValueMap<float>& timeQualityMap = *(timeQualityMap_.product());
     const edm::Association<reco::GenParticleCollection> trackMCMatch = *(trackMCMatch_.product());
     std::vector<GenVertex> GVs;
+    std::vector<GenVertex> simGVs;
     reco::VertexCollection PVs = *(PVs_.product()); // Not the slimmed collection
     reco::VertexCollection inclusiveSVs = *(inclusiveSVs_.product());
     unsigned int nClusters = *(IVFclusters_.product());
@@ -425,30 +427,36 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
     reco::VertexCompositePtrCandidateCollection cpvtx = *secVertices();
     const edm::View<pat::Jet> jetCollection = *jets();
 
-    // Construct GenVertex collection
+    // Construct GenVertex collection ("good" GVs only!!)
     for (unsigned int iGP = 0; iGP < genParticles_->size(); iGP++) {
-        const reco::GenParticle gp = genParticles_->at(iGP);
-        int motherPartID = genPartID(gp.pdgId());
+        const reco::GenParticle* gp = (genParticles_->at(iGP)).clone();
+        int motherPartID = genPartID(gp->pdgId());
+
         if (motherPartID < 0) continue; // Mother is not interesting hadron
-        if (gp.numberOfDaughters() < 2) continue; // Not a vertex
-        // Check for last instance of interesting hadron
-        bool lastInstance = true;
-        for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
-            const reco::Candidate* dau = gp.daughter(iDau);
-            int daughterPartID = genPartID(dau->pdgId());
-            if (daughterPartID == motherPartID) {
+        if (!goodGenParticle(gp, genPartPtCut_, absEtaMax_)) continue;
+        if (gp->numberOfDaughters() < 2) continue; // Not a vertex
+
+        bool lastInstance = true; // Check for last instance of interesting hadron
+        for (unsigned int iDau = 0; iDau < gp->numberOfDaughters(); iDau++) {
+            if (genPartID((gp->daughter(iDau))->pdgId()) == motherPartID) {
                 lastInstance = false; // Not last instance of interesting hadron
                 break;
             }
         }
+
         if (lastInstance) {
-            GenVertex* newGV = new GenVertex();
-            newGV->setMother(gp.clone());
-            for (unsigned int iDau = 0; iDau < gp.numberOfDaughters(); iDau++) {
-                const reco::Candidate* dau = gp.daughter(iDau)->clone();
-                newGV->addDaughter(dau);
+            std::vector<const reco::Candidate*>* goodDaughters = new std::vector<const reco::Candidate*>;
+            for (unsigned int iDau = 0; iDau < gp->numberOfDaughters(); iDau++) {
+                const reco::Candidate* dau = gp->daughter(iDau);
+                if (goodGenParticle(dau, genDauPtCut_, absEtaMax_))
+                    goodDaughters->push_back(dau);
             }
-            if (newGV->isValid()) GVs.push_back(*newGV);
+            if (goodDaughters->size() < 2) continue;
+
+            GenVertex newGV(gp, goodDaughters);
+            GVs.push_back(newGV);
+            if (matchGenToSimVertex(newGV, simTracks, GVSimTrackMatchFrac_, genToSimTrackdR_, genToSimTrackPt_))
+                simGVs.push_back(newGV);
         }
 
         // if (motherPartID == 4) {
@@ -493,7 +501,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         const GenVertex& gv = GVs.at(iGV);
 
         int matchSVIdx = -1;
-        float mindR = matchGVdR_;
+        float mindR = SVtoGVdR_;
         for (unsigned int iSV = 0; iSV < inclusiveSVs.size(); iSV++) {
             const reco::Vertex& sv = inclusiveSVs.at(iSV);
             float dR3D = vertexD3d(gv, sv);
@@ -508,7 +516,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         }
 
         int matchSVtIdx = -1;
-        mindR = matchGVdR_;
+        mindR = SVtoGVdR_;
         for (unsigned int iSVt = 0; iSVt < inclusiveSVsMTDTiming.size(); iSVt++) {
             const reco::Vertex& svt = inclusiveSVsMTDTiming.at(iSVt);
             float dR3D = vertexD3d(gv, svt);
@@ -685,13 +693,15 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
     for (unsigned int iGV = 0; iGV < GVs.size(); iGV++) {
         const GenVertex& gv = GVs.at(iGV);
 
+        // By construction, all GVs are "good"
+
         // Skip vertices not passing cuts
-        if (!goodGenVertex(gv, genPartPtCut_, genDauPtCut_, absEtaMax_)) continue;
+        // if (!goodGenVertex(gv, genPartPtCut_, genDauPtCut_, absEtaMax_)) continue;
 
         evt_nGV++;
         unsigned int gv_ndaus = 0;
-        for (const reco::Candidate* dau : gv.daughters()) {
-            if (!goodGenParticle(*dau, genDauPtCut_, absEtaMax_)) continue;
+        for (const reco::Candidate* dau : *(gv.daughters())) {
+            if (!goodGenParticle(dau, genDauPtCut_, absEtaMax_)) continue;
 
             gv_ndaus++;
             b_["trk_gv_x"]->push_back(dau->vx());
@@ -1268,31 +1278,31 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
 }
 
 
-// Helper functions
+// Quality cuts
 
 
 template <class P>
-bool ntuple_SV::goodGenParticle(const P& gp, float ptCut, float etaCut) {
+bool ntuple_SV::goodGenParticle(const P* gp, float ptCut, float etaCut) {
 
     bool pass = true;
-    if (gp.pt() < ptCut) pass = false;
-    if (abs(gp.eta()) > etaCut) pass = false;
+    if (gp->pt() < ptCut) pass = false;
+    if (abs(gp->eta()) > etaCut) pass = false;
     return pass;
 }
 
 
-bool ntuple_SV::goodGenVertex(const GenVertex& gv,
-        float motherPtCut, float dauPtCut, float etaCut) {
+// bool ntuple_SV::goodGenVertex(const GenVertex& gv,
+//         float motherPtCut, float dauPtCut, float etaCut) {
 
-    bool pass = true;
-    if (!goodGenParticle(*(gv.mother()), motherPtCut, etaCut)) pass = false;
-    int nDaughters = gv.nDaughters();
-    for (const reco::Candidate* dau : gv.daughters()) {
-        if (!goodGenParticle(*dau, dauPtCut, etaCut)) nDaughters--;
-    }
-    if (nDaughters < 2) pass = false;
-    return pass;
-}
+//     bool pass = true;
+//     if (!goodGenParticle(gv.mother(), motherPtCut, etaCut)) pass = false;
+//     int nDaughters = gv.nDaughters();
+//     for (const reco::Candidate* dau : *(gv.daughters())) {
+//         if (!goodGenParticle(dau, dauPtCut, etaCut)) nDaughters--;
+//     }
+//     if (nDaughters < 2) pass = false;
+//     return pass;
+// }
 
 
 template <class T>
@@ -1333,6 +1343,49 @@ bool ntuple_SV::goodJet(const pat::Jet& jet, float ptMin, float ptMax, float eta
     if (abs(jet.eta()) > etaCut) pass = false;
     return pass;
 }
+
+
+// Matching
+
+
+template <class P>
+bool ntuple_SV::matchGenToSimTrack(const P* gt, const SimTrack& st, float drCut, float ptCut) {
+
+    bool match = true;
+    if (reco::deltaR(gt->eta(), gt->phi(), st.momentum().Eta(), st.momentum().Phi()) > drCut) match = false;
+    float dpt = abs(gt->pt() - st.momentum().Pt()) / (gt->pt() + st.momentum().Pt());
+    if (dpt > ptCut) match = false;
+    return match;
+}
+
+
+bool ntuple_SV::matchGenToSimVertex(const GenVertex& gv, const edm::SimTrackContainer& simTracks,
+        float matchFrac, float trkDrCut, float trkPtCut) {
+
+    // First check if mother has SimTrack
+    bool match = false;
+    for (const SimTrack& st : simTracks) {
+        if (matchGenToSimTrack(gv.mother(), st, trkDrCut, trkPtCut)) {
+            match = true;
+            break;
+        }
+    }
+    if (!match) return false;
+    // Check if daughters have SimTracks
+    float nmatch = 0;
+    for (const reco::Candidate* dau : *(gv.daughters())) {
+        for (const SimTrack& st : simTracks) {
+            if (matchGenToSimTrack(dau, st, trkDrCut, trkPtCut)) {
+                nmatch++;
+                break;
+            }
+        }
+    }
+    return (nmatch/(float)gv.nDaughters()) >= matchFrac;
+}
+
+
+// Helper functions
 
 
 int ntuple_SV::genPartID(int pdgId) {

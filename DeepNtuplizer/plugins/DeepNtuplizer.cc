@@ -19,7 +19,7 @@
 #include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
 #include "DataFormats/JetMatching/interface/JetFlavourInfoMatching.h"
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
-// #include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
+#include "SimDataFormats/TrackingAnalysis/interface/TrackingVertexContainer.h"
 
 #include "TrackingTools/IPTools/interface/IPTools.h"
 #if defined( __GXX_EXPERIMENTAL_CXX0X__)
@@ -147,7 +147,8 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig) :
     svmodule->setTimeErrorMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("tofPID:sigmat0:BTV")));
     svmodule->setTimeQualityMapToken(consumes<edm::ValueMap<float>>(edm::InputTag("mtdTrackQualityMVA:mtdQualMVA:BTV")));
     svmodule->setTrackMCMatchToken(consumes<edm::Association<reco::GenParticleCollection>>(edm::InputTag("trackMCMatch::BTV")));
-    // svmodule->setGenVertexToken(consumes<TrackingVertexCollection>(edm::InputTag("mix", "MergedTrackTruth")));
+    // svmodule->setTPsToken(consumes<TrackingParticleCollection>(edm::InputTag("mix", "MergedTrackTruth")));
+    // svmodule->setTVsToken(consumes<TrackingVertexCollection>(edm::InputTag("mix", "MergedTrackTruth")));
     svmodule->setPVsToken(consumes<reco::VertexCollection>(edm::InputTag("offlinePrimaryVertices::BTV")));
     svmodule->setInclusiveSVsToken(consumes<reco::VertexCollection>(edm::InputTag("inclusiveVertexFinder::BTV")));
     svmodule->setIVFClustersToken(consumes<unsigned int>(edm::InputTag("inclusiveVertexFinder:nClusters:BTV")));

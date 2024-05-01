@@ -828,7 +828,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["trk_gvs_x"]->push_back(dau->vx());
             b_["trk_gvs_y"]->push_back(dau->vy());
             b_["trk_gvs_z"]->push_back(dau->vz());
-            b_["trk_gv_pt"]->push_back(dau->pt());
+            b_["trk_gvs_pt"]->push_back(dau->pt());
             b_["trk_gvs_eta"]->push_back(dau->eta());
             b_["trk_gvs_phi"]->push_back(dau->phi());
             b_["trk_gvs_charge"]->push_back(dau->charge());

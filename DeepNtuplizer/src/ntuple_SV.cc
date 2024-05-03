@@ -627,6 +627,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
     for (unsigned int iST = 0; iST < simTracks.size(); iST++) {
         SimTrack st = simTracks.at(iST);
         b_["trk_st_pt"]->push_back(st.momentum().Pt());
+        b_["trk_st_pt2"]->push_back(st.momentum().Pt()*st.momentum().Pt());
         b_["trk_st_eta"]->push_back(st.momentum().Eta());
         b_["trk_st_phi"]->push_back(st.momentum().Phi());
         b_["trk_st_charge"]->push_back(st.charge());
@@ -646,6 +647,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         b_["trk_all_y"]->push_back(trkRef->vy());
         b_["trk_all_z"]->push_back(trkRef->vz());
         b_["trk_all_pt"]->push_back(trkRef->pt());
+        b_["trk_all_pt2"]->push_back(trkRef->pt()*trkRef->pt());
         b_["trk_all_pterr"]->push_back(trkRef->ptError());
         b_["trk_all_eta"]->push_back(trkRef->eta());
         b_["trk_all_etaerr"]->push_back(trkRef->etaError());
@@ -680,6 +682,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["trk_match_gp_y"]->push_back(trkRef->vy());
             b_["trk_match_gp_z"]->push_back(trkRef->vz());
             b_["trk_match_gp_pt"]->push_back(trkRef->pt());
+            b_["trk_match_gp_pt2"]->push_back(trkRef->pt()*trkRef->pt());
             b_["trk_match_gp_pterr"]->push_back(trkRef->ptError());
             b_["trk_match_gp_eta"]->push_back(trkRef->eta());
             b_["trk_match_gp_etaerr"]->push_back(trkRef->etaError());
@@ -712,6 +715,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 b_["trk_pu_y"]->push_back(trkRef->vy());
                 b_["trk_pu_z"]->push_back(trkRef->vz());
                 b_["trk_pu_pt"]->push_back(trkRef->pt());
+                b_["trk_pu_pt2"]->push_back(trkRef->pt()*trkRef->pt());
                 b_["trk_pu_pterr"]->push_back(trkRef->ptError());
                 b_["trk_pu_eta"]->push_back(trkRef->eta());
                 b_["trk_pu_etaerr"]->push_back(trkRef->etaError());
@@ -748,6 +752,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["trk_gv_y"]->push_back(dau->vy());
             b_["trk_gv_z"]->push_back(dau->vz());
             b_["trk_gv_pt"]->push_back(dau->pt());
+            b_["trk_gv_pt2"]->push_back(dau->pt()*dau->pt());
             b_["trk_gv_eta"]->push_back(dau->eta());
             b_["trk_gv_phi"]->push_back(dau->phi());
             b_["trk_gv_charge"]->push_back(dau->charge());
@@ -759,6 +764,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         b_["vtx_gv_y"]->push_back(gv.y());
         b_["vtx_gv_z"]->push_back(gv.z());
         b_["vtx_gv_pt"]->push_back(gv.pt());
+        b_["vtx_gv_pt2"]->push_back(gv.pt()*gv.pt());
         b_["vtx_gv_eta"]->push_back(gv.eta());
         b_["vtx_gv_phi"]->push_back(gv.phi());
         b_["vtx_gv_dxy"]->push_back(vertexDxy(gv, spv));
@@ -780,6 +786,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["vtx_matchgv_sv_y"]->push_back(gv.y());
             b_["vtx_matchgv_sv_z"]->push_back(gv.z());
             b_["vtx_matchgv_sv_pt"]->push_back(gv.pt());
+            b_["vtx_matchgv_sv_pt2"]->push_back(gv.pt()*gv.pt());
             b_["vtx_matchgv_sv_eta"]->push_back(gv.eta());
             b_["vtx_matchgv_sv_phi"]->push_back(gv.phi());
             b_["vtx_matchgv_sv_dxy"]->push_back(vertexDxy(gv, spv));
@@ -803,6 +810,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["vtx_matchgv_svt_y"]->push_back(gv.y());
             b_["vtx_matchgv_svt_z"]->push_back(gv.z());
             b_["vtx_matchgv_svt_pt"]->push_back(gv.pt());
+            b_["vtx_matchgv_svt_pt2"]->push_back(gv.pt()*gv.pt());
             b_["vtx_matchgv_svt_eta"]->push_back(gv.eta());
             b_["vtx_matchgv_svt_phi"]->push_back(gv.phi());
             b_["vtx_matchgv_svt_dxy"]->push_back(vertexDxy(gv, spv));
@@ -829,6 +837,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["trk_gvs_y"]->push_back(dau->vy());
             b_["trk_gvs_z"]->push_back(dau->vz());
             b_["trk_gvs_pt"]->push_back(dau->pt());
+            b_["trk_gvs_pt2"]->push_back(dau->pt()*dau->pt());
             b_["trk_gvs_eta"]->push_back(dau->eta());
             b_["trk_gvs_phi"]->push_back(dau->phi());
             b_["trk_gvs_charge"]->push_back(dau->charge());
@@ -840,6 +849,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         b_["vtx_gvs_y"]->push_back(gvs.y());
         b_["vtx_gvs_z"]->push_back(gvs.z());
         b_["vtx_gvs_pt"]->push_back(gvs.pt());
+        b_["vtx_gvs_pt2"]->push_back(gvs.pt()*gvs.pt());
         b_["vtx_gvs_eta"]->push_back(gvs.eta());
         b_["vtx_gvs_phi"]->push_back(gvs.phi());
         b_["vtx_gvs_dxy"]->push_back(vertexDxy(gvs, spv));
@@ -861,6 +871,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["vtx_matchgvs_sv_y"]->push_back(gvs.y());
             b_["vtx_matchgvs_sv_z"]->push_back(gvs.z());
             b_["vtx_matchgvs_sv_pt"]->push_back(gvs.pt());
+            b_["vtx_matchgvs_sv_pt2"]->push_back(gvs.pt()*gvs.pt());
             b_["vtx_matchgvs_sv_eta"]->push_back(gvs.eta());
             b_["vtx_matchgvs_sv_phi"]->push_back(gvs.phi());
             b_["vtx_matchgvs_sv_dxy"]->push_back(vertexDxy(gvs, spv));
@@ -884,6 +895,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["vtx_matchgvs_svt_y"]->push_back(gvs.y());
             b_["vtx_matchgvs_svt_z"]->push_back(gvs.z());
             b_["vtx_matchgvs_svt_pt"]->push_back(gvs.pt());
+            b_["vtx_matchgvs_svt_pt2"]->push_back(gvs.pt()*gvs.pt());
             b_["vtx_matchgvs_svt_eta"]->push_back(gvs.eta());
             b_["vtx_matchgvs_svt_phi"]->push_back(gvs.phi());
             b_["vtx_matchgvs_svt_dxy"]->push_back(vertexDxy(gvs, spv));
@@ -925,6 +937,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["trk_pv_y"]->push_back(trkRef->vy());
             b_["trk_pv_z"]->push_back(trkRef->vz());
             b_["trk_pv_pt"]->push_back(trkRef->pt());
+            b_["trk_pv_pt2"]->push_back(trkRef->pt()*trkRef->pt());
             b_["trk_pv_pterr"]->push_back(trkRef->ptError());
             b_["trk_pv_eta"]->push_back(trkRef->eta());
             b_["trk_pv_etaerr"]->push_back(trkRef->etaError());
@@ -980,6 +993,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["trk_sv_y"]->push_back(trkRef->vy());
             b_["trk_sv_z"]->push_back(trkRef->vz());
             b_["trk_sv_pt"]->push_back(trkRef->pt());
+            b_["trk_sv_pt2"]->push_back(trkRef->pt()*trkRef->pt());
             b_["trk_sv_pterr"]->push_back(trkRef->ptError());
             b_["trk_sv_eta"]->push_back(trkRef->eta());
             b_["trk_sv_etaerr"]->push_back(trkRef->etaError());
@@ -1014,6 +1028,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 b_["trk_matchsv_gv_y"]->push_back(trkRef->vy());
                 b_["trk_matchsv_gv_z"]->push_back(trkRef->vz());
                 b_["trk_matchsv_gv_pt"]->push_back(trkRef->pt());
+                b_["trk_matchsv_gv_pt2"]->push_back(trkRef->pt()*trkRef->pt());
                 b_["trk_matchsv_gv_pterr"]->push_back(trkRef->ptError());
                 b_["trk_matchsv_gv_eta"]->push_back(trkRef->eta());
                 b_["trk_matchsv_gv_etaerr"]->push_back(trkRef->etaError());
@@ -1049,6 +1064,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 b_["trk_matchsv_gvs_y"]->push_back(trkRef->vy());
                 b_["trk_matchsv_gvs_z"]->push_back(trkRef->vz());
                 b_["trk_matchsv_gvs_pt"]->push_back(trkRef->pt());
+                b_["trk_matchsv_gvs_pt2"]->push_back(trkRef->pt()*trkRef->pt());
                 b_["trk_matchsv_gvs_pterr"]->push_back(trkRef->ptError());
                 b_["trk_matchsv_gvs_eta"]->push_back(trkRef->eta());
                 b_["trk_matchsv_gvs_etaerr"]->push_back(trkRef->etaError());
@@ -1081,7 +1097,11 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         b_["vtx_sv_x"]->push_back(sv.x());
         b_["vtx_sv_y"]->push_back(sv.y());
         b_["vtx_sv_z"]->push_back(sv.z());
+        b_["vtx_sv_xerr"]->push_back(sv.xError());
+        b_["vtx_sv_yerr"]->push_back(sv.yError());
+        b_["vtx_sv_zerr"]->push_back(sv.zError());
         b_["vtx_sv_pt"]->push_back(sv.p4().Pt());
+        b_["vtx_sv_pt2"]->push_back(sv.p4().Pt()*sv.p4().Pt());
         b_["vtx_sv_eta"]->push_back(sv.p4().Eta());
         b_["vtx_sv_phi"]->push_back(sv.p4().Phi());
         b_["vtx_sv_dxy"]->push_back(vertexDxy(sv, spv).value());
@@ -1095,6 +1115,68 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         b_["vtx_sv_ndof"]->push_back(sv.ndof());
         b_["vtx_sv_chi2dof"]->push_back(sv.chi2() / sv.ndof());
         b_["vtx_sv_ntracks"]->push_back(sv_ntrks);
+
+        int iGV = SV_matchtoGV.at(iSV);
+        if (iGV >= 0) {
+            const GenVertex& gv = GVs.at(iGV);
+            b_["vtx_sv_matchgv_timeavg"]->push_back(timeAvg);
+            b_["vtx_sv_matchgv_timerange"]->push_back(timeRange);
+            b_["vtx_sv_matchgv_x"]->push_back(sv.x());
+            b_["vtx_sv_matchgv_y"]->push_back(sv.y());
+            b_["vtx_sv_matchgv_z"]->push_back(sv.z());
+            b_["vtx_sv_matchgv_xerr"]->push_back(sv.xError());
+            b_["vtx_sv_matchgv_yerr"]->push_back(sv.yError());
+            b_["vtx_sv_matchgv_zerr"]->push_back(sv.zError());
+            b_["vtx_sv_matchgv_xres"]->push_back(gv.x()-sv.x());
+            b_["vtx_sv_matchgv_yres"]->push_back(gv.y()-sv.y());
+            b_["vtx_sv_matchgv_zres"]->push_back(gv.z()-sv.z());
+            b_["vtx_sv_matchgv_pt"]->push_back(sv.p4().Pt());
+            b_["vtx_sv_matchgv_pt2"]->push_back(sv.p4().Pt()*sv.p4().Pt());
+            b_["vtx_sv_matchgv_eta"]->push_back(sv.p4().Eta());
+            b_["vtx_sv_matchgv_phi"]->push_back(sv.p4().Phi());
+            b_["vtx_sv_matchgv_dxy"]->push_back(vertexDxy(sv, spv).value());
+            b_["vtx_sv_matchgv_dxyerr"]->push_back(vertexDxy(sv, spv).error());
+            b_["vtx_sv_matchgv_dxysig"]->push_back(vertexDxy(sv, spv).value() / vertexDxy(sv, spv).error());
+            b_["vtx_sv_matchgv_dz"]->push_back(TMath::Abs(sv.z() - spv.z()));
+            b_["vtx_sv_matchgv_d3d"]->push_back(vertexD3d(sv, spv).value());
+            b_["vtx_sv_matchgv_d3derr"]->push_back(vertexD3d(sv, spv).error() );
+            b_["vtx_sv_matchgv_d3dsig"]->push_back(vertexD3d(sv, spv).value() / vertexD3d(sv, spv).error());
+            b_["vtx_sv_matchgv_chi2"]->push_back(sv.chi2());
+            b_["vtx_sv_matchgv_ndof"]->push_back(sv.ndof());
+            b_["vtx_sv_matchgv_chi2dof"]->push_back(sv.chi2() / sv.ndof());
+            b_["vtx_sv_matchgv_ntracks"]->push_back(sv_ntrks);
+        }
+
+        int iGVs = SV_matchtoSimGV.at(iSV);
+        if (iGVs >= 0) {
+            const GenVertex& gvs = simGVs.at(iGVs);
+            b_["vtx_sv_matchgvs_timeavg"]->push_back(timeAvg);
+            b_["vtx_sv_matchgvs_timerange"]->push_back(timeRange);
+            b_["vtx_sv_matchgvs_x"]->push_back(sv.x());
+            b_["vtx_sv_matchgvs_y"]->push_back(sv.y());
+            b_["vtx_sv_matchgvs_z"]->push_back(sv.z());
+            b_["vtx_sv_matchgvs_xerr"]->push_back(sv.xError());
+            b_["vtx_sv_matchgvs_yerr"]->push_back(sv.yError());
+            b_["vtx_sv_matchgvs_zerr"]->push_back(sv.zError());
+            b_["vtx_sv_matchgvs_xres"]->push_back(gvs.x()-sv.x());
+            b_["vtx_sv_matchgvs_yres"]->push_back(gvs.y()-sv.y());
+            b_["vtx_sv_matchgvs_zres"]->push_back(gvs.z()-sv.z());
+            b_["vtx_sv_matchgvs_pt"]->push_back(sv.p4().Pt());
+            b_["vtx_sv_matchgvs_pt2"]->push_back(sv.p4().Pt()*sv.p4().Pt());
+            b_["vtx_sv_matchgvs_eta"]->push_back(sv.p4().Eta());
+            b_["vtx_sv_matchgvs_phi"]->push_back(sv.p4().Phi());
+            b_["vtx_sv_matchgvs_dxy"]->push_back(vertexDxy(sv, spv).value());
+            b_["vtx_sv_matchgvs_dxyerr"]->push_back(vertexDxy(sv, spv).error());
+            b_["vtx_sv_matchgvs_dxysig"]->push_back(vertexDxy(sv, spv).value() / vertexDxy(sv, spv).error());
+            b_["vtx_sv_matchgvs_dz"]->push_back(TMath::Abs(sv.z() - spv.z()));
+            b_["vtx_sv_matchgvs_d3d"]->push_back(vertexD3d(sv, spv).value());
+            b_["vtx_sv_matchgvs_d3derr"]->push_back(vertexD3d(sv, spv).error() );
+            b_["vtx_sv_matchgvs_d3dsig"]->push_back(vertexD3d(sv, spv).value() / vertexD3d(sv, spv).error());
+            b_["vtx_sv_matchgvs_chi2"]->push_back(sv.chi2());
+            b_["vtx_sv_matchgvs_ndof"]->push_back(sv.ndof());
+            b_["vtx_sv_matchgvs_chi2dof"]->push_back(sv.chi2() / sv.ndof());
+            b_["vtx_sv_matchgvs_ntracks"]->push_back(sv_ntrks);
+        }
     }
 
     if (debug_) std::cout << "Secondary vertices w/timing" << std::endl;
@@ -1127,6 +1209,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
             b_["trk_svt_y"]->push_back(trkRef->vy());
             b_["trk_svt_z"]->push_back(trkRef->vz());
             b_["trk_svt_pt"]->push_back(trkRef->pt());
+            b_["trk_svt_pt2"]->push_back(trkRef->pt()*trkRef->pt());
             b_["trk_svt_pterr"]->push_back(trkRef->ptError());
             b_["trk_svt_eta"]->push_back(trkRef->eta());
             b_["trk_svt_etaerr"]->push_back(trkRef->etaError());
@@ -1161,6 +1244,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 b_["trk_matchsvt_gv_y"]->push_back(trkRef->vy());
                 b_["trk_matchsvt_gv_z"]->push_back(trkRef->vz());
                 b_["trk_matchsvt_gv_pt"]->push_back(trkRef->pt());
+                b_["trk_matchsvt_gv_pt2"]->push_back(trkRef->pt()*trkRef->pt());
                 b_["trk_matchsvt_gv_pterr"]->push_back(trkRef->ptError());
                 b_["trk_matchsvt_gv_eta"]->push_back(trkRef->eta());
                 b_["trk_matchsvt_gv_etaerr"]->push_back(trkRef->etaError());
@@ -1196,6 +1280,7 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
                 b_["trk_matchsvt_gvs_y"]->push_back(trkRef->vy());
                 b_["trk_matchsvt_gvs_z"]->push_back(trkRef->vz());
                 b_["trk_matchsvt_gvs_pt"]->push_back(trkRef->pt());
+                b_["trk_matchsvt_gvs_pt2"]->push_back(trkRef->pt()*trkRef->pt());
                 b_["trk_matchsvt_gvs_pterr"]->push_back(trkRef->ptError());
                 b_["trk_matchsvt_gvs_eta"]->push_back(trkRef->eta());
                 b_["trk_matchsvt_gvs_etaerr"]->push_back(trkRef->etaError());
@@ -1228,7 +1313,11 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         b_["vtx_svt_x"]->push_back(sv.x());
         b_["vtx_svt_y"]->push_back(sv.y());
         b_["vtx_svt_z"]->push_back(sv.z());
+        b_["vtx_svt_xerr"]->push_back(sv.xError());
+        b_["vtx_svt_yerr"]->push_back(sv.yError());
+        b_["vtx_svt_zerr"]->push_back(sv.zError());
         b_["vtx_svt_pt"]->push_back(sv.p4().Pt());
+        b_["vtx_svt_pt2"]->push_back(sv.p4().Pt()*sv.p4().Pt());
         b_["vtx_svt_eta"]->push_back(sv.p4().Eta());
         b_["vtx_svt_phi"]->push_back(sv.p4().Phi());
         b_["vtx_svt_dxy"]->push_back(vertexDxy(sv, spv).value());
@@ -1242,6 +1331,68 @@ int ntuple_SV::fillBranches(bool applySelection, float EventTime) {
         b_["vtx_svt_ndof"]->push_back(sv.ndof());
         b_["vtx_svt_chi2dof"]->push_back(sv.chi2() / sv.ndof());
         b_["vtx_svt_ntracks"]->push_back(svt_ntrks);
+
+        int iGV = SVt_matchtoGV.at(iSVt);
+        if (iGV >= 0) {
+            const GenVertex& gv = GVs.at(iGV);
+            b_["vtx_svt_matchgv_timeavg"]->push_back(timeAvg);
+            b_["vtx_svt_matchgv_timerange"]->push_back(timeRange);
+            b_["vtx_svt_matchgv_x"]->push_back(sv.x());
+            b_["vtx_svt_matchgv_y"]->push_back(sv.y());
+            b_["vtx_svt_matchgv_z"]->push_back(sv.z());
+            b_["vtx_svt_matchgv_xerr"]->push_back(sv.xError());
+            b_["vtx_svt_matchgv_yerr"]->push_back(sv.yError());
+            b_["vtx_svt_matchgv_zerr"]->push_back(sv.zError());
+            b_["vtx_svt_matchgv_xres"]->push_back(gv.x()-sv.x());
+            b_["vtx_svt_matchgv_yres"]->push_back(gv.y()-sv.y());
+            b_["vtx_svt_matchgv_zres"]->push_back(gv.z()-sv.z());
+            b_["vtx_svt_matchgv_pt"]->push_back(sv.p4().Pt());
+            b_["vtx_svt_matchgv_pt2"]->push_back(sv.p4().Pt()*sv.p4().Pt());
+            b_["vtx_svt_matchgv_eta"]->push_back(sv.p4().Eta());
+            b_["vtx_svt_matchgv_phi"]->push_back(sv.p4().Phi());
+            b_["vtx_svt_matchgv_dxy"]->push_back(vertexDxy(sv, spv).value());
+            b_["vtx_svt_matchgv_dxyerr"]->push_back(vertexDxy(sv, spv).error());
+            b_["vtx_svt_matchgv_dxysig"]->push_back(vertexDxy(sv, spv).value() / vertexDxy(sv, spv).error());
+            b_["vtx_svt_matchgv_dz"]->push_back(TMath::Abs(sv.z() - spv.z()));
+            b_["vtx_svt_matchgv_d3d"]->push_back(vertexD3d(sv, spv).value());
+            b_["vtx_svt_matchgv_d3derr"]->push_back(vertexD3d(sv, spv).error() );
+            b_["vtx_svt_matchgv_d3dsig"]->push_back(vertexD3d(sv, spv).value() / vertexD3d(sv, spv).error());
+            b_["vtx_svt_matchgv_chi2"]->push_back(sv.chi2());
+            b_["vtx_svt_matchgv_ndof"]->push_back(sv.ndof());
+            b_["vtx_svt_matchgv_chi2dof"]->push_back(sv.chi2() / sv.ndof());
+            b_["vtx_svt_matchgv_ntracks"]->push_back(svt_ntrks);
+        }
+
+        int iGVs = SVt_matchtoSimGV.at(iSVt);
+        if (iGVs >= 0) {
+            const GenVertex& gvs = simGVs.at(iGVs);
+            b_["vtx_svt_matchgvs_timeavg"]->push_back(timeAvg);
+            b_["vtx_svt_matchgvs_timerange"]->push_back(timeRange);
+            b_["vtx_svt_matchgvs_x"]->push_back(sv.x());
+            b_["vtx_svt_matchgvs_y"]->push_back(sv.y());
+            b_["vtx_svt_matchgvs_z"]->push_back(sv.z());
+            b_["vtx_svt_matchgvs_xerr"]->push_back(sv.xError());
+            b_["vtx_svt_matchgvs_yerr"]->push_back(sv.yError());
+            b_["vtx_svt_matchgvs_zerr"]->push_back(sv.zError());
+            b_["vtx_svt_matchgvs_xres"]->push_back(gvs.x()-sv.x());
+            b_["vtx_svt_matchgvs_yres"]->push_back(gvs.y()-sv.y());
+            b_["vtx_svt_matchgvs_zres"]->push_back(gvs.z()-sv.z());
+            b_["vtx_svt_matchgvs_pt"]->push_back(sv.p4().Pt());
+            b_["vtx_svt_matchgvs_pt2"]->push_back(sv.p4().Pt()*sv.p4().Pt());
+            b_["vtx_svt_matchgvs_eta"]->push_back(sv.p4().Eta());
+            b_["vtx_svt_matchgvs_phi"]->push_back(sv.p4().Phi());
+            b_["vtx_svt_matchgvs_dxy"]->push_back(vertexDxy(sv, spv).value());
+            b_["vtx_svt_matchgvs_dxyerr"]->push_back(vertexDxy(sv, spv).error());
+            b_["vtx_svt_matchgvs_dxysig"]->push_back(vertexDxy(sv, spv).value() / vertexDxy(sv, spv).error());
+            b_["vtx_svt_matchgvs_dz"]->push_back(TMath::Abs(sv.z() - spv.z()));
+            b_["vtx_svt_matchgvs_d3d"]->push_back(vertexD3d(sv, spv).value());
+            b_["vtx_svt_matchgvs_d3derr"]->push_back(vertexD3d(sv, spv).error() );
+            b_["vtx_svt_matchgvs_d3dsig"]->push_back(vertexD3d(sv, spv).value() / vertexD3d(sv, spv).error());
+            b_["vtx_svt_matchgvs_chi2"]->push_back(sv.chi2());
+            b_["vtx_svt_matchgvs_ndof"]->push_back(sv.ndof());
+            b_["vtx_svt_matchgvs_chi2dof"]->push_back(sv.chi2() / sv.ndof());
+            b_["vtx_svt_matchgvs_ntracks"]->push_back(svt_ntrks);
+        }
     }
 
     if (debug_) std::cout << "Jets" << std::endl;

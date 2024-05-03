@@ -1,11 +1,11 @@
 from CRABClient.UserUtilities import config
 config = config()
 
-# sample = "TTToHadronic_noPU"
-sample = "TTToHadronic_PU200"
+sample = "TTToHadronic_noPU"
+# sample = "TTToHadronic_PU200"
 
 config.General.requestName       = sample
-config.General.workArea          = "/afs/cern.ch/user/e/etsai/workspace/SecondaryVertexing_CMSSW_14_1_0_pre0/src/DeepNTuples/DeepNtuplizer/production"
+config.General.workArea          = "/eos/user/e/etsai/workspace/DeepNTuples_CMSSW_14_1_0_pre0/src/DeepNTuples/DeepNtuplizer/production"
 config.General.transferOutputs   = True
 config.General.instance          = "prod"
 

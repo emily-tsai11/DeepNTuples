@@ -223,6 +223,7 @@ class ntuple_SV : public ntuple_content {
             "y",
             "z",
             "pt",
+            "pt2",
             "pterr",
             "eta",
             "etaerr",
@@ -256,7 +257,11 @@ class ntuple_SV : public ntuple_content {
             "matchgvs_svt", // GV w/Sim matched to SV w/MTD timing
             "pv",           // PrimaryVertex
             "sv",           // SecondaryVertex
+            "sv_matchgv",   // SecondaryVertex
+            "sv_matchgvs",  // SecondaryVertex
             "svt",          // SecondaryVertex w/MTD timing
+            "svt_matchgv",  // SecondaryVertex w/MTD timing w/GV
+            "svt_matchgvs", // SecondaryVertex w/MTD timing w/GV w/SIM
         };
 
         std::vector<TString> vtx_branches_ {
@@ -265,7 +270,14 @@ class ntuple_SV : public ntuple_content {
             "x",
             "y",
             "z",
+            "xerr",
+            "yerr",
+            "zerr",
+            "xres",
+            "yres",
+            "zres",
             "pt",
+            "pt2",
             "eta",
             "phi",
             "dxy",
